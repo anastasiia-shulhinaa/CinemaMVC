@@ -1,0 +1,77 @@
+﻿@model CinemaDomain.Model.Movie
+
+@{
+    ViewData["Title"] = "Деталі фільму";
+}
+
+<div>
+    <h1>@Model.Title</h1>
+
+    <div>
+        <p><strong>Опис:</strong> @Model.Description</p>
+        <p><strong>Мова:</strong> @Model.Language</p>
+        <p><strong>Тривалість:</strong> @Model.Duration</p>
+        <p><strong>Рік випуску:</strong> @Model.ReleaseYear</p>
+        <p><strong>Рейтинг:</strong> @Model.Rating</p>
+
+        <p>
+            <strong>Категорії:</strong>
+            @if (Model.Categories != null && Model.Categories.Any())
+            {
+                @string.Join(", ", Model.Categories.Select(c => c.Name))
+            }
+            else
+            {
+                @:Не вказано
+            }
+        </p>
+
+        <p>
+            <strong>Режисери:</strong>
+            @if (Model.Directors != null && Model.Directors.Any())
+            {
+                @string.Join(", ", Model.Directors.Select(d => d.FullName))
+            }
+            else
+            {
+                @:Не вказано
+            }
+        </p>
+
+        <p>
+            <strong>Актори:</strong>
+            @if (Model.Actors != null && Model.Actors.Any())
+            {
+                @string.Join(", ", Model.Actors.Select(a => a.FullName))
+            }
+            else
+            {
+                @:Не вказано
+            }
+        </p>
+
+        <p>
+            <strong>Трейлер:</strong>
+            @if (!string.IsNullOrEmpty(Model.TrailerLink))
+            {
+                <a href="@Model.TrailerLink" target="_blank">Переглянути трейлер</a>
+            }
+            else
+            {
+                @:Не доступно
+            }
+        </p>
+    </div>
+
+
+    <div style="margin-top:20px;">
+        <a asp-action="Index" style="padding:10px 20px; background-color:gray; color:white; text-decoration:none; margin-right:10px;">
+            Повернутись до переліку
+        </a>
+
+        <a asp-controller="Sessions" asp-action="Create" asp-route-movieId="@Model.Id"
+           style="padding:10px 20px; background-color:#d63384; color:white; text-decoration:none;">
+            Створити сеанс
+        </a>
+    </div>
+</div>

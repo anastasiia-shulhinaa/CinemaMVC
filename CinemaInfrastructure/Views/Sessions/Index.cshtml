@@ -1,0 +1,38 @@
+﻿@model IEnumerable<CinemaDomain.Model.Session>
+
+@{
+    ViewData["Title"] = "Доступні сеанси";
+}
+
+<h1>Доступні сеанси</h1>
+
+<p>
+    <!-- Link to Movie page (to create new session it's necessary to choose movie firstly) -->
+    <a asp-controller="Movies" asp-action="Index" class="btn btn-primary">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.First().CreatedAt)</th>
+            <th>@Html.DisplayNameFor(model => model.First().IsActive)</th>
+            <th>Фільм</th>
+            <th>@Html.DisplayNameFor(model => model.First().Schedule)</th>
+            <th>Дії</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.CreatedAt)</td>
+                <td>@Html.DisplayFor(modelItem => item.IsActive)</td>
+                <td>@Html.DisplayFor(modelItem => item.Schedule.Id)</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.Id">Session Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

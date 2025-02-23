@@ -1,0 +1,111 @@
+﻿@model IEnumerable<CinemaDomain.Model.Movie>
+
+
+<div class="container">
+    <!-- Form for search using Title -->
+    <h2>Пошук фільмів</h2>
+    <div class="row mb-4">
+        <div class="col-12">
+            <form method="get" asp-action="SearchByTitle" id="titleSearchForm">
+                <div class="form-group">
+                    <input type="text" name="title" class="form-control" placeholder="Введіть назву фільму" />
+                </div>
+                <button type="submit" style="padding:10px 20px; background-color:#d63384; color:white; text-decoration:none;">
+                    Пошук за назвою</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Form for search using criterias (category, release year, rating) -->
+    <form method="get" asp-action="Index" id="searchForm">
+        <div class="form-row">
+
+            <div class="form-group col-md-3">
+                <label>Жанр</label>
+                <select class="form-control" name="category">
+                    <option value="">Всі жанри</option>
+                    @if (ViewBag.Categories != null)
+                    {
+                        foreach (var cat in ViewBag.Categories)
+                        {
+                            <option value="@cat">@cat</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="form-group col-md-3">
+                <label>Рік випуску</label>
+                <select class="form-control" name="year">
+                    <option value="">Всі роки</option>
+                    @if (ViewBag.Years != null)
+                    {
+                        foreach (var y in ViewBag.Years)
+                        {
+                            <option value="@y">@y</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="form-group col-md-3">
+                <label>Мінімальний рейтинг</label>
+                <select class="form-control" name="rating">
+                    <option value="">Всі рейтинги</option>
+                    @if (ViewBag.Ratings != null)
+                    {
+                        foreach (var r in ViewBag.Ratings)
+                        {
+                            <option value="@r">@r</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="form-group col-md-3 align-self-end">
+                <button type="submit" style="padding:10px 20px; background-color:#d63384; color:white; text-decoration:none;">
+                    Пошук</button>
+                <a asp-action="Index">Скинути</a>
+            </div>
+
+        </div>
+    </form>
+
+    <hr />
+
+    <h2>Перелік фільмів</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>@Html.DisplayNameFor(model => model.First().Title)</th>
+                <th>@Html.DisplayNameFor(model => model.First().ReleaseYear)</th>
+                <th>@Html.DisplayNameFor(model => model.First().Language)</th>
+                <th>@Html.DisplayNameFor(model => model.First().Rating)</th>
+                <th>Трейлер</th>
+                <th>Дії</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var movie in Model)
+            {
+                <tr>
+                    <td>@movie.Title</td>
+                    <td>@movie.ReleaseYear</td>
+                    <td>@movie.Language</td>
+                    <td>@movie.Rating</td>
+                    <td><a href="@movie.TrailerLink" target="_blank">Переглянути трейлер</a></td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@movie.Id">Edit</a> |
+                        <a asp-action="Details" asp-route-id="@movie.Id">Details</a> |
+                        <a asp-action="Delete" asp-route-id="@movie.Id">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<p>
+    <a asp-action="Create"
+        style="padding:10px 20px; background-color:#d63384; color:white; text-decoration:none;">
+        Create New</a>
+</p>
