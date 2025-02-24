@@ -14,7 +14,7 @@ public partial class Hall : Entity
     public string Name { get; set; } = null!;
 
     [Display(Name = "Кількість місць")]
-    [Range(6, 50, ErrorMessage = "Зал повинен мати від 8 до 50 місць")]
+    [Range(8, 50, ErrorMessage = "Зал повинен мати від 8 до 50 місць")]
     public int TotalSeats { get; set; }
 
     [Display(Name = "Кінотеатр")]

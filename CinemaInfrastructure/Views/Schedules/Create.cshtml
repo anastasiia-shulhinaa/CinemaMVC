@@ -1,0 +1,25 @@
+﻿@model CinemaDomain.Model.Schedule
+
+@{
+    ViewData["Title"] = "Створити розклад";
+}
+
+<h1>Створити розклад</h1>
+
+<form asp-action="Create" method="post">
+    <input type="hidden" asp-for="HallId" />
+
+    <div class="form-group">
+        <label asp-for="StartTime" class="control-label"></label>
+        <input asp-for="StartTime" class="form-control" type="datetime-local" />
+        <span asp-validation-for="StartTime" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Додати</button>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

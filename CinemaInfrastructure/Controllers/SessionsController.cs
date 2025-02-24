@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using CinemaDomain.Model;
-using CinemaInfrastructure;
+using CinemaInfrastructure.ViewModels;
 
 namespace CinemaInfrastructure.Controllers
 {
@@ -19,45 +15,135 @@ namespace CinemaInfrastructure.Controllers
             _context = context;
         }
 
-        // Select Cinema
-        public IActionResult SelectCinema()
+        public IActionResult GetHallsByCinema(int cinemaId)
         {
-            var cinemas = _context.Cinemas.ToList();
-
-            if (cinemas == null || !cinemas.Any())
-            {
-                return PartialView("_SelectTheater", new List<Cinema>()); 
-            }
-
-            return PartialView("_SelectTheater", cinemas);
+            var halls = _context.Halls
+                .Where(h => h.CinemaId == cinemaId)
+                .Select(h => new { id = h.Id, name = h.Name })
+                .ToList();
+            return Json(halls);
         }
 
-        // Load Halls for Selected Cinema
-        public async Task<IActionResult> SelectHall(int cinemaId)
+        public IActionResult GetSchedulesByHall(int hallId)
         {
-            var halls = await _context.Halls.Where(h => h.CinemaId == cinemaId).ToListAsync();
-            return PartialView("_SelectHall", halls);
-        }
-
-        // Load Available Times for Selected Hall
-        public async Task<IActionResult> SelectTime(int hallId)
-        {
-            var schedules = await _context.Schedules.Where(s => s.HallId == hallId).ToListAsync();
-            return PartialView("_SelectTime", schedules);
-        }
-
-        // Select type of Booking (private or public)
-        public IActionResult SelectBookingType()
-        {
-            return PartialView("_SelectBookingType");
+            var schedules = _context.Schedules
+                .Where(s => s.HallId == hallId)
+                .Select(s => new { id = s.Id, startTime = s.StartTime.ToString("HH:mm") })
+                .ToList();
+            return Json(schedules);
         }
 
         // GET: Sessions
         public async Task<IActionResult> Index()
         {
-            var dbcinemaContext = _context.Sessions.Include(s => s.Movie).Include(s => s.Schedule);
-            return View(await dbcinemaContext.ToListAsync());
+            var sessions = _context.Sessions
+                .Include(s => s.Movie)
+                .Include(s => s.Schedule)
+                .ThenInclude(sch => sch.Hall)
+                .ThenInclude(hall => hall.Cinema)
+                .ToList();
+            return View(sessions);
         }
+
+        // ========== 📌 SESSION CREATION (USERS & ADMINS) ==========
+        // GET: Sessions/Create
+        public IActionResult Create()
+        {
+            ViewData["Movies"] = new SelectList(_context.Movies, "Id", "Title");
+            ViewData["Cinemas"] = new SelectList(_context.Cinemas, "Id", "Name");
+            return View();
+        }
+
+        // POST: Sessions/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("MovieId, ScheduleId, IsPrivate, IsActive")] Session session)
+        {
+            if (ModelState.IsValid)
+            {
+                session.CreatedAt = BitConverter.GetBytes(DateTime.UtcNow.ToBinary());
+
+                _context.Add(session);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewData["Movies"] = new SelectList(_context.Movies, "Id", "Title", session.MovieId);
+            ViewData["Cinemas"] = new SelectList(_context.Cinemas, "Id", "Name");
+            return View(session);
+        }
+
+        // User Create Session
+        // GET: Display the initial form
+        public IActionResult CreateUser()
+        {
+            var model = new CreateSessionViewModel
+            {
+                Movies = _context.Movies.ToList(),   // Отримати список фільмів з БД
+                Cinemas = _context.Cinemas.ToList(), // Отримати список кінотеатрів з БД
+                Halls = new List<Hall>(),            // Порожній список, оновиться при виборі кінотеатру
+                Schedules = new List<Schedule>()     // Так само порожній список
+            };
+
+            model.Movies = _context.Movies.ToList();
+            model.Cinemas = _context.Cinemas.ToList();
+            model.Halls = model.Halls ?? new List<Hall>();
+            model.Schedules = model.Schedules ?? new List<Schedule>();
+
+            return View(model);
+        }
+
+
+        [HttpPost]
+        public IActionResult CreateUser(CreateSessionViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                // Reload dropdown lists in case of validation errors
+                model.Movies = _context.Movies.ToList();
+                model.Cinemas = _context.Cinemas.ToList();
+                model.Halls = _context.Halls.Where(h => h.CinemaId == model.SelectedCinemaId).ToList();
+                model.Schedules = _context.Schedules.Where(s => s.HallId == model.SelectedHallId).ToList();
+                return View(model);
+            }
+
+            var session = new Session
+            {
+                MovieId = model.SelectedMovieId.Value,
+                ScheduleId = model.SelectedScheduleId.Value,
+                IsActive = BitConverter.GetBytes(true)
+            };
+
+            _context.Sessions.Add(session);
+            _context.SaveChanges();
+
+            return RedirectToAction("Index");
+        }
+
+
+
+
+        // Admin Create Session
+        public IActionResult CreateAdmin()
+        {
+            ViewBag.Movies = new SelectList(_context.Movies, "Id", "Title");
+            ViewBag.Cinemas = new SelectList(_context.Cinemas, "Id", "Name");
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateAdmin(Session session)
+        {
+            if (ModelState.IsValid)
+            {
+                session.CreatedAt = BitConverter.GetBytes(DateTime.UtcNow.ToBinary());
+                _context.Sessions.Add(session);
+                await _context.SaveChangesAsync();
+                return RedirectToAction("Index");
+            }
+            return View(session);
+        }
+
 
         // GET: Sessions/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -79,30 +165,6 @@ namespace CinemaInfrastructure.Controllers
             return View(session);
         }
 
-        // GET: Sessions/Create
-        public IActionResult Create()
-        {
-            var cinemas = _context.Cinemas.ToList();
-            return View(cinemas);
-        }
-
-        // POST: Sessions/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("MovieId,ScheduleId,CreatedAt,IsActive,Id")] Session session)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(session);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["MovieId"] = new SelectList(_context.Movies, "Id", "Language", session.MovieId);
-            ViewData["ScheduleId"] = new SelectList(_context.Schedules, "Id", "Id", session.ScheduleId);
-            return View(session);
-        }
 
         // GET: Sessions/Edit/5
         public async Task<IActionResult> Edit(int? id)

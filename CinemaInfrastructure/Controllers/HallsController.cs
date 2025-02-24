@@ -40,13 +40,17 @@ namespace CinemaInfrastructure.Controllers
             var hall = await _context.Halls
                 .Include(h => h.Cinema)
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (hall == null)
             {
                 return NotFound();
             }
 
+            ViewData["HallId"] = hall.Id; // Передаємо в представлення
+
             return View(hall);
         }
+
 
         // GET: Halls/Create
         public IActionResult Create(int? cinemaId)

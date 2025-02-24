@@ -34,3 +34,6 @@
     <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
     <a asp-action="Index">Back to List</a>
 </div>
+<a asp-controller="Schedules" asp-action="Create" asp-route-hallId="@ViewData["HallId"]" class="btn btn-primary">
+    Додати розклад
+</a>

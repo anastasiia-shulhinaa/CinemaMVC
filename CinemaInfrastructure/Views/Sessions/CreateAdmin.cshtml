@@ -1,12 +1,12 @@
 ﻿@model CinemaDomain.Model.Session
 
 @{
-    ViewData["Title"] = "Створити сеанс";
+    ViewData["Title"] = "Створити сеанс (Адміністратор)";
 }
 
 <h1>Створити сеанс</h1>
 
-<form asp-action="Create">
+<form asp-action="CreateAdmin">
     <div class="form-group">
         <label>Фільм</label>
         <select asp-for="MovieId" class="form-control" asp-items="ViewBag.Movies"></select>
@@ -61,4 +61,3 @@
         });
     });
 </script>
-
