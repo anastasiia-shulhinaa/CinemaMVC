@@ -1,0 +1,28 @@
+﻿<h3>Тип замовлення</h3>
+
+<div class="form-check">
+    <input type="radio" id="privateBooking" name="bookingType" value="private" class="form-check-input">
+    <label for="privateBooking" class="form-check-label">Приватне замовлення (весь зал)</label>
+</div>
+
+<div class="form-check">
+    <input type="radio" id="publicBooking" name="bookingType" value="public" class="form-check-input">
+    <label for="publicBooking" class="form-check-label">Публічне замовлення (вибір місць)</label>
+</div>
+
+<button id="confirmSession" class="btn btn-success mt-3">Підтвердити</button>
+
+<script>
+    $(document).ready(function () {
+        $("#confirmSession").click(function () {
+            var bookingType = $("input[name='bookingType']:checked").val();
+            if (!bookingType) {
+                alert("Будь ласка, оберіть тип замовлення!");
+                return;
+            }
+
+            alert("Сеанс успішно створено! (Фактична реалізація збереження буде додана пізніше)");
+            window.location.href = "/Sessions/Index"; // Redirect to session list
+        });
+    });
+</script>

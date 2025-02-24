@@ -19,6 +19,39 @@ namespace CinemaInfrastructure.Controllers
             _context = context;
         }
 
+        // Select Cinema
+        public IActionResult SelectCinema()
+        {
+            var cinemas = _context.Cinemas.ToList();
+
+            if (cinemas == null || !cinemas.Any())
+            {
+                return PartialView("_SelectTheater", new List<Cinema>()); 
+            }
+
+            return PartialView("_SelectTheater", cinemas);
+        }
+
+        // Load Halls for Selected Cinema
+        public async Task<IActionResult> SelectHall(int cinemaId)
+        {
+            var halls = await _context.Halls.Where(h => h.CinemaId == cinemaId).ToListAsync();
+            return PartialView("_SelectHall", halls);
+        }
+
+        // Load Available Times for Selected Hall
+        public async Task<IActionResult> SelectTime(int hallId)
+        {
+            var schedules = await _context.Schedules.Where(s => s.HallId == hallId).ToListAsync();
+            return PartialView("_SelectTime", schedules);
+        }
+
+        // Select type of Booking (private or public)
+        public IActionResult SelectBookingType()
+        {
+            return PartialView("_SelectBookingType");
+        }
+
         // GET: Sessions
         public async Task<IActionResult> Index()
         {
@@ -49,9 +82,8 @@ namespace CinemaInfrastructure.Controllers
         // GET: Sessions/Create
         public IActionResult Create()
         {
-            ViewData["MovieId"] = new SelectList(_context.Movies, "Id", "Language");
-            ViewData["ScheduleId"] = new SelectList(_context.Schedules, "Id", "Id");
-            return View();
+            var cinemas = _context.Cinemas.ToList();
+            return View(cinemas);
         }
 
         // POST: Sessions/Create

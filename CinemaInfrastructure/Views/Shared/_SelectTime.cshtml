@@ -1,0 +1,26 @@
+﻿@model IEnumerable<CinemaDomain.Model.Schedule>
+
+<h3>Оберіть час сеансу</h3>
+
+<select id="timeSelect" class="form-control">
+    <option value="">-- Оберіть час --</option>
+    @foreach (var schedule in Model)
+    {
+        <option value="@schedule.Id">@schedule.StartTime.ToString("HH:mm") (Тривалість: @schedule.StartTime хв)</option>
+    }
+</select>
+
+<button id="nextStep" class="btn btn-primary mt-3">Далі</button>
+
+<script>
+    $(document).ready(function () {
+        $("#nextStep").click(function () {
+            var selectedTime = $("#timeSelect").val();
+            if (selectedTime) {
+                $("#sessionCreationContainer").load("/Sessions/SelectBookingType");
+            } else {
+                alert("Будь ласка, оберіть час сеансу!");
+            }
+        });
+    });
+</script>

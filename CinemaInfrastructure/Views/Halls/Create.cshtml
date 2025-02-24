@@ -1,0 +1,32 @@
+﻿@model CinemaDomain.Model.Hall
+
+@{
+    ViewData["Title"] = "Створити зал";
+}
+
+<h1>Створити зал</h1>
+
+<form asp-action="Create" method="post">
+    <!-- Приховане поле для CinemaId -->
+    <input type="hidden" asp-for="CinemaId" />
+
+    <div class="form-group">
+        <label asp-for="Name" class="control-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="TotalSeats" class="control-label"></label>
+        <input asp-for="TotalSeats" class="form-control" />
+        <span asp-validation-for="TotalSeats" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">Додати</button>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

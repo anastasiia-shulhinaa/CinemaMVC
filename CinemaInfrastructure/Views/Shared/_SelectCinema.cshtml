@@ -1,0 +1,28 @@
+﻿@model IEnumerable<CinemaDomain.Model.Cinema>
+
+
+<h3>Оберіть кінотеатр</h3>
+
+<select id="cinemaSelect" class="form-control">
+    <option value="">-- Оберіть кінотеатр --</option>
+    @foreach (var cinema in Model)
+    {
+        <option value="@cinema.Id">@cinema.Name</option>
+    }
+</select>
+
+<button id="nextStep" class="btn btn-primary mt-3">Далі</button>
+
+<script>
+    $(document).ready(function () {
+        $("#nextStep").click(function () {
+            var selectedCinema = $("#cinemaSelect").val();
+            if (selectedCinema) {
+                $("#sessionCreationContainer").load("/Sessions/SelectHall?cinemaId=" + selectedCinema);
+            } else {
+                alert("Будь ласка, оберіть кінотеатр!");
+            }
+        });
+    });
+</script>
+
