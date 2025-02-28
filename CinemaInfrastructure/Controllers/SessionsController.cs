@@ -45,7 +45,6 @@ namespace CinemaInfrastructure.Controllers
             return View(sessions);
         }
 
-        // ========== 📌 SESSION CREATION (USERS & ADMINS) ==========
         // GET: Sessions/Create
         public IActionResult Create()
         {
@@ -79,10 +78,10 @@ namespace CinemaInfrastructure.Controllers
         {
             var model = new CreateSessionViewModel
             {
-                Movies = _context.Movies.ToList(),   // Отримати список фільмів з БД
-                Cinemas = _context.Cinemas.ToList(), // Отримати список кінотеатрів з БД
-                Halls = new List<Hall>(),            // Порожній список, оновиться при виборі кінотеатру
-                Schedules = new List<Schedule>()     // Так само порожній список
+                Movies = _context.Movies.ToList(),   
+                Cinemas = _context.Cinemas.ToList(), 
+                Halls = new List<Hall>(),            
+                Schedules = new List<Schedule>()     
             };
 
             model.Movies = _context.Movies.ToList();
@@ -99,7 +98,6 @@ namespace CinemaInfrastructure.Controllers
         {
             if (!ModelState.IsValid)
             {
-                // Reload dropdown lists in case of validation errors
                 model.Movies = _context.Movies.ToList();
                 model.Cinemas = _context.Cinemas.ToList();
                 model.Halls = _context.Halls.Where(h => h.CinemaId == model.SelectedCinemaId).ToList();

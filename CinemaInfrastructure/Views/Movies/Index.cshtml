@@ -1,75 +1,73 @@
 ﻿@model IEnumerable<CinemaDomain.Model.Movie>
 
 
-<div class="container">
-    <!-- Form for search using Title -->
-    <h2>Пошук фільмів</h2>
-    <div class="row mb-4">
-        <div class="col-12">
-            <form method="get" asp-action="SearchByTitle" id="titleSearchForm">
-                <div class="form-group">
-                    <input type="text" name="title" class="form-control" placeholder="Введіть назву фільму" />
-                </div>
-                <button type="submit" style="padding:10px 20px; background-color:#d63384; color:white; text-decoration:none;">
-                    Пошук за назвою</button>
-            </form>
+<div class="container my-4">
+    <h2 class="text-center mb-4">Пошук та фільтри фільмів</h2>
+    <form method="get" asp-action="Index" class="row g-3 align-items-end">
+
+        <!-- Категорія -->
+        <div class="col-md-3">
+            <label class="form-label">Оберіть категорію</label>
+            <select class="form-select" name="category">
+                <option value="">Всі категорії</option>
+                @if (ViewBag.Categories != null)
+                {
+                    foreach (var cat in ViewBag.Categories)
+                    {
+                        <option value="@cat">@cat</option>
+                    }
+                }
+            </select>
         </div>
-    </div>
 
-    <!-- Form for search using criterias (category, release year, rating) -->
-    <form method="get" asp-action="Index" id="searchForm">
-        <div class="form-row">
-
-            <div class="form-group col-md-3">
-                <label>Жанр</label>
-                <select class="form-control" name="category">
-                    <option value="">Всі жанри</option>
-                    @if (ViewBag.Categories != null)
+        <!-- Рік випуску -->
+        <div class="col-md-3">
+            <label class="form-label">Рік випуску</label>
+            <select class="form-select" name="year">
+                <option value="">Всі роки</option>
+                @if (ViewBag.Years != null)
+                {
+                    foreach (var y in ViewBag.Years)
                     {
-                        foreach (var cat in ViewBag.Categories)
-                        {
-                            <option value="@cat">@cat</option>
-                        }
+                        <option value="@y">@y</option>
                     }
-                </select>
-            </div>
+                }
+            </select>
+        </div>
 
-            <div class="form-group col-md-3">
-                <label>Рік випуску</label>
-                <select class="form-control" name="year">
-                    <option value="">Всі роки</option>
-                    @if (ViewBag.Years != null)
+        <!-- Рейтинг -->
+        <div class="col-md-3">
+            <label class="form-label">Мінімальний рейтинг</label>
+            <select class="form-select" name="rating">
+                <option value="">Всі рейтинги</option>
+                @if (ViewBag.Ratings != null)
+                {
+                    foreach (var r in ViewBag.Ratings)
                     {
-                        foreach (var y in ViewBag.Years)
-                        {
-                            <option value="@y">@y</option>
-                        }
+                        <option value="@r">@r</option>
                     }
-                </select>
-            </div>
+                }
+            </select>
+        </div>
 
-            <div class="form-group col-md-3">
-                <label>Мінімальний рейтинг</label>
-                <select class="form-control" name="rating">
-                    <option value="">Всі рейтинги</option>
-                    @if (ViewBag.Ratings != null)
-                    {
-                        foreach (var r in ViewBag.Ratings)
-                        {
-                            <option value="@r">@r</option>
-                        }
-                    }
-                </select>
+        <!-- Поле пошуку -->
+        <div class="col-md-3">
+            <label class="form-label">Пошук по каталогу</label>
+            <div class="input-group">
+                <input type="text" class="form-control" name="title" placeholder="Назва">
+                <button class="btn btn-dark" type="submit">
+                    <i class="bi bi-search"></i>
+                </button>
             </div>
+        </div>
 
-            <div class="form-group col-md-3 align-self-end">
-                <button type="submit" style="padding:10px 20px; background-color:#d63384; color:white; text-decoration:none;">
-                    Пошук</button>
-                <a asp-action="Index">Скинути</a>
-            </div>
-
+        <!-- Кнопки пошуку і скидання -->
+        <div class="col-12 text-center">
+            <button type="submit" class="btn btn-primary">Застосувати фільтри</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Скинути</a>
         </div>
     </form>
+
 
     <hr />
 

@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CinemaDomain.Model;
 
@@ -38,6 +39,9 @@ public partial class Movie : Entity
     [RegularExpression(@"^https:\/\/.*", ErrorMessage = "Посилання на трейлер повинно починатися з https://")]
     public string? TrailerLink { get; set; }
 
+    [NotMapped]
+    [RegularExpression(@"^[a-zA-Z0-9_\-]+\.(jpg|jpeg|png)$", ErrorMessage = "Only .jpg, .jpeg, or .png files are allowed.")]
+    public string? BannerUrl { get; set; } // Посилання на банер
 
     [Display(Name = "Актори")]
     public virtual ICollection<Actor> Actors { get; set; } = new List<Actor>();
