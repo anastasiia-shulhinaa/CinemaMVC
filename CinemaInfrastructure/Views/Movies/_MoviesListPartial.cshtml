@@ -1,0 +1,102 @@
+﻿@model X.PagedList.IPagedList<CinemaDomain.Model.Movie>
+@using X.PagedList.Mvc;
+@using X.PagedList.Mvc.Core;
+
+<div class="movies-container">
+    @foreach (var movie in Model)
+    {
+        <div class="movie-card">
+            <a asp-controller="Movies" asp-action="Details" asp-route-id="@movie.Id">
+                <div class="movie-poster">
+                    <img src="@movie.BannerUrl" alt="@movie.Title">
+                    <div class="rating">@movie.Rating</div>
+                </div>
+            </a>
+            <h3 class="movie-title">@movie.Title</h3>
+            <p class="movie-genres">@string.Join(", ", movie.Categories.Select(c => c.Name))</p>
+        </div>
+    }
+</div>
+
+<div class="pagination-container">
+    @Html.PagedListPager(Model, page => Url.Action("Index", new { page }))
+</div>
+
+<style>
+    .movies-container {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .movie-card {
+        background: #1e1e1e;
+        padding: 15px;
+        border-radius: 12px;
+        text-align: center;
+    }
+
+    .movie-poster {
+        position: relative;
+        width: 100%;
+        height: 250px;
+        overflow: hidden;
+        border-radius: 10px;
+    }
+
+        .movie-poster img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+    .rating {
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 5px 8px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .movie-title {
+        color: white;
+        margin-top: 10px;
+        font-size: 18px;
+    }
+
+    .movie-genres {
+        color: gray;
+        font-size: 14px;
+    }
+
+    .pagination-container {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+        .pagination-container .pagination {
+            display: inline-flex;
+            list-style: none;
+            padding: 0;
+        }
+
+            .pagination-container .pagination li {
+                margin: 0 5px;
+            }
+
+                .pagination-container .pagination li a {
+                    text-decoration: none;
+                    padding: 8px 12px;
+                    background: #333;
+                    color: white;
+                    border-radius: 5px;
+                }
+
+            .pagination-container .pagination .active a {
+                background: #ff6b01;
+            }
+</style>

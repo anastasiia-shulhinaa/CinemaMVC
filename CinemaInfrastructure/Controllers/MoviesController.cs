@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CinemaDomain.Model;
+using X.PagedList;
+using X.PagedList.Mvc.Core;
+
 
 
 namespace CinemaInfrastructure.Controllers
@@ -14,29 +17,20 @@ namespace CinemaInfrastructure.Controllers
             _context = context;
         }
 
-        // GET: Movies by Title
-        public IActionResult SearchByTitle(string title)
+
+        // GET: Movies by Category \ Release year \ Rating \ Title
+        [HttpGet]
+        public async Task<IActionResult> Filter(string category, int? year, double? rating, string title, int? page)
         {
-            if (string.IsNullOrEmpty(title))
-            {
-                return RedirectToAction("Index");
-            }
+            int pageSize = 18; // 6 movies per row, 3 rows per page
+            int pageNumber = page ?? 1;
 
-            var movies = _context.Movies
-                                 .Where(m => m.Title.Contains(title)) // contains helps us handle partial match
-                                 .ToList();
-
-            return View("Index", movies);
-        }
-
-        // GET: Movies by Category \ Release year \ Rating 
-        public IActionResult Index(string category, int? year, double? rating)
-        {
+            // Start with the query and include Categories for filtering.
             var moviesQuery = _context.Movies
-        .Include(m => m.Categories)
-        .AsQueryable();
+                .Include(m => m.Categories)
+                .AsQueryable();
 
-            // Apply filters (if any)
+            // Apply filters that can run in the database.
             if (!string.IsNullOrEmpty(category))
             {
                 moviesQuery = moviesQuery.Where(m => m.Categories.Any(c => c.Name == category));
@@ -44,6 +38,94 @@ namespace CinemaInfrastructure.Controllers
             if (year.HasValue)
             {
                 moviesQuery = moviesQuery.Where(m => m.ReleaseYear == year.Value);
+            }
+            if (!string.IsNullOrEmpty(title))
+            {
+                moviesQuery = moviesQuery.Where(m => m.Title.Contains(title));
+            }
+
+            List<Movie> filteredMovies;
+            if (rating.HasValue)
+            {
+                // If rating filter is provided, we need to filter in memory.
+                // First, fetch all movies matching the other filters.
+                var moviesList = await moviesQuery.OrderBy(m => m.Title).ToListAsync();
+                // Then filter by rating.
+                filteredMovies = moviesList.Where(m =>
+                    !string.IsNullOrEmpty(m.Rating) &&
+                    double.TryParse(m.Rating, out double movieRating) &&
+                    movieRating >= rating.Value).ToList();
+            }
+            else
+            {
+                // Otherwise, just fetch the movies ordered by title.
+                filteredMovies = await moviesQuery.OrderBy(m => m.Title).ToListAsync();
+            }
+
+            // Total count after filtering.
+            int totalMovies = filteredMovies.Count;
+
+            // Apply pagination on the filtered list.
+            var moviesPage = filteredMovies
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            // Wrap the result in a StaticPagedList to implement IPagedList<Movie>.
+            var pagedMovies = new StaticPagedList<Movie>(moviesPage, pageNumber, pageSize, totalMovies);
+
+            // Reload filter options (if needed) for the view.
+            ViewBag.Categories = await _context.Categories
+                .Select(c => c.Name)
+                .Distinct()
+                .ToListAsync();
+
+            ViewBag.Years = await _context.Movies
+                .Select(m => m.ReleaseYear)
+                .Distinct()
+                .OrderByDescending(y => y)
+                .ToListAsync();
+
+            ViewBag.Ratings = await _context.Movies
+                .Where(m => !string.IsNullOrEmpty(m.Rating))
+                .Select(m => m.Rating)
+                .Distinct()
+                .OrderBy(r => r)
+                .ToListAsync();
+
+            return PartialView("_MoviesListPartial", pagedMovies);
+        }
+
+
+
+        // GET: Movies by Category \ Release year \ Rating 
+        // Об'єднаний метод для відображення фільтрованого списку фільмів з пагінацією
+        public async Task<IActionResult> Index(
+            string category,
+            int? year,
+            double? rating,
+            string title,
+            int? page)
+        {
+            int pageSize = 18; // 6 фільмів в ряд, 3 рядки на сторінці
+            int pageNumber = page ?? 1;
+
+            // Формуємо запит із врахуванням фільтрів
+            var moviesQuery = _context.Movies
+                .Include(m => m.Categories)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(category))
+            {
+                moviesQuery = moviesQuery.Where(m => m.Categories.Any(c => c.Name == category));
+            }
+            if (year.HasValue)
+            {
+                moviesQuery = moviesQuery.Where(m => m.ReleaseYear == year.Value);
+            }
+            if (!string.IsNullOrEmpty(title))
+            {
+                moviesQuery = moviesQuery.Where(m => m.Title.Contains(title));
             }
             if (rating.HasValue)
             {
@@ -55,26 +137,41 @@ namespace CinemaInfrastructure.Controllers
                     .AsQueryable();
             }
 
-            var movies = moviesQuery.ToList();
+            // Сортуємо та отримуємо дані із бази
+            var moviesList = await moviesQuery.OrderBy(m => m.Title).ToListAsync();
+            int totalMovies = moviesList.Count;
 
-            ViewBag.Categories = _context.Categories
-                                        .Select(c => c.Name)
-                                        .Distinct()
-                                        .ToList();
-            ViewBag.Years = _context.Movies
-                                    .Select(m => m.ReleaseYear)
-                                    .Distinct()
-                                    .OrderByDescending(y => y)
-                                    .ToList();
-            ViewBag.Ratings = _context.Movies
-                                      .Where(m => !string.IsNullOrEmpty(m.Rating))
-                                      .Select(m => m.Rating)
-                                      .Distinct()
-                                      .OrderBy(r => r)
-                                      .ToList();
+            // Пагінація: отримуємо лише дані для поточної сторінки
+            var moviesPage = moviesList
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
 
-            return View(movies);
+            // Створюємо об'єкт StaticPagedList для передачі у View
+            var pagedMovies = new StaticPagedList<Movie>(moviesPage, pageNumber, pageSize, totalMovies);
+
+            // Передаємо додаткові дані для фільтрів у ViewBag (якщо потрібно)
+            ViewBag.Categories = await _context.Categories
+                .Select(c => c.Name)
+                .Distinct()
+                .ToListAsync();
+
+            ViewBag.Years = await _context.Movies
+                .Select(m => m.ReleaseYear)
+                .Distinct()
+                .OrderByDescending(y => y)
+                .ToListAsync();
+
+            ViewBag.Ratings = await _context.Movies
+                .Where(m => !string.IsNullOrEmpty(m.Rating))
+                .Select(m => m.Rating)
+                .Distinct()
+                .OrderBy(r => r)
+                .ToListAsync();
+
+            return View(pagedMovies);
         }
+
 
 
         // GET: Movies/Details/5

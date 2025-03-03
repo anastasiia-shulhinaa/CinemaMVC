@@ -1,109 +1,235 @@
 ﻿@model IEnumerable<CinemaDomain.Model.Movie>
 
-
 <div class="container my-4">
-    <h2 class="text-center mb-4">Пошук та фільтри фільмів</h2>
-    <form method="get" asp-action="Index" class="row g-3 align-items-end">
+    <h2 class="text-center mb-4">Перелік фільмів</h2>
 
+    <!-- Форма з кастомним випадаючим списком -->
+    <form id="filtersForm" class="row g-2 align-items-center">
         <!-- Категорія -->
         <div class="col-md-3">
-            <label class="form-label">Оберіть категорію</label>
-            <select class="form-select" name="category">
-                <option value="">Всі категорії</option>
-                @if (ViewBag.Categories != null)
-                {
-                    foreach (var cat in ViewBag.Categories)
-                    {
-                        <option value="@cat">@cat</option>
-                    }
-                }
-            </select>
+            <label class="form-label small mb-1">Категорія</label>
+            <div class="custom-dropdown-wrapper">
+                <div class="custom-dropdown" data-name="category">
+                    <div class="dropdown-header">Всі категорії</div>
+                    <ul class="dropdown-list">
+                        <li data-value="">Всі категорії</li>
+                        @if (ViewBag.Categories != null)
+                        {
+                            foreach (var cat in ViewBag.Categories)
+                            {
+                                <li data-value="@cat">@cat</li>
+                            }
+                        }
+                    </ul>
+                    <input type="hidden" name="category" value="" />
+                </div>
+            </div>
         </div>
 
-        <!-- Рік випуску -->
+        <!-- Рік -->
         <div class="col-md-3">
-            <label class="form-label">Рік випуску</label>
-            <select class="form-select" name="year">
-                <option value="">Всі роки</option>
-                @if (ViewBag.Years != null)
-                {
-                    foreach (var y in ViewBag.Years)
-                    {
-                        <option value="@y">@y</option>
-                    }
-                }
-            </select>
+            <label class="form-label small mb-1">Рік</label>
+            <div class="custom-dropdown-wrapper">
+                <div class="custom-dropdown" data-name="year">
+                    <div class="dropdown-header">Всі роки</div>
+                    <ul class="dropdown-list">
+                        <li data-value="">Всі роки</li>
+                        @if (ViewBag.Years != null)
+                        {
+                            foreach (var y in ViewBag.Years)
+                            {
+                                <li data-value="@y">@y</li>
+                            }
+                        }
+                    </ul>
+                    <input type="hidden" name="year" value="" />
+                </div>
+            </div>
         </div>
 
         <!-- Рейтинг -->
         <div class="col-md-3">
-            <label class="form-label">Мінімальний рейтинг</label>
-            <select class="form-select" name="rating">
-                <option value="">Всі рейтинги</option>
-                @if (ViewBag.Ratings != null)
-                {
-                    foreach (var r in ViewBag.Ratings)
-                    {
-                        <option value="@r">@r</option>
-                    }
-                }
-            </select>
+            <label class="form-label small mb-1">Рейтинг</label>
+            <div class="custom-dropdown-wrapper">
+                <div class="custom-dropdown" data-name="rating">
+                    <div class="dropdown-header">Всі рейтинги</div>
+                    <ul class="dropdown-list">
+                        <li data-value="">Всі рейтинги</li>
+                        @if (ViewBag.Ratings != null)
+                        {
+                            foreach (var r in ViewBag.Ratings)
+                            {
+                                <li data-value="@r">@r</li>
+                            }
+                        }
+                    </ul>
+                    <input type="hidden" name="rating" value="" />
+                </div>
+            </div>
         </div>
 
-        <!-- Поле пошуку -->
+        <!-- Поле пошуку за назвою -->
         <div class="col-md-3">
-            <label class="form-label">Пошук по каталогу</label>
+            <label class="form-label small mb-1">Назва</label>
             <div class="input-group">
-                <input type="text" class="form-control" name="title" placeholder="Назва">
-                <button class="btn btn-dark" type="submit">
+                <input type="text" class="form-control custom-input" name="title" placeholder="Назва" oninput="debouncedUpdateMovies()" />
+                <button type="button" class="input-group-text custom-session-btn" onclick="updateMovies()">
                     <i class="bi bi-search"></i>
                 </button>
             </div>
         </div>
-
-        <!-- Кнопки пошуку і скидання -->
-        <div class="col-12 text-center">
-            <button type="submit" class="btn btn-primary">Застосувати фільтри</button>
-            <a asp-action="Index" class="btn btn-outline-secondary">Скинути</a>
-        </div>
     </form>
 
-
-    <hr />
-
-    <h2>Перелік фільмів</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>@Html.DisplayNameFor(model => model.First().Title)</th>
-                <th>@Html.DisplayNameFor(model => model.First().ReleaseYear)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Language)</th>
-                <th>@Html.DisplayNameFor(model => model.First().Rating)</th>
-                <th>Трейлер</th>
-                <th>Дії</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var movie in Model)
-            {
-                <tr>
-                    <td>@movie.Title</td>
-                    <td>@movie.ReleaseYear</td>
-                    <td>@movie.Language</td>
-                    <td>@movie.Rating</td>
-                    <td><a href="@movie.TrailerLink" target="_blank">Переглянути трейлер</a></td>
-                    <td>
-                        <a asp-action="Edit" asp-route-id="@movie.Id">Edit</a> |
-                        <a asp-action="Details" asp-route-id="@movie.Id">Details</a> |
-                        <a asp-action="Delete" asp-route-id="@movie.Id">Delete</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <!-- Сюди завантажується список фільмів -->
+    <div id="moviesList">
+        @await Html.PartialAsync("_MoviesListPartial", Model)
+    </div>
 </div>
-<p>
-    <a asp-action="Create"
-        style="padding:10px 20px; background-color:#d63384; color:white; text-decoration:none;">
-        Create New</a>
-</p>
+
+<style>
+    /* Стиль кастомного dropdown */
+    .custom-dropdown {
+        position: relative;
+        background-color: #EDE9E6;
+        border: 2px solid #D1C2B6;
+        border-radius: 6px;
+        padding: 10px 14px;
+        font-weight: bold;
+        color: #5A514C;
+        cursor: pointer;
+        user-select: none;
+        transition: all 0.3s ease;
+    }
+
+        .custom-dropdown .dropdown-header {
+            display: block;
+        }
+
+        .custom-dropdown .dropdown-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background-color: #F7F4F2;
+            border: 1px solid #D1C2B6;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .custom-dropdown.open .dropdown-list {
+            display: block;
+        }
+
+        .custom-dropdown .dropdown-list li {
+            padding: 10px 14px;
+            color: #5A514C;
+            transition: background 0.3s ease;
+        }
+
+            .custom-dropdown .dropdown-list li:hover {
+                background-color: #D1C2B6;
+            }
+
+    /* Стиль для кастомного input */
+    .custom-input {
+        background-color: #EDE9E6 !important;
+        border: 2px solid transparent !important;
+        color: #5A514C !important;
+        font-weight: bold;
+        padding: 10px 14px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+
+    /* Стиль для кнопки пошуку */
+    .custom-session-btn {
+        background: #5A514C;
+        color: white;
+        border: 2px solid #5A514C;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        padding: 10px 14px;
+        border-radius: 6px;
+    }
+
+        .custom-session-btn:hover {
+            background: #800020;
+            border-color: #800020;
+            transform: scale(1.05);
+        }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Для кожного кастомного dropdown
+        document.querySelectorAll('.custom-dropdown').forEach(function (dropdown) {
+            var header = dropdown.querySelector('.dropdown-header');
+            header.addEventListener('click', function (e) {
+                // Закрити інші відкриті dropdown
+                document.querySelectorAll('.custom-dropdown').forEach(function (d) {
+                    if (d !== dropdown) {
+                        d.classList.remove('open');
+                    }
+                });
+                dropdown.classList.toggle('open');
+            });
+
+            // Обробка кліку по пунктам списку
+            var items = dropdown.querySelectorAll('.dropdown-list li');
+            items.forEach(function (item) {
+                item.addEventListener('click', function (e) {
+                    var value = item.getAttribute('data-value');
+                    var text = item.innerText;
+                    // Оновити заголовок
+                    dropdown.querySelector('.dropdown-header').innerText = text;
+                    // Записати значення у прихований інпут
+                    dropdown.querySelector('input[type="hidden"]').value = value;
+                    dropdown.classList.remove('open');
+                    updateMovies();
+                });
+            });
+        });
+
+        // Закриття dropdown при кліку поза ними
+        document.addEventListener('click', function (e) {
+            document.querySelectorAll('.custom-dropdown').forEach(function (dropdown) {
+                if (!dropdown.contains(e.target)) {
+                    dropdown.classList.remove('open');
+                }
+            });
+        });
+    });
+
+    // AJAX-оновлення фільмів
+    function updateMovies() {
+        const formData = new FormData(document.getElementById('filtersForm'));
+        const params = new URLSearchParams(formData).toString();
+
+        fetch(`/Movies/Filter?${params}`, {
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('moviesList').innerHTML = html;
+        });
+    }
+
+    // Функція дебаунсу для пошуку за назвою
+    function debounce(func, delay) {
+        let timer;
+        return function() {
+            clearTimeout(timer);
+            timer = setTimeout(() => func.apply(this, arguments), delay);
+        };
+    }
+
+    const debouncedUpdateMovies = debounce(updateMovies, 500);
+</script>
