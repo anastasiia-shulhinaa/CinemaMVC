@@ -1,11 +1,11 @@
 ﻿@model IEnumerable<CinemaDomain.Model.Movie>
 
+
 <div class="container my-4">
     <h2 class="text-center mb-4">Перелік фільмів</h2>
 
-    <!-- Форма з кастомним випадаючим списком -->
+ 
     <form id="filtersForm" class="row g-2 align-items-center">
-        <!-- Категорія -->
         <div class="col-md-3">
             <label class="form-label small mb-1">Категорія</label>
             <div class="custom-dropdown-wrapper">
@@ -26,7 +26,7 @@
             </div>
         </div>
 
-        <!-- Рік -->
+
         <div class="col-md-3">
             <label class="form-label small mb-1">Рік</label>
             <div class="custom-dropdown-wrapper">
@@ -47,7 +47,7 @@
             </div>
         </div>
 
-        <!-- Рейтинг -->
+
         <div class="col-md-3">
             <label class="form-label small mb-1">Рейтинг</label>
             <div class="custom-dropdown-wrapper">
@@ -68,7 +68,7 @@
             </div>
         </div>
 
-        <!-- Поле пошуку за назвою -->
+
         <div class="col-md-3">
             <label class="form-label small mb-1">Назва</label>
             <div class="input-group">
@@ -80,14 +80,13 @@
         </div>
     </form>
 
-    <!-- Сюди завантажується список фільмів -->
+
     <div id="moviesList">
         @await Html.PartialAsync("_MoviesListPartial", Model)
     </div>
 </div>
 
 <style>
-    /* Стиль кастомного dropdown */
     .custom-dropdown {
         position: relative;
         background-color: #EDE9E6;
@@ -137,7 +136,7 @@
                 background-color: #D1C2B6;
             }
 
-    /* Стиль для кастомного input */
+
     .custom-input {
         background-color: #EDE9E6 !important;
         border: 2px solid transparent !important;
@@ -148,7 +147,7 @@
         transition: all 0.3s ease;
     }
 
-    /* Стиль для кнопки пошуку */
+
     .custom-session-btn {
         background: #5A514C;
         color: white;
@@ -168,11 +167,9 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // Для кожного кастомного dropdown
         document.querySelectorAll('.custom-dropdown').forEach(function (dropdown) {
             var header = dropdown.querySelector('.dropdown-header');
             header.addEventListener('click', function (e) {
-                // Закрити інші відкриті dropdown
                 document.querySelectorAll('.custom-dropdown').forEach(function (d) {
                     if (d !== dropdown) {
                         d.classList.remove('open');
@@ -181,15 +178,12 @@
                 dropdown.classList.toggle('open');
             });
 
-            // Обробка кліку по пунктам списку
             var items = dropdown.querySelectorAll('.dropdown-list li');
             items.forEach(function (item) {
                 item.addEventListener('click', function (e) {
                     var value = item.getAttribute('data-value');
                     var text = item.innerText;
-                    // Оновити заголовок
                     dropdown.querySelector('.dropdown-header').innerText = text;
-                    // Записати значення у прихований інпут
                     dropdown.querySelector('input[type="hidden"]').value = value;
                     dropdown.classList.remove('open');
                     updateMovies();
@@ -197,7 +191,7 @@
             });
         });
 
-        // Закриття dropdown при кліку поза ними
+
         document.addEventListener('click', function (e) {
             document.querySelectorAll('.custom-dropdown').forEach(function (dropdown) {
                 if (!dropdown.contains(e.target)) {
@@ -207,7 +201,7 @@
         });
     });
 
-    // AJAX-оновлення фільмів
+
     function updateMovies() {
         const formData = new FormData(document.getElementById('filtersForm'));
         const params = new URLSearchParams(formData).toString();
@@ -222,7 +216,7 @@
         });
     }
 
-    // Функція дебаунсу для пошуку за назвою
+
     function debounce(func, delay) {
         let timer;
         return function() {
@@ -233,3 +227,7 @@
 
     const debouncedUpdateMovies = debounce(updateMovies, 500);
 </script>
+
+
+
+

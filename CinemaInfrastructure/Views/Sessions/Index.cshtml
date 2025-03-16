@@ -38,3 +38,38 @@
     </tbody>
 </table>
 
+@section Scripts
+{
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawMovieSessionsChart);
+
+        function drawMovieSessionsChart() {
+            fetch('/api/charts/countByMovie') // Використовуємо правильний API
+                .then(response => response.json())
+                .then(data => {
+                    const dataTable = new google.visualization.DataTable();
+                    dataTable.addColumn('string', 'Фільм');
+                    dataTable.addColumn('number', 'Кількість сеансів');
+
+                    data.forEach(item => {
+                        dataTable.addRow([item.movieTitle, item.sessionCount]);
+                 });
+
+                    const options = {
+                        title: 'Кількість сеансів за назвами фільмів',
+                        width: 600,
+                        height: 400,
+                        pieHole: 0.4, // Для стильного вигляду як "donut"
+                        legend: { position: 'right' }
+                    };
+
+                    const chart = new google.visualization.PieChart(document.getElementById('movieSessionsChart'));
+
+                    chart.draw(dataTable, options);
+                });
+        }
+    </script>
+}
+

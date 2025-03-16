@@ -26,25 +26,25 @@
             position: absolute;
             bottom: 20px;
             left: 20px;
-            background: rgba(255, 255, 255, 0.95); /* Яскравіший фон */
-            border: 2px solid white; /* Додає контур */
+            background: rgba(255, 255, 255, 0.95); 
+            border: 2px solid white; 
             color: black;
             font-size: 20px;
             font-weight: bold;
-            padding: 10px 25px; /* Збільшений розмір */
+            padding: 10px 25px; 
             border-radius: 30px;
             backdrop-filter: blur(5px);
             transition: all 0.3s ease-in-out;
             cursor: pointer;
-            box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.4); /* Чіткіша тінь */
+            box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.4); 
             text-decoration: none !important;
         }
 
             .custom-session-btn:hover {
-                background: #800020; /* Бордовий фон при наведенні */
-                color: white; /* Білий текст */
-                border-color: #800020; /* Бордовий контур */
-                transform: scale(1.05); /* Легке збільшення */
+                background: #800020; 
+                color: white; 
+                border-color: #800020; 
+                transform: scale(1.05); 
             }
 
             .watch-now {
@@ -70,7 +70,6 @@
     <body>
 
         <div class="container mt-4">
-            <!-- Banner -->
             <div class="row">
                 <div class="col">
                     <div class="movie-card">
@@ -82,70 +81,69 @@
                 </div>
             </div>
 
-            <!-- Now Playing Carousel -->
-            <h3 class="mt-4">Now Playing</h3>
+
+            <h3 class="mt-4">Доступні сеанси</h3>
             <div id="nowPlayingCarousel" class="carousel slide" data-bs-ride="carousel">
                 <div class="carousel-inner">
-                    <!-- First Slide -->
                     <div class="carousel-item active">
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="movie-card">
-                                    <img src="movie1.jpg" alt="Movie 1">
+                                    <img src="movie1.jpg" alt="Фільм 1">
                                     <button class="watch-now">Watch Now</button>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="movie-card">
-                                    <img src="movie2.jpg" alt="Movie 2">
+                                <img src="movie2.jpg" alt="Фільм 2">
                                     <button class="watch-now">Watch Now</button>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="movie-card">
-                                    <img src="movie3.jpg" alt="Movie 3">
+                                <img src="movie3.jpg" alt="Фільм 3">
                                     <button class="watch-now">Watch Now</button>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="movie-card">
-                                    <img src="movie4.jpg" alt="Movie 4">
+                                <img src="movie4.jpg" alt="Фільм 4">
                                     <button class="watch-now">Watch Now</button>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <!-- Second Slide -->
+
                     <div class="carousel-item">
                         <div class="row">
                             <div class="col-md-3">
                                 <div class="movie-card">
-                                    <img src="movie5.jpg" alt="Movie 5">
+                                <img src="movie5.jpg" alt="Фільм 5">
                                     <button class="watch-now">Watch Now</button>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="movie-card">
-                                    <img src="movie6.jpg" alt="Movie 6">
+                                <img src="movie6.jpg" alt="Фільм 6">
                                     <button class="watch-now">Watch Now</button>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="movie-card">
-                                    <img src="movie7.jpg" alt="Movie 7">
+                                <img src="movie7.jpg" alt="Фільм 7">
                                     <button class="watch-now">Watch Now</button>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="movie-card">
-                                    <img src="movie8.jpg" alt="Movie 8">
+                                <img src="movie8.jpg" alt="Фільм 8">
                                     <button class="watch-now">Watch Now</button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <!-- Carousel Controls -->
+
                 <button class="carousel-control-prev" type="button" data-bs-target="#nowPlayingCarousel" data-bs-slide="prev">
                     <span class="carousel-control-prev-icon"></span>
                 </button>
@@ -154,57 +152,7 @@
                 </button>
             </div>
 
-            <!-- Top Rated Movies Carousel -->
-            <h3 class="mt-4">Top Rated Movies</h3>
-            <div id="topRatedCarousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                    <div class="carousel-item active">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="movie-card">
-                                    <img src="top1.jpg" alt="Top Movie 1">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="movie-card">
-                                    <img src="top2.jpg" alt="Top Movie 2">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="movie-card">
-                                    <img src="top3.jpg" alt="Top Movie 3">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="carousel-item">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="movie-card">
-                                    <img src="top4.jpg" alt="Top Movie 4">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="movie-card">
-                                    <img src="top5.jpg" alt="Top Movie 5">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="movie-card">
-                                    <img src="top6.jpg" alt="Top Movie 6">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Carousel Controls -->
-                <button class="carousel-control-prev" type="button" data-bs-target="#topRatedCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#topRatedCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                </button>
-            </div>
+           
         </div>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
