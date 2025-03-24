@@ -1,0 +1,31 @@
+﻿@using Microsoft.AspNetCore.Identity
+@model CinemaInfrastructure.ViewModels.ChangeRoleViewModel
+
+<h2>Зміна ролей для користувача @Model.UserEmail</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" name="userId" value="@Model.UserId" />
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Роль</th>
+                <th>Наявність</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (IdentityRole role in Model.AllRoles)
+            {
+                <tr>
+                    <td>@role.Name</td>
+                    <td>
+                        <input type="checkbox" name="roles" value="@role.Name"
+                        @(Model.UserRoles.Contains(role.Name) ? "checked" : "") />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn bg-danger text-bg-success text-light">Зберегти</button>
+</form>

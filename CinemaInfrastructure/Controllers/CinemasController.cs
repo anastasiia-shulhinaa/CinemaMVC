@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CinemaDomain.Model;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CinemaInfrastructure.Controllers
 {
+    [Authorize(Roles = "admin")]
     public class CinemasController : Controller
     {
+
         private readonly DbcinemaContext _context;
 
         public CinemasController(DbcinemaContext context)

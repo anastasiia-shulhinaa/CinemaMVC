@@ -1,0 +1,46 @@
+﻿@model IEnumerable<CinemaDomain.Model.Movie>
+
+<h2>Управління фільмами</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Назва</th>
+            <th>Рік</th>
+            <th>Тривалість</th>
+            <th>Рейтинг</th>
+            <th>Зображення</th>
+            <th>Дії</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var movie in Model)
+        {
+            <tr>
+                <td>@movie.Title</td>
+                <td>@movie.ReleaseYear</td>
+                <td>@movie.Duration хв</td>
+                <td>@movie.Rating</td>
+                <td>
+                    @if (!string.IsNullOrEmpty(movie.BannerUrl))
+                    {
+                        <img src="~/img/@movie.BannerUrl" alt="@movie.Title" width="100" />
+                    }
+                    else
+                    {
+                        <span>Немає зображення</span>
+                    }
+				</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@movie.Id" class="btn btn-warning btn-sm">Редагувати</a>
+                    <form asp-action="Delete" asp-route-id="@movie.Id" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-danger btn-sm">Видалити</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Create" class="btn btn-primary">Додати фільм</a>
+

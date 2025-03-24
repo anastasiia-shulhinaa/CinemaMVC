@@ -4,50 +4,74 @@
     ViewData["Title"] = "Edit";
 }
 
-<h1>Edit</h1>
-
-<h4>Movie</h4>
+<h1>Edit Movie</h1>
 <hr />
 <div class="row">
     <div class="col-md-4">
-        <form asp-action="Edit">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <input type="hidden" asp-for="Id" />
+
             <div class="form-group">
                 <label asp-for="Title" class="control-label"></label>
                 <input asp-for="Title" class="form-control" />
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="ReleaseYear" class="control-label"></label>
                 <input asp-for="ReleaseYear" class="form-control" />
                 <span asp-validation-for="ReleaseYear" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Language" class="control-label"></label>
                 <input asp-for="Language" class="form-control" />
                 <span asp-validation-for="Language" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
+                <textarea asp-for="Description" class="form-control"></textarea>
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Duration" class="control-label"></label>
                 <input asp-for="Duration" class="form-control" />
                 <span asp-validation-for="Duration" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="Rating" class="control-label"></label>
                 <input asp-for="Rating" class="form-control" />
                 <span asp-validation-for="Rating" class="text-danger"></span>
             </div>
+
             <div class="form-group">
                 <label asp-for="TrailerLink" class="control-label"></label>
                 <input asp-for="TrailerLink" class="form-control" />
                 <span asp-validation-for="TrailerLink" class="text-danger"></span>
             </div>
-            <input type="hidden" asp-for="Id" />
+
+            <!-- Display Existing Banner -->
+            @if (!string.IsNullOrEmpty(Model.BannerUrl))
+            {
+                <div class="form-group">
+                    <label class="control-label">Current Banner</label>
+                    <div>
+                        <img src="~/img/@Model.BannerUrl" alt="Banner" class="img-fluid" style="max-height: 200px;" />
+                    </div>
+                </div>
+            }
+
+            <!-- Hidden BannerUrl Field to Preserve Existing Value -->
+            <input type="hidden" asp-for="BannerUrl" />
+
+            <label>Upload New Image</label>
+            <input type="file" name="imageFile" class="form-control" />
+
             <div class="form-group">
                 <input type="submit" value="Save" class="btn btn-primary" />
             </div>
@@ -60,5 +84,8 @@
 </div>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
+

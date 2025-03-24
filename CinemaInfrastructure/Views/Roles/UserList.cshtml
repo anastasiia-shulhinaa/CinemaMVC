@@ -1,0 +1,25 @@
+﻿@model IEnumerable<CinemaInfrastructure.Models.User>
+
+<h2>Список користувачів</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Електронна пошта</th>
+            <th>Дії</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.Email</td>
+                <td>
+                    <a asp-action="Edit" asp-route-userid="@user.Id" button type="submit" class="btn bg-danger text-bg-success text-light">Права доступу</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<hr />

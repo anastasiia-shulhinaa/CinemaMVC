@@ -1,68 +1,95 @@
 ﻿@model CinemaDomain.Model.Movie
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Movie";
 }
 
-<h1>Create</h1>
+<h1>Create Movie</h1>
 
-<h4>Movie</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Title" class="control-label"></label>
-                <input asp-for="Title" class="form-control" />
-                <span asp-validation-for="Title" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="ReleaseYear" class="control-label"></label>
-                <input asp-for="ReleaseYear" class="form-control" />
-                <span asp-validation-for="ReleaseYear" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Language" class="control-label"></label>
-                <input asp-for="Language" class="form-control" />
-                <span asp-validation-for="Language" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Duration" class="control-label"></label>
-                <input asp-for="Duration" class="form-control" />
-                <span asp-validation-for="Duration" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Rating" class="control-label"></label>
-                <input asp-for="Rating" class="form-control" />
-                <span asp-validation-for="Rating" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="TrailerLink" class="control-label"></label>
-                <input asp-for="TrailerLink" class="form-control" />
-                <span asp-validation-for="TrailerLink" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="BannerUrl" class="control-label"></label>
-                <input asp-for="BannerUrl" class="form-control" />
-                <span asp-validation-for="BannerUrl" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <label asp-for="Title" class="control-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger"></span>
     </div>
-</div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+    <div class="form-group">
+        <label asp-for="ReleaseYear" class="control-label"></label>
+        <input asp-for="ReleaseYear" class="form-control" />
+        <span asp-validation-for="ReleaseYear" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Language" class="control-label"></label>
+        <input asp-for="Language" class="form-control" />
+        <span asp-validation-for="Language" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Description" class="control-label"></label>
+        <textarea asp-for="Description" class="form-control"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Duration" class="control-label"></label>
+        <input asp-for="Duration" class="form-control" />
+        <span asp-validation-for="Duration" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Rating" class="control-label"></label>
+        <input asp-for="Rating" class="form-control" />
+        <span asp-validation-for="Rating" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="TrailerLink" class="control-label"></label>
+        <input asp-for="TrailerLink" class="form-control" />
+        <span asp-validation-for="TrailerLink" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label>Banner Image</label>
+        <input type="file" name="imageFile" class="form-control" />
+    </div>
+
+    <!-- Categories Selection with "Create New Category" Button -->
+    <div class="form-group">
+        <label>Categories</label>
+        <div class="d-flex">
+            <select name="selectedCategories" class="form-control">
+                @foreach (var category in ViewBag.Categories as SelectList)
+                {
+                    <option value="@category.Value">@category.Text</option>
+                }
+            </select>
+            <a asp-controller="Categories" asp-action="Create" class="btn btn-success ms-2">+ Create Category</a>
+        </div>
+    </div>
+
+    <!-- Actors Input -->
+    <div class="form-group">
+        <label>Actors (comma-separated)</label>
+        <input type="text" name="actorNames" class="form-control" placeholder="Enter actor names separated by commas" />
+    </div>
+
+    <!-- Directors Input -->
+    <div class="form-group">
+        <label>Directors (comma-separated)</label>
+        <input type="text" name="directorNames" class="form-control" placeholder="Enter director names separated by commas" />
+    </div>
+
+    <div class="form-group mt-3">
+        <button type="submit" class="btn btn-primary">Create</button>
+        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+    </div>
+</form>
 
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
 }
+
+
