@@ -4,6 +4,7 @@ using CinemaInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CinemaInfrastructure.Migrations
 {
     [DbContext(typeof(DbcinemaContext))]
-    partial class DbcinemaContextModelSnapshot : ModelSnapshot
+    [Migration("20250406125241_Schedule functionallity")]
+    partial class Schedulefunctionallity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -291,14 +294,16 @@ namespace CinemaInfrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("CreatedAt")
+                    b.Property<byte[]>("CreatedAt")
                         .IsConcurrencyToken()
+                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("datetime2");
+                        .HasColumnType("rowversion");
 
-                    b.Property<bool>("IsActive")
+                    b.Property<byte[]>("IsActive")
+                        .IsRequired()
                         .HasMaxLength(50)
-                        .HasColumnType("bit")
+                        .HasColumnType("binary(50)")
                         .IsFixedLength();
 
                     b.Property<int>("MovieId")

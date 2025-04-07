@@ -25,6 +25,7 @@ namespace CinemaInfrastructure.Controllers
             if (id == null) return RedirectToAction("Index", "Cinemas");
             ViewBag.CinemaId = id;
             ViewBag.CinemaName = name;
+
             var hallByCinema = _context.Halls.Where(h => h.CinemaId == id).Include(h => h.Cinema);
             return View(await hallByCinema.ToListAsync());
         }
@@ -71,6 +72,12 @@ namespace CinemaInfrastructure.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("CinemaId,Name,TotalSeats,Id")] Hall hall)
         {
+            var cinema = await _context.Cinemas.FindAsync(hall.CinemaId);
+
+            hall.Cinema = cinema;
+
+            ModelState.Clear();
+            TryValidateModel(hall);
             // Якщо агрегована сутність Cinema не встановлена, завантажуємо її з бази даних
             if (hall.Cinema == null)
             {

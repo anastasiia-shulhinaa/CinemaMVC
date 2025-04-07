@@ -1,212 +1,196 @@
-﻿@{
+﻿@model IEnumerable<CinemaDomain.Model.Session>
+
+@{
     ViewData["Title"] = "Home Page";
 }
 
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://bootswatch.com/5/lux/bootstrap.min.css">
+    <style>
+        .movie-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 10px;
+        }
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-        <link rel="stylesheet" href="https://bootswatch.com/5/lux/bootstrap.min.css">
-        <style>
-            .movie-card {
-                position: relative;
-                overflow: hidden;
+            .movie-card img {
+                width: 100%;
                 border-radius: 10px;
+                object-fit: cover;
+                max-height: 250px;
             }
-
-                .movie-card img {
-                    width: 100%;
-                    border-radius: 10px;
-                    object-fit: cover;
-                    max-height: 250px
-                }
 
         .custom-session-btn {
             position: absolute;
             bottom: 20px;
             left: 20px;
-            background: rgba(255, 255, 255, 0.95); /* Яскравіший фон */
-            border: 2px solid white; /* Додає контур */
+            background: rgba(255, 255, 255, 0.95); /* Brighter background */
+            border: 2px solid white; /* Adds border */
             color: black;
             font-size: 20px;
             font-weight: bold;
-            padding: 10px 25px; /* Збільшений розмір */
+            padding: 10px 25px; /* Increased size */
             border-radius: 30px;
             backdrop-filter: blur(5px);
             transition: all 0.3s ease-in-out;
             cursor: pointer;
-            box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.4); /* Чіткіша тінь */
+            box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.4); /* Sharper shadow */
             text-decoration: none !important;
         }
 
             .custom-session-btn:hover {
-                background: #800020; /* Бордовий фон при наведенні */
-                color: white; /* Білий текст */
-                border-color: #800020; /* Бордовий контур */
-                transform: scale(1.05); /* Легке збільшення */
+                background: #800020; /* Burgundy background on hover */
+                color: white; /* White text */
+                border-color: #800020; /* Burgundy border */
+                transform: scale(1.05); /* Slight increase */
             }
 
-            .watch-now {
-                position: absolute;
-                bottom: 10px;
-                left: 50%;
-                transform: translateX(-50%);
-                background-color: ButtonShadow; 
-                border: none;
-                padding: 8px 15px;
-                font-size: 14px;
-                font-weight: bold;
-                color: white;
-                border-radius: 5px;
-                opacity: 0.9;
+        .watch-now {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: ButtonShadow;
+            border: none;
+            padding: 8px 15px;
+            font-size: 14px;
+            font-weight: bold;
+            color: white;
+            border-radius: 5px;
+            opacity: 0.9;
+        }
+
+            .watch-now:hover {
+                opacity: 1;
             }
+    </style>
+</head>
 
-                .watch-now:hover {
-                    opacity: 1;
-                }
-        </style>
-    </head>
-    <body>
+<body>
 
-        <div class="container mt-4">
-            <!-- Banner -->
-            <div class="row">
-                <div class="col">
-                    <div class="movie-card">
-                        <img src="/cinema_icon1.jpg" alt="Supernatural Banner">
+    <div class="container mt-4">
+        <!-- Banner -->
+        <div class="row">
+            <div class="col">
+                <div class="movie-card">
+                    <img src="/cinema_icon1.jpg" alt="Supernatural Banner">
                     <a asp-controller="Movies" class="custom-session-btn">
                         Створити кіносеанс
                     </a>
-                    </div>
                 </div>
-            </div>
-
-            <!-- Now Playing Carousel -->
-            <h3 class="mt-4">Now Playing</h3>
-            <div id="nowPlayingCarousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                    <!-- First Slide -->
-                    <div class="carousel-item active">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="movie-card">
-                                    <img src="movie1.jpg" alt="Movie 1">
-                                    <button class="watch-now">Watch Now</button>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="movie-card">
-                                    <img src="movie2.jpg" alt="Movie 2">
-                                    <button class="watch-now">Watch Now</button>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="movie-card">
-                                    <img src="movie3.jpg" alt="Movie 3">
-                                    <button class="watch-now">Watch Now</button>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="movie-card">
-                                    <img src="movie4.jpg" alt="Movie 4">
-                                    <button class="watch-now">Watch Now</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Second Slide -->
-                    <div class="carousel-item">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="movie-card">
-                                    <img src="movie5.jpg" alt="Movie 5">
-                                    <button class="watch-now">Watch Now</button>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="movie-card">
-                                    <img src="movie6.jpg" alt="Movie 6">
-                                    <button class="watch-now">Watch Now</button>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="movie-card">
-                                    <img src="movie7.jpg" alt="Movie 7">
-                                    <button class="watch-now">Watch Now</button>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="movie-card">
-                                    <img src="movie8.jpg" alt="Movie 8">
-                                    <button class="watch-now">Watch Now</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Carousel Controls -->
-                <button class="carousel-control-prev" type="button" data-bs-target="#nowPlayingCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#nowPlayingCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                </button>
-            </div>
-
-            <!-- Top Rated Movies Carousel -->
-            <h3 class="mt-4">Top Rated Movies</h3>
-            <div id="topRatedCarousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-inner">
-                    <div class="carousel-item active">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="movie-card">
-                                    <img src="top1.jpg" alt="Top Movie 1">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="movie-card">
-                                    <img src="top2.jpg" alt="Top Movie 2">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="movie-card">
-                                    <img src="top3.jpg" alt="Top Movie 3">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="carousel-item">
-                        <div class="row">
-                            <div class="col-md-4">
-                                <div class="movie-card">
-                                    <img src="top4.jpg" alt="Top Movie 4">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="movie-card">
-                                    <img src="top5.jpg" alt="Top Movie 5">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="movie-card">
-                                    <img src="top6.jpg" alt="Top Movie 6">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!-- Carousel Controls -->
-                <button class="carousel-control-prev" type="button" data-bs-target="#topRatedCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon"></span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#topRatedCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon"></span>
-                </button>
             </div>
         </div>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    </body>
+        <!-- Now Playing Carousel -->
+        <h3 class="mt-4">Now Playing</h3>
+        <div id="nowPlayingCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                @if (Model != null && Model.Any()) // Check if Model is not null and has sessions
+                {
+                    var first = true; // To handle the active class for the first item
+                    foreach (var session in Model)
+                    {
+                        <div class="carousel-item @(first ? "active" : "")">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="movie-card">
+                                        <img src="@session.Movie.BannerUrl" alt="@session.Movie.Title">
+                                        <div class="slide-description">
+                                            <a href="@Url.Action("Details", "Movies", new { id = session.Movie.Id })" class="custom-session-btn">
+                                                @session.Movie.Title
+                                            </a>
+                                        </div>
+                                        <button class="watch-now">Watch Now</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        first = false; // Set first to false after the first iteration
+                    }
+                }
+                else
+                {
+                    <div class="carousel-item active">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="movie-card">
+                                    <img src="/path/to/placeholder.jpg" alt="No Movies Available">
+                                    <div class="slide-description">
+                                        <p>No movies available.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Carousel Controls -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#nowPlayingCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#nowPlayingCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+        </div>
+
+        <!-- Top Rated Movies Carousel -->
+        <h3 class="mt-4">Top Rated Movies</h3>
+        <div id="topRatedCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="movie-card">
+                                <img src="top1.jpg" alt="Top Movie 1">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="movie-card">
+                                <img src="top2.jpg" alt="Top Movie 2">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="movie-card">
+                                <img src="top3.jpg" alt="Top Movie 3">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="movie-card">
+                                <img src="top4.jpg" alt="Top Movie 4">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="movie-card">
+                                <img src="top5.jpg" alt="Top Movie 5">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="movie-card">
+                                <img src="top6.jpg" alt="Top Movie 6">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Carousel Controls -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#topRatedCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#topRatedCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
 

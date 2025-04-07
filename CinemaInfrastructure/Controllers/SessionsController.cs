@@ -15,19 +15,22 @@ namespace CinemaInfrastructure.Controllers
             _context = context;
         }
 
-        public IActionResult GetHallsByCinema(int cinemaId)
+        [HttpGet]
+        public IActionResult GetHalls(int cinemaId)
         {
             var halls = _context.Halls
                 .Where(h => h.CinemaId == cinemaId)
                 .Select(h => new { id = h.Id, name = h.Name })
                 .ToList();
+
             return Json(halls);
         }
 
-        public IActionResult GetSchedulesByHall(int hallId)
+        [HttpGet]
+        public IActionResult GetSchedules(int hallId)
         {
             var schedules = _context.Schedules
-                .Where(s => s.HallId == hallId)
+                .Where(s => s.HallId == hallId && s.IsActive) // Only active schedules
                 .Select(s => new { id = s.Id, startTime = s.StartTime.ToString("HH:mm") })
                 .ToList();
             return Json(schedules);
@@ -36,41 +39,91 @@ namespace CinemaInfrastructure.Controllers
         // GET: Sessions
         public async Task<IActionResult> Index()
         {
-            var sessions = _context.Sessions
-                .Include(s => s.Movie)
+            var sessions = await _context.Sessions
+                .Include(s => s.Movie) // Include the related Movie
                 .Include(s => s.Schedule)
-                .ThenInclude(sch => sch.Hall)
-                .ThenInclude(hall => hall.Cinema)
-                .ToList();
-            return View(sessions);
+                .ThenInclude(sch => sch.Hall) // Include Hall details if necessary
+                .ToListAsync(); // Fetch all sessions
+
+            return View(sessions); // Pass sessions to the view
         }
 
         // GET: Sessions/Create
         public IActionResult Create()
         {
-            ViewData["Movies"] = new SelectList(_context.Movies, "Id", "Title");
-            ViewData["Cinemas"] = new SelectList(_context.Cinemas, "Id", "Name");
+            ViewBag.Cinemas = _context.Cinemas.ToList();
+            ViewBag.Movies = _context.Movies.ToList(); // Add movies for selection
+            ViewBag.Schedules = _context.Schedules.ToList(); // Add schedules for selection
+            ViewBag.Halls = _context.Halls.ToList(); // Add halls for selection
             return View();
         }
 
         // POST: Sessions/Create
+        // POST: Sessions/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("MovieId, ScheduleId, IsPrivate, IsActive")] Session session)
+        public async Task<IActionResult> Create([Bind("MovieId, ScheduleId")] Session session)
         {
-            if (ModelState.IsValid)
-            {
-                session.CreatedAt = BitConverter.GetBytes(DateTime.UtcNow.ToBinary());
+            // Load the Movie
+            session.Movie = await _context.Movies.FindAsync(session.MovieId);
 
-                _context.Add(session);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+            // Load the Schedule, including Hall and its associated Cinema
+            session.Schedule = await _context.Schedules
+                .Include(s => s.Hall) // Include Hall
+                .ThenInclude(h => h.Cinema) // Include Cinema from Hall
+                .FirstOrDefaultAsync(s => s.Id == session.ScheduleId);
+
+            // Check if the Movie and Schedule exist
+            if (session.Movie == null)
+            {
+                ModelState.AddModelError("MovieId", "The selected movie does not exist.");
             }
 
-            ViewData["Movies"] = new SelectList(_context.Movies, "Id", "Title", session.MovieId);
-            ViewData["Cinemas"] = new SelectList(_context.Cinemas, "Id", "Name");
-            return View(session);
+            if (session.Schedule == null)
+            {
+                ModelState.AddModelError("ScheduleId", "The selected schedule does not exist.");
+            }
+
+            // Check if the Hall is available in the Schedule
+            if (session.Schedule != null && session.Schedule.Hall == null)
+            {
+                ModelState.AddModelError("ScheduleId", "The selected schedule must have an associated hall.");
+            }
+
+            // Automatically set IsActive and CreatedAt properties
+            session.IsActive = true; 
+            session.CreatedAt = DateTime.UtcNow; 
+
+            // Clear any existing validation errors and re-validate
+            ModelState.Clear();
+            TryValidateModel(session); // Re-validate the model
+
+            // Validate the model state
+            if (!ModelState.IsValid)
+            {
+                // Log the validation errors for debugging
+                foreach (var entry in ModelState)
+                {
+                    foreach (var error in entry.Value.Errors)
+                    {
+                        Console.WriteLine($"ModelState Error - Field: {entry.Key}, Error: {error.ErrorMessage}");
+                    }
+                }
+
+                // Return the view with the current session model
+                ViewBag.Cinemas = _context.Cinemas.ToList();
+                ViewBag.Movies = _context.Movies.ToList();
+                ViewBag.Schedules = _context.Schedules.ToList();
+                return View(session);
+            }
+
+            // Add the session to the context
+            _context.Add(session);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
         }
+
+
 
         // User Create Session
         // GET: Display the initial form
@@ -109,37 +162,13 @@ namespace CinemaInfrastructure.Controllers
             {
                 MovieId = model.SelectedMovieId.Value,
                 ScheduleId = model.SelectedScheduleId.Value,
-                IsActive = BitConverter.GetBytes(true)
+                IsActive = true
             };
 
             _context.Sessions.Add(session);
             _context.SaveChanges();
 
             return RedirectToAction("Index");
-        }
-
-
-
-
-        // Admin Create Session
-        public IActionResult CreateAdmin()
-        {
-            ViewBag.Movies = new SelectList(_context.Movies, "Id", "Title");
-            ViewBag.Cinemas = new SelectList(_context.Cinemas, "Id", "Name");
-            return View();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CreateAdmin(Session session)
-        {
-            if (ModelState.IsValid)
-            {
-                session.CreatedAt = BitConverter.GetBytes(DateTime.UtcNow.ToBinary());
-                _context.Sessions.Add(session);
-                await _context.SaveChangesAsync();
-                return RedirectToAction("Index");
-            }
-            return View(session);
         }
 
 

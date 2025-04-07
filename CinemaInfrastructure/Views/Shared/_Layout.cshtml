@@ -1,4 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Identity
+@inject DbcinemaContext _context
+
+
+
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -10,7 +15,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap_state.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CinemaInfrastructure.styles.css" asp-append-version="true" />
-   <style>
+    <style>
         .brand-title {
         text-transform: none !important;
         }
@@ -27,7 +32,7 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                       
+
                     </ul>
                     <div class="d-flex align-items-center">
                         @if (User.IsInRole("admin"))
@@ -38,7 +43,7 @@
                                         <a class="nav-link text-dark" asp-area="" asp-controller="Cinemas" asp-action="Index">Кінотеатри</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Sessions" asp-action="CreateAdmin">Сеанси</a>
+                                        <a class="nav-link text-dark" asp-area="" asp-controller="Sessions" asp-action="Create">Сеанси</a>
                                     </li>
                                     <li class="nav-item">
                                         <a class="nav-link text-dark" asp-area="" asp-controller="Movies" asp-action="AdminIndex">Фільми</a>
@@ -50,6 +55,13 @@
                                 </ul>
                             </div>
                         }
+                        @if (User.IsInRole("user"))
+                        {
+                            
+                        }
+                      
+
+                        
                         @if(User.Identity.IsAuthenticated) {
                             <div class="me-3">
                                 @User?.Identity?.Name
@@ -91,3 +103,19 @@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch("/api/cinemas")
+            .then(response => response.json())
+            .then(data => {
+                let dropdown = document.getElementById("cinemaList");
+                dropdown.innerHTML = "";
+                data.forEach(cinema => {
+                    let item = document.createElement("li");
+                    item.innerHTML = `<a class="dropdown-item cinema-selection" href="#" data-value="${cinema.Id}">${cinema.Name}</a>`;
+                    dropdown.appendChild(item);
+                });
+            })
+            .catch(error => console.error("Error loading cinemas:", error));
+    });
+</script>

@@ -1,0 +1,12 @@
+﻿@{
+    ViewData["Title"] = "Select Session Type";
+}
+
+<h2>Choose Session Type</h2>
+
+<form asp-action="CreateSession">
+    <input type="hidden" name="movieId" value="@ViewBag.MovieId" />
+    <input type="hidden" name="scheduleId" value="@ViewBag.ScheduleId" />
+    <button type="submit" name="isPrivate" value="true" class="btn btn-danger">Private Session</button>
+    <button type="submit" name="isPrivate" value="false" class="btn btn-primary">Public Session</button>
+</form>

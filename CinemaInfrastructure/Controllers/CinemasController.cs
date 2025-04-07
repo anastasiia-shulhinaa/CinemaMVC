@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace CinemaInfrastructure.Controllers
 {
-    [Authorize(Roles = "admin")]
     public class CinemasController : Controller
     {
 
@@ -14,6 +13,17 @@ namespace CinemaInfrastructure.Controllers
         public CinemasController(DbcinemaContext context)
         {
             _context = context;
+        }
+        [HttpGet]
+        public IActionResult GetCinemas()
+        {
+            var cinemas = _context.Cinemas
+                .GroupBy(c => c.Name)
+                .Select(g => g.First())
+                .Select(c => new { c.Id, c.Name })
+                .ToList();
+
+            return Ok(cinemas);
         }
 
         // GET: Cinemas

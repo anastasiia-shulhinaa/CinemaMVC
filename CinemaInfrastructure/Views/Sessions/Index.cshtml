@@ -24,10 +24,19 @@
         @foreach (var item in Model)
         {
             <tr>
-                <td>@DateTime.FromBinary(BitConverter.ToInt64(item.CreatedAt, 0)).ToString("yyyy-MM-dd HH:mm")</td>
-                <td>@(item.IsActive[0] == 1 ? "Active" : "Inactive")</td>
+                <!-- Correctly display CreatedAt as DateTime -->
+                <td>@item.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+
+                <!-- Display IsActive directly as a boolean -->
+                <td>@(item.IsActive ? "Active" : "Inactive")</td>
+
+                <!-- Display Movie Title -->
                 <td>@item.Movie.Title</td>
+
+                <!-- Display Schedule Start Time -->
                 <td>@($"{item.Schedule.StartTime:HH:mm} ({item.Schedule.StartTime} min)")</td>
+
+                <!-- Action buttons -->
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Edit</a>
                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Details</a>

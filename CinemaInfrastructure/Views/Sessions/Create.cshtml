@@ -1,64 +1,103 @@
 ﻿@model CinemaDomain.Model.Session
-
 @{
-    ViewData["Title"] = "Створити сеанс";
+    ViewData["Title"] = "Create Session";
 }
 
-<h1>Створити сеанс</h1>
+<h2>Create Session</h2>
 
 <form asp-action="Create">
     <div class="form-group">
-        <label>Фільм</label>
-        <select asp-for="MovieId" class="form-control" asp-items="ViewBag.Movies"></select>
-    </div>
-
-    <div class="form-group">
-        <label>Кінотеатр</label>
-        <select id="cinemaDropdown" class="form-control" asp-items="ViewBag.Cinemas"></select>
-    </div>
-
-    <div class="form-group">
-        <label>Зал</label>
-        <select id="hallDropdown" class="form-control"></select>
-    </div>
-
-    <div class="form-group">
-        <label>Розклад</label>
-        <select id="scheduleDropdown" asp-for="ScheduleId" class="form-control"></select>
-    </div>
-
-    <div class="form-group">
-        <label>Статус</label>
-        <select asp-for="IsActive" class="form-control">
-            <option value="true">Активний</option>
-            <option value="false">Неактивний</option>
+        <label for="MovieId">Movie</label>
+        <select id="MovieId" name="MovieId" class="form-control">
+            <option value="">-- Select Movie --</option>
+            @foreach (var movie in ViewBag.Movies)
+            {
+                <option value="@movie.Id">@movie.Title</option>
+            }
         </select>
     </div>
 
-    <button type="submit" class="btn btn-primary">Створити</button>
+    <div class="form-group">
+        <label for="CinemaId">Cinema</label>
+        <select id="CinemaId" name="CinemaId" class="form-control">
+            <option value="">-- Select Cinema --</option>
+            @foreach (var cinema in ViewBag.Cinemas)
+            {
+                <option value="@cinema.Id">@cinema.Name</option>
+            }
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="HallId">Hall</label>
+        <select id="HallId" name="HallId" class="form-control">
+            <option value="">-- Select Hall --</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="ScheduleId">Schedule</label>
+        <select id="ScheduleId" name="ScheduleId" class="form-control">
+            <option value="">-- Select Schedule --</option>
+        </select>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
 </form>
 
-<script>
-    $(document).ready(function () {
-        $("#cinemaDropdown").change(function () {
-            var cinemaId = $(this).val();
-            $.getJSON('/Schedules/GetHallsByCinema/' + cinemaId, function (data) {
-                $("#hallDropdown").empty();
-                $.each(data, function (index, item) {
-                    $("#hallDropdown").append($('<option>').val(item.id).text(item.name));
-                });
+@section Scripts {
+    <!-- Load jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+            integrity="sha256-/xUj+3OJ+Y3vyBMOcHGqFtXJrQAB16fr1cqa1M6nHCk="
+            crossorigin="anonymous"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('#CinemaId').change(function () {
+                const cinemaId = $(this).val();
+
+                if (cinemaId) {
+                    $.ajax({
+                        url: '/Sessions/GetHalls',
+                        type: 'GET',
+                        data: { cinemaId: cinemaId },
+                        success: function (data) {
+                            $('#HallId').empty().append('<option value="">-- Select Hall --</option>');
+                            $.each(data, function (i, hall) {
+                                $('#HallId').append(`<option value="${hall.id}">${hall.name}</option>`);
+                            });
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error loading halls:', error);
+                        }
+                    });
+                } else {
+                    $('#HallId').empty().append('<option value="">-- Select Hall --</option>');
+                }
+            });
+
+            $('#HallId').change(function () {
+                const hallId = $(this).val();
+
+                if (hallId) {
+                    $.ajax({
+                        url: '/Sessions/GetSchedules',
+                        type: 'GET',
+                        data: { hallId: hallId },
+                        success: function (data) {
+                            $('#ScheduleId').empty().append('<option value="">-- Select Schedule --</option>');
+                            $.each(data, function (i, schedule) {
+                                $('#ScheduleId').append(`<option value="${schedule.id}">${schedule.startTime}</option>`);
+                            });
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error loading schedules:', error);
+                        }
+                    });
+                } else {
+                    $('#ScheduleId').empty().append('<option value="">-- Select Schedule --</option>');
+                }
             });
         });
-
-        $("#hallDropdown").change(function () {
-            var hallId = $(this).val();
-            $.getJSON('/Schedules/GetSchedulesByHall/' + hallId, function (data) {
-                $("#scheduleDropdown").empty();
-                $.each(data, function (index, item) {
-                    $("#scheduleDropdown").append($('<option>').val(item.id).text(item.startTime));
-                });
-            });
-        });
-    });
-</script>
-
+    </script>
+}

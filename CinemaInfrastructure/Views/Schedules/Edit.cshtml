@@ -1,38 +1,25 @@
 ﻿@model CinemaDomain.Model.Schedule
 
-@{
-    ViewData["Title"] = "Edit";
-}
-
-<h1>Edit</h1>
-
-<h4>Schedule</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="StartTime" class="control-label"></label>
-                <input asp-for="StartTime" class="form-control" />
-                <span asp-validation-for="StartTime" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="HallId" class="control-label"></label>
-                <select asp-for="HallId" class="form-control" asp-items="ViewBag.HallId"></select>
-                <span asp-validation-for="HallId" class="text-danger"></span>
-            </div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+<form asp-action="Edit">
+    <div class="form-group">
+        <label for="StartTime">Start Time</label>
+        <input type="time" id="StartTime" name="StartTime" class="form-control" value="@Model.StartTime.ToString(@"hh\:mm")" required />
     </div>
-</div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+    <div class="form-group">
+        <label for="EndTime">End Time</label>
+        <input type="time" id="EndTime" name="EndTime" class="form-control" value="@Model.EndTime.ToString(@"hh\:mm")" />
+    </div>
+
+    <div class="form-group">
+        <label for="HallId">Hall</label>
+        @Html.DropDownListFor(m => m.HallId, (SelectList)ViewData["HallId"], "-- Select Hall --", new { @class = "form-control", required = "required" })
+    </div>
+
+    <button type="submit" class="btn btn-primary">Edit</button>
+</form>
+
+
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

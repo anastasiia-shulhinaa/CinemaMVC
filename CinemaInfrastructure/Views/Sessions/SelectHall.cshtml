@@ -1,0 +1,17 @@
+﻿@model CinemaDomain.Model.Movie
+@{
+    ViewData["Title"] = "Select Hall";
+}
+
+<h2>Select a Hall for @Model.Title</h2>
+
+<form asp-action="SelectSchedule">
+    <input type="hidden" name="movieId" value="@Model.Id" />
+    <select name="hallId" class="form-control">
+        @foreach (var hall in ViewBag.Halls)
+        {
+            <option value="@hall.Value">@hall.Text</option>
+        }
+    </select>
+    <button type="submit" class="btn btn-primary mt-3">Next</button>
+</form>

@@ -1,21 +1,38 @@
 ﻿@model CinemaDomain.Model.Schedule
 
 @{
-    ViewData["Title"] = "Створити розклад";
+    ViewData["Title"] = "Create Schedule";
 }
 
-<h1>Створити розклад</h1>
+<h1>Create Schedule</h1>
 
 <form asp-action="Create" method="post">
-    <input type="hidden" asp-for="HallId" />
-
     <div class="form-group">
-        <label asp-for="StartTime" class="control-label"></label>
-        <input asp-for="StartTime" class="form-control" type="datetime-local" />
-        <span asp-validation-for="StartTime" class="text-danger"></span>
+        <label asp-for="HallId" class="control-label"></label>
+        <select asp-for="HallId" class="form-control" asp-items="ViewBag.HallId">
+            <option value="">-- Select Hall --</option>
+        </select>
+        <span asp-validation-for="HallId" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary mt-3">Додати</button>
+    <div class="form-group">
+        <label for="startDate">Start Date</label>
+        <input type="date" name="startDate" class="form-control" required />
+    </div>
+
+    <div class="form-group">
+        <label for="startTime">Start Time</label>
+        <input type="time" name="startTime" class="form-control" required />
+    </div>
+
+    <div class="form-group">
+        <label asp-for="IsActive" class="control-label"></label>
+        <input asp-for="IsActive" class="form-check-input" type="checkbox" />
+        <span asp-validation-for="IsActive" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Create</button>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </form>
 
 @section Scripts {

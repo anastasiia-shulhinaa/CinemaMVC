@@ -6,9 +6,9 @@ public partial class Session : Entity
 
     public int ScheduleId { get; set; }
 
-    public byte[] CreatedAt { get; set; } = null!;
+    public DateTime CreatedAt { get; set; } 
 
-    public byte[] IsActive { get; set; } = null!;
+    public bool IsActive { get; set; } 
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 

@@ -1,0 +1,27 @@
+﻿@model List<CinemaDomain.Model.Cinema>
+
+<div class="dropdown me-3">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="cinemaDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        Виберіть кінотеатр
+    </button>
+
+    <ul class="dropdown-menu" aria-labelledby="cinemaDropdown">
+        @foreach (var cinema in Model)
+        {
+            <li><a class="dropdown-item cinema-selection" href="#" data-value="@cinema.Id">@cinema.Name</a></li>
+        }
+    </ul>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        document.querySelectorAll(".cinema-selection").forEach(item => {
+            item.addEventListener("click", function (e) {
+                e.preventDefault();
+                let selectedCinema = this.getAttribute("data-value");
+                console.log("Selected Cinema ID:", selectedCinema);
+                
+            });
+        });
+    });
+</script>
