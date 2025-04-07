@@ -36,14 +36,6 @@ public partial class DbcinemaContext : DbContext
 
     public virtual DbSet<SessionSeat> SessionSeats { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        if (!optionsBuilder.IsConfigured)
-        {
-            optionsBuilder.UseSqlServer("Server=DESKTOP-T0I43G1\\SQLEXPRESS; Database=DBCinema; Trusted_Connection=True; TrustServerCertificate=True; ",
-                b => b.MigrationsAssembly("CinemaDomain")); // Specify the migrations assembly
-        }
-    }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Actor>(entity =>

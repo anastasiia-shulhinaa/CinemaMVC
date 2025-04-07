@@ -14,6 +14,7 @@ namespace CinemaInfrastructure.Controllers
             _context = context;
         }
 
+
         public async Task<IActionResult> Index()
         {
             // Fetch active sessions including the related movies

@@ -7,8 +7,14 @@
 <h1>Доступні сеанси</h1>
 
 <p>
-    <a asp-controller="Movies" asp-action="Index" class="btn btn-primary">Оберіть фільм для створення сеансу</a>
+    <a asp-controller="Sessions" asp-action="Create" class="btn btn-primary">Створення сеансу</a>
 </p>
+
+<div class="row">
+    <div class="col-12">
+        <div id="countByMovieChart"></div>
+    </div>
+</div>
 
 <table class="table">
     <thead>
@@ -24,19 +30,10 @@
         @foreach (var item in Model)
         {
             <tr>
-                <!-- Correctly display CreatedAt as DateTime -->
                 <td>@item.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
-
-                <!-- Display IsActive directly as a boolean -->
                 <td>@(item.IsActive ? "Active" : "Inactive")</td>
-
-                <!-- Display Movie Title -->
                 <td>@item.Movie.Title</td>
-
-                <!-- Display Schedule Start Time -->
                 <td>@($"{item.Schedule.StartTime:HH:mm} ({item.Schedule.StartTime} min)")</td>
-
-                <!-- Action buttons -->
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Edit</a>
                     <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Details</a>
@@ -47,3 +44,38 @@
     </tbody>
 </table>
 
+@section Scripts {
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawCharts);
+
+        function drawCharts() {
+            drawTopMovies(); // Call to the method that draws the top movies pie chart
+        }
+
+        function drawTopMovies() {
+            fetch('/api/charts/topMovies')
+                .then(response => response.json())
+                .then(data => {
+                    const dataTable = new google.visualization.DataTable();
+                    dataTable.addColumn('string', 'Фільм'); // Column for Movie Title
+                    dataTable.addColumn('number', 'К-сть сеансів'); // Column for Session Count
+
+                    data.forEach(item => {
+                        dataTable.addRow([item.movieTitle, item.sessionCount]); // Add rows for top movies
+                    });
+
+                    const options = {
+                        title: 'Топ 10 фільмів за кількістю сеансів',
+                        width: 700,
+                        height: 400,
+                        is3D: true, // Optional: for 3D effect
+                    };
+
+                    const chart = new google.visualization.PieChart(document.getElementById('countByMovieChart'));
+                    chart.draw(dataTable, options);
+                });
+        }
+    </script>
+}

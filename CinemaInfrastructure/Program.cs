@@ -19,9 +19,6 @@ builder.Services.AddDbContext<IdentityContext>(option => option.UseSqlServer(
     ));
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDbContext<DbcinemaContext>(option => option.UseSqlServer(
-     builder.Configuration.GetConnectionString("DefaultConnection")
-     ));
 builder.Services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<IdentityContext>();
 
 builder.Services.Configure<IdentityOptions>(options =>
