@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using CinemaInfrastructure.Models;
 using Microsoft.EntityFrameworkCore;
+using CinemaDomain.Model;
 
 namespace CinemaInfrastructure.Controllers
 {
@@ -17,13 +18,18 @@ namespace CinemaInfrastructure.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // Fetch active sessions including the related movies
-            var activeSessions = await _context.Sessions
-                .Include(s => s.Movie) // Include Movie details
-                .Where(s => s.IsActive == true) // Check if IsActive is true
-                .ToListAsync();
+            var today = DateTime.Today;
 
-            return View(activeSessions); // Pass the active sessions to the view
+            var uniqueSessions = _context.Sessions
+                .Include(s => s.Movie)
+                .Include(s => s.Schedule)
+                .Where(s => s.IsActive && s.Schedule.StartTime > today)
+                .ToList()
+                .GroupBy(s => s.MovieId)
+                .Select(g => g.OrderBy(s => s.Schedule.StartTime).First())
+                .ToList();
+
+            return View(uniqueSessions);
         }
 
         public IActionResult Privacy()

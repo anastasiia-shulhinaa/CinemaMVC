@@ -1,16 +1,17 @@
 ﻿namespace CinemaDomain.Model;
 
-public partial class Booking : Entity
+public partial class Booking 
 {
+    public int Id { get; set; }
     public int SessionId { get; set; }
 
     public int? NumberOfSeats { get; set; }
 
-    public byte[] IsPrivateBooking { get; set; } = null!;
+    public bool IsPrivateBooking { get; set; }
 
     public decimal? PrivateBookingPrice { get; set; }
 
-    public byte[] BookingDate { get; set; } = null!;
+    public DateTime BookingDate { get; set; }
 
     public virtual Session Session { get; set; } = null!;
 

@@ -10,14 +10,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<DbcinemaContext>(option => option.UseSqlServer(
-    builder.Configuration.GetConnectionString("DefaultConnection")
-    ));
+builder.Services.AddDbContext<DbcinemaContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddDbContext<IdentityContext>(option => option.UseSqlServer(
     builder.Configuration.GetConnectionString("IdentityConnection")
-    ));
+    ));   
 builder.Services.AddControllersWithViews();
+builder.Services.AddDbContext<DbcinemaContext>(option => option.UseSqlServer(
+      builder.Configuration.GetConnectionString("DefaultConnection")
+      ));
 
 builder.Services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<IdentityContext>();
 
@@ -30,6 +32,7 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequiredUniqueChars = 1;
 });
+
 
 var app = builder.Build();
 
@@ -49,7 +52,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseStaticFiles(); // Serve wwwroot by default
+app.UseStaticFiles(); 
 
 app.UseStaticFiles(new StaticFileOptions
 {
