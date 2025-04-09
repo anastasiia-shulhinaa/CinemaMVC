@@ -182,8 +182,7 @@
 
                                 <div class="data">
                                     @startDate
-                                    <a asp-controller="Movies" asp-action="Create" class="btn btn-link">інші дати</a> <!-- Add the button here -->
-                                </div>
+                                    <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id" class="btn btn-link">інші дати</a>
 
                                 <div class="ticket-icon">
                                     <img src="https://www.palladium-cinema.com.ua/desktop/img/bilet.png" alt="Ticket icon" />

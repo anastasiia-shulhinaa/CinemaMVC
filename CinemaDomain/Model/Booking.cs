@@ -10,7 +10,7 @@ public partial class Booking
     public bool IsPrivateBooking { get; set; }
 
     public decimal? PrivateBookingPrice { get; set; }
-
+    public string UserId { get; set; } = null!;
     public DateTime BookingDate { get; set; }
 
     public virtual Session Session { get; set; } = null!;

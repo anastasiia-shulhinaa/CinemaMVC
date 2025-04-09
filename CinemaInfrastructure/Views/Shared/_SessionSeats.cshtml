@@ -1,0 +1,14 @@
+﻿@model IEnumerable<dynamic>
+
+<h4>Доступні місця:</h4>
+<div class="seat-selection">
+    @foreach (var seat in Model)
+    {
+        <label>
+            <input type="checkbox" name="SelectedSeatIds" value="@seat.Id" />
+            Row: @seat.RowNumber, Seat: @seat.SeatNumber - ₴@seat.Price
+        </label>
+
+        <br />
+    }
+</div>

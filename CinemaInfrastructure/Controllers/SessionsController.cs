@@ -58,22 +58,21 @@ namespace CinemaInfrastructure.Controllers
             return View();
         }
 
-        // POST: Sessions/Create
+
         // POST: Sessions/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("MovieId, ScheduleId")] Session session)
+        public async Task<IActionResult> Create([Bind("MovieId, ScheduleId")] Session session, decimal PricePerSeat)
         {
             // Load the Movie
             session.Movie = await _context.Movies.FindAsync(session.MovieId);
 
             // Load the Schedule, including Hall and its associated Cinema
             session.Schedule = await _context.Schedules
-                .Include(s => s.Hall) // Include Hall
-                .ThenInclude(h => h.Cinema) // Include Cinema from Hall
+                .Include(s => s.Hall)
+                .ThenInclude(h => h.Cinema)
                 .FirstOrDefaultAsync(s => s.Id == session.ScheduleId);
 
-            // Check if the Movie and Schedule exist
             if (session.Movie == null)
             {
                 ModelState.AddModelError("MovieId", "The selected movie does not exist.");
@@ -84,45 +83,55 @@ namespace CinemaInfrastructure.Controllers
                 ModelState.AddModelError("ScheduleId", "The selected schedule does not exist.");
             }
 
-            // Check if the Hall is available in the Schedule
             if (session.Schedule != null && session.Schedule.Hall == null)
             {
                 ModelState.AddModelError("ScheduleId", "The selected schedule must have an associated hall.");
             }
 
-            // Automatically set IsActive and CreatedAt properties
-            session.IsActive = true; 
-            session.CreatedAt = DateTime.UtcNow; 
+            if (PricePerSeat <= 0)
+            {
+                ModelState.AddModelError("PricePerSeat", "Price must be greater than zero.");
+            }
 
-            // Clear any existing validation errors and re-validate
+            session.IsActive = true;
+            session.CreatedAt = DateTime.UtcNow;
+
             ModelState.Clear();
-            TryValidateModel(session); // Re-validate the model
+            TryValidateModel(session);
 
-            // Validate the model state
             if (!ModelState.IsValid)
             {
-                // Log the validation errors for debugging
-                foreach (var entry in ModelState)
-                {
-                    foreach (var error in entry.Value.Errors)
-                    {
-                        Console.WriteLine($"ModelState Error - Field: {entry.Key}, Error: {error.ErrorMessage}");
-                    }
-                }
-
-                // Return the view with the current session model
                 ViewBag.Cinemas = _context.Cinemas.ToList();
                 ViewBag.Movies = _context.Movies.ToList();
                 ViewBag.Schedules = _context.Schedules.ToList();
                 return View(session);
             }
 
-            // Add the session to the context
-            _context.Add(session);
+            _context.Sessions.Add(session);
             await _context.SaveChangesAsync();
+
+            var hallId = session.Schedule?.Hall?.Id;
+
+            if (hallId != null)
+            {
+                var seats = await _context.Seats
+                    .Where(seat => seat.HallId == hallId)
+                    .ToListAsync();
+
+                var sessionSeats = seats.Select(seat => new SessionSeat
+                {
+                    SessionId = session.Id,
+                    SeatId = seat.Id,
+                    Price = PricePerSeat
+                    // BookingId remains null, so seat is available
+                }).ToList();
+
+                _context.SessionSeats.AddRange(sessionSeats);
+                await _context.SaveChangesAsync();
+            }
+
             return RedirectToAction(nameof(Index));
         }
-
 
 
         // User Create Session

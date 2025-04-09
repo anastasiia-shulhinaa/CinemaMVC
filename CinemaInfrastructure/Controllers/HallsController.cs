@@ -52,6 +52,25 @@ namespace CinemaInfrastructure.Controllers
             return View(hall);
         }
 
+        private void GenerateSeatsForHall(int hallId, int totalSeats)
+        {
+            int seatsPerRow = 5;
+
+            var seats = new List<Seat>();
+
+            for (int i = 1; i <= totalSeats; i++)
+            {
+                seats.Add(new Seat
+                {
+                    HallId = hallId,
+                    SeatNumber = i,
+                    RowNumber = (i - 1) / seatsPerRow + 1
+                });
+            }
+
+            _context.Seats.AddRange(seats);
+            _context.SaveChanges();
+        }
 
         // GET: Halls/Create
         public IActionResult Create(int? cinemaId)
@@ -91,7 +110,7 @@ namespace CinemaInfrastructure.Controllers
             {
                 _context.Add(hall);
                 await _context.SaveChangesAsync();
-
+                GenerateSeatsForHall(hall.Id, hall.TotalSeats);
                 // Для редиректу отримуємо назву кінотеатру (або використовуємо вже завантажену Hall.Cinema)
                 string cinemaName = hall.Cinema?.Name ?? "";
                 return RedirectToAction("Index", new { id = hall.CinemaId, name = cinemaName });
