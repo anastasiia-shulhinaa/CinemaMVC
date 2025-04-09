@@ -32,14 +32,16 @@ namespace CinemaInfrastructure.Controllers
             if (session == null)
                 return NotFound();
 
+            var today = DateTime.Today;
             var availableTimes = await _context.Sessions
                 .Include(s => s.Schedule)
-                .Where(s => s.MovieId == session.MovieId && s.IsActive)
+                .Where(s => s.MovieId == session.MovieId && s.IsActive && s.Schedule.StartTime >= today)
                 .Select(s => new TimeOption
                 {
                     SessionId = s.Id,
-                    StartTime = s.Schedule.StartTime.TimeOfDay
+                    StartTime = s.Schedule.StartTime // Selecting the full DateTime
                 })
+                .OrderBy(to => to.StartTime)
                 .ToListAsync();
 
             var model = new BookingFormModel
@@ -60,12 +62,12 @@ namespace CinemaInfrastructure.Controllers
             var seats = _context.SessionSeats
                 .Include(ss => ss.Seat)
                 .Where(ss => ss.SessionId == sessionId && ss.BookingId == null)
-                .Select(ss => new
+                .Select(ss => new SeatViewModel
                 {
-                    ss.Id,
+                    Id = ss.Id,
                     RowNumber = ss.Seat.RowNumber,
                     SeatNumber = ss.Seat.SeatNumber,
-                    ss.Price
+                    Price = ss.Price
                 })
                 .ToList();
 

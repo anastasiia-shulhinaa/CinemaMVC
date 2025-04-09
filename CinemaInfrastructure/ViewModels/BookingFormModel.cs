@@ -15,5 +15,5 @@ public class BookingFormModel
 public class TimeOption
 {
     public int SessionId { get; set; }
-    public TimeSpan StartTime { get; set; }
+    public DateTime StartTime { get; set; } // Changed to DateTime
 }

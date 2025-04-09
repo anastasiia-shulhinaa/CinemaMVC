@@ -1,14 +1,29 @@
-﻿@model IEnumerable<dynamic>
+﻿@model IEnumerable<CinemaInfrastructure.ViewModels.SeatViewModel>
 
-<h4>Доступні місця:</h4>
-<div class="seat-selection">
+<div class="seats-container">
     @foreach (var seat in Model)
     {
-        <label>
-            <input type="checkbox" name="SelectedSeatIds" value="@seat.Id" />
-            Row: @seat.RowNumber, Seat: @seat.SeatNumber - ₴@seat.Price
-        </label>
-
-        <br />
+        <div class="seat"
+             data-seat="@($"{seat.RowNumber}-{seat.SeatNumber}")"
+             data-id="@seat.Id"
+             title="Ряд @seat.RowNumber, Місце @seat.SeatNumber">
+            @seat.SeatNumber
+        </div>
     }
 </div>
+
+<style>
+    .seat {
+        display: inline-block;
+        margin: 4px;
+        padding: 8px 12px;
+        background-color: #eee;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+        .seat.selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+</style>
