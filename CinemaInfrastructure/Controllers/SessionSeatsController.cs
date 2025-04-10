@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using CinemaInfrastructure.ViewModels;
 using CinemaInfrastructure;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CinemaApp.Controllers
 {
@@ -15,22 +16,30 @@ namespace CinemaApp.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetSeats(int sessionId)
+        [Authorize]
+        public IActionResult GetSeatsForSession(int sessionId)
         {
-            var seats = await _context.SessionSeats
-                .Include(s => s.Seat)
-                .Where(s => s.SessionId == sessionId)
-                .Select(s => new SeatViewModel
-                {
-                    Id = s.Id,
-                    RowNumber = s.Seat.RowNumber,
-                    SeatNumber = s.Seat.SeatNumber,
-                    Price = s.Price,
-                    TopRowLabel = s.Seat.RowNumber * 40 // Adjust as needed for row position
-                })
-                .ToListAsync();
+            var session = _context.Sessions
+                .Include(s => s.Schedule.Hall)
+                .FirstOrDefault(s => s.Id == sessionId);
 
-            return PartialView("_SessionSeats", seats);  // This should now correctly pass a List<SeatViewModel> to the view
+            if (session == null)
+                return NotFound();
+
+            var seats = _context.SessionSeats
+                .Include(ss => ss.Seat)
+                .Where(ss => ss.SessionId == sessionId && ss.BookingId == null)
+                .Select(ss => new SeatViewModel
+                {
+                    Id = ss.Id,
+                    RowNumber = ss.Seat.RowNumber,
+                    SeatNumber = ss.Seat.SeatNumber,
+                    Price = ss.Price
+                })
+                .ToList();
+
+            ViewBag.TotalSeats = session.Schedule.Hall.TotalSeats;
+            return PartialView("_SessionSeats", seats);
         }
     }
 }

@@ -10,66 +10,63 @@
 <section class="film-page gray-bg py-4">
     <div class="container">
 
+        <h2 class="mb-3">@Model.Movie.Title <span class="badge bg-primary px-3 py-2 rounded-pill fs-6">@Model.Movie.Rating</span></h2>
 
-        <h2 class="mb-3">@Model.Movie.Title  <span class="badge bg-primary px-3 py-2 rounded-pill fs-6">@Model.Movie.Rating</span></h2>
-                        
-
-                @if (!string.IsNullOrEmpty(Model.Movie.Language))
-                {
-                    <div class="film-name-translate">@Model.Movie.Language</div>
-                }
-            <div>
-                <a href="@Url.Action("Index", "Movies")" class="button-empty">Розклад <span class="d-icon icon-next"></span></a>
-            </div>
+        @if (!string.IsNullOrEmpty(Model.Movie.Language))
+        {
+            <div class="film-name-translate">@Model.Movie.Language</div>
+        }
+        <div>
+            <a href="@Url.Action("Index", "Movies")" class="button-empty">Розклад <span class="d-icon icon-next"></span></a>
         </div>
+    </div>
 
-        <div class="row">
-            <div class="col-lg-9 col-md-12">
-                <div class="video mb-4 position-relative">
-                    <div class="embed-responsive embed-responsive-16by9">
-                        <iframe class="embed-responsive-item" id="TrailerPreview"
-                                src="@embedLink"  <!-- Use the embed link here -->
+    <div class="row">
+        <div class="col-lg-9 col-md-12">
+            <div class="video mb-4 position-relative">
+                <div class="embed-responsive embed-responsive-16by9">
+                    <iframe class="embed-responsive-item" id="TrailerPreview"
+                            src="@embedLink" <!-- Use the embed link here -->
                         frameborder="0"
                         allowfullscreen
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                         referrerpolicy="strict-origin-when-cross-origin"
                         title="@Model.Movie.Title | Офіційний трейлер">
-                        </iframe>
-                    </div>
+                    </iframe>
                 </div>
-                <div class="mt-4">
-                    <h4 class="mb-3">Доступні дати показу</h4>
-                    <div class="date-film-slider d-flex flex-wrap gap-2">
-                        @foreach (var date in Model.AvailableTimes.Select(t => t.StartTime.Date).Distinct().OrderBy(d => d))
-                        {
-                            <div class="date-item @((date == Model.AvailableTimes.First().StartTime.Date) ? "active" : "")"
-                                 data-date="@date.ToString("yyyy-MM-dd")">
-                                <div class="number-day">@date.Day</div>
-                                <div class="day">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetShortestDayName(date.DayOfWeek)</div>
-                            </div>
-                        }
-                    </div>
+            </div>
+            <div class="mt-4">
+                <h4 class="mb-3">Доступні дати показу</h4>
+                <div class="date-film-slider d-flex flex-wrap gap-2">
+                    @foreach (var date in Model.AvailableTimes.Select(t => t.StartTime.Date).Distinct().OrderBy(d => d))
+                    {
+                        <div class="date-item @((date == Model.AvailableTimes.First().StartTime.Date) ? "active" : "")"
+                             data-date="@date.ToString("yyyy-MM-dd")">
+                            <div class="number-day">@date.Day</div>
+                            <div class="day">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetShortestDayName(date.DayOfWeek)</div>
+                        </div>
+                    }
                 </div>
+            </div>
 
-                <div class="mt-4">
-                    <div class="tabs-content">
+            <div class="mt-4">
+                <div class="tabs-content">
                     <input type="hidden" id="SessionId" name="SessionId" value="" />
-                        @foreach (var timeGroup in Model.AvailableTimes.GroupBy(t => t.StartTime.Date))
-                        {
-                            <ul class="time-list @(timeGroup.Key == Model.AvailableTimes.First().StartTime.Date ? "active" : "")"
-                                data-date="@timeGroup.Key.ToString("yyyy-MM-dd")">
-                                @foreach (var item in timeGroup.OrderBy(t => t.StartTime.TimeOfDay))
-                                {
-                                    <li>
-                                        <a href="#" data-session-id="@item.SessionId" data-start-time="@item.StartTime.ToString("HH:mm")">
-                                            @item.StartTime.ToString("HH:mm")
-                                        </a>
-                                    </li>
-                                }
-                            </ul>
-                        }
-                    </div>
-              
+                    @foreach (var timeGroup in Model.AvailableTimes.GroupBy(t => t.StartTime.Date))
+                    {
+                        <ul class="time-list @(timeGroup.Key == Model.AvailableTimes.First().StartTime.Date ? "active" : "")"
+                            data-date="@timeGroup.Key.ToString("yyyy-MM-dd")">
+                            @foreach (var item in timeGroup.OrderBy(t => t.StartTime.TimeOfDay))
+                            {
+                                <li>
+                                    <a href="#" data-session-id="@item.SessionId" data-start-time="@item.StartTime.ToString("HH:mm")">
+                                        @item.StartTime.ToString("HH:mm")
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
             </div>
 
             <div class="about-film mt-4">
@@ -88,28 +85,28 @@
                 <p><b>Тривалість: </b>@Model.Movie.Duration</p>
                 <p>
                     <b>Жанр: </b>
-                        @foreach (var cat in Model.Movie.Categories)
-                        {
+                    @foreach (var cat in Model.Movie.Categories)
+                    {
                         <span>@cat.Name</span>
-                        }
+                    }
                 </p>
                 <p>
                     <b>Режисер: </b>
-                        @foreach (var director in Model.Movie.Directors)
-                        {
+                    @foreach (var director in Model.Movie.Directors)
+                    {
                         <span>@director.FullName</span>
-                        }
+                    }
                 </p>
                 <p>
                     <b>Актори: </b>
-                        @foreach (var actor in Model.Movie.Actors.Take(5))
-                        {
+                    @foreach (var actor in Model.Movie.Actors.Take(5))
+                    {
                         <span>@actor.FullName</span>
-                        }
-                        @if (Model.Movie.Actors.Count() > 5)
-                        {
+                    }
+                    @if (Model.Movie.Actors.Count() > 5)
+                    {
                         <span>...</span>
-                        }
+                    }
                 </p>
             </div>
         </div>
@@ -118,11 +115,38 @@
     <div class="mt-4">
         <h2>Виберіть місця</h2>
         <div id="seatsArea">
+            @if (Model.SessionSeats != null)
+            {
+                <div class="seat-grid">
+                    @foreach (var row in Model.SessionSeats.GroupBy(s => s.RowNumber))
+                    {
+                        <div class="seat-row mb-2">
+                            <strong>Ряд @row.Key:</strong>
+                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                @foreach (var seat in row.OrderBy(s => s.SeatNumber))
+                                {
+                                    var disabled = seat.IsAvailable ? "" : "booked"; // Use "booked" class if not available
+                                    <div class="seat @disabled" data-seat="@seat.SeatNumber" data-price="@seat.Price">
+                                        <!-- Include data-price attribute -->
+                                        @seat.SeatNumber
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p>Оберіть час показу, щоб побачити доступні місця.</p>
+            }
         </div>
+
         <div id="selectedSeatsInfo" class="mt-3">
             <p>Обрані місця: <span id="selectedSeatsList"></span></p>
-            <p>Загальна вартість: <span id="totalPrice">0</span> грн</p>
+            <p>Загальна вартість: <span id="totalPrice">0.00</span> грн</p> <!-- Initialize total price to 0.00 -->
         </div>
+
         <form asp-action="ConfirmBooking" method="post" id="bookingForm">
             <input type="hidden" name="SelectedSeats" id="SelectedSeatsInput" value="" />
             <input type="hidden" name="SessionId" id="SelectedSessionId" value="" />
@@ -131,6 +155,7 @@
     </div>
 
 </section>
+
 <style>
     .video {
         position: relative;
@@ -216,19 +241,21 @@
                 background-color: #333;
                 color: white;
             }
+
+    .booked {
+        background-color: #e0e0e0; /* Indicate booked seats */
+        cursor: not-allowed;
+    }
 </style>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
     <script>
         let selectedSeats = [];
-        let seatPrice = 80;
+        let totalPrice = 0; // Initialize total price
 
         function updateSelectedSeatsInfo() {
             document.getElementById("selectedSeatsList").innerText = selectedSeats.join(', ');
-            document.getElementById("totalPrice").innerText = selectedSeats.length * seatPrice;
+            document.getElementById("totalPrice").innerText = totalPrice.toFixed(2); // Format total price to two decimal places
             document.getElementById("SelectedSeatsInput").value = JSON.stringify(selectedSeats);
             const sessionId = document.getElementById("SelectedSessionId").value;
             document.querySelector('#bookingForm button[type="submit"]').disabled = selectedSeats.length === 0 || !sessionId;
@@ -236,45 +263,23 @@
 
         function toggleSeat(event) {
             const seat = event.target;
+            if (seat.classList.contains('booked')) return; // Prevent selection of booked seats
+
             const seatNumber = seat.dataset.seat;
+            const seatPrice = parseFloat(seat.dataset.price); // Get the price of the seat
             const isSelected = selectedSeats.includes(seatNumber);
 
             if (isSelected) {
                 selectedSeats = selectedSeats.filter(s => s !== seatNumber);
+                totalPrice -= seatPrice; // Decrease the total price
                 seat.classList.remove('selected');
             } else {
                 selectedSeats.push(seatNumber);
+                totalPrice += seatPrice; // Increase the total price
                 seat.classList.add('selected');
             }
 
             updateSelectedSeatsInfo();
-        }
-
-        function loadAvailableSeats(sessionId) {
-            document.getElementById("SelectedSessionId").value = sessionId;
-            selectedSeats = [];
-            updateSelectedSeatsInfo();
-
-            const seatsArea = document.getElementById("seatsArea");
-            seatsArea.innerHTML = "<p>Завантаження місць...</p>";
-
-            fetch(`/Bookings/GetSeatsForSession?sessionId=${sessionId}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Сервер повернув помилку");
-                    }
-                    return response.text();
-                })
-                .then(html => {
-                    seatsArea.innerHTML = html;
-                    document.querySelectorAll('.seat').forEach(seat => {
-                        seat.addEventListener('click', toggleSeat);
-                    });
-                })
-                .catch(error => {
-                    console.error('Помилка при завантаженні місць:', error);
-                    seatsArea.innerHTML = "<p class='text-danger'>Не вдалося завантажити місця. Спробуйте пізніше.</p>";
-                });
         }
 
         function showTimesForDate(date) {
@@ -282,42 +287,43 @@
                 list.classList.toggle('active', list.dataset.date === date);
             });
 
-            // Очистити вибрані сеанси
             document.querySelectorAll('.time-list a').forEach(a => a.classList.remove('selected'));
         }
 
+        function loadAvailableSeats(sessionId) {
+            document.getElementById("SelectedSessionId").value = sessionId;
+            selectedSeats = [];
+            totalPrice = 0; // Reset total price
+            updateSelectedSeatsInfo();
+
+            fetch(`/Bookings/GetSeatsForSession?sessionId=${sessionId}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById("seatsArea").innerHTML = html;
+                    document.querySelectorAll('.seat').forEach(seat => {
+                        seat.addEventListener('click', toggleSeat);
+                    });
+                })
+                .catch(() => {
+                    document.getElementById("seatsArea").innerHTML = "<p class='text-danger'>Не вдалося завантажити місця.</p>";
+                });
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
-            const dateItems = document.querySelectorAll('.date-item');
-
-            // Показати часи для першої дати
-            if (dateItems.length > 0) {
-                const firstDate = dateItems[0].dataset.date;
-                showTimesForDate(firstDate);
-                dateItems[0].classList.add('active');
-            }
-
-            // Обробка натискання на дату
-            dateItems.forEach(item => {
-                item.addEventListener('click', function () {
+            document.querySelectorAll('.date-item').forEach(item => {
+                item.addEventListener('click', () => {
                     document.querySelectorAll('.date-item').forEach(d => d.classList.remove('active'));
-                    this.classList.add('active');
-                    const selectedDate = this.dataset.date;
-                    showTimesForDate(selectedDate);
+                    item.classList.add('active');
+                    showTimesForDate(item.dataset.date);
                 });
             });
 
-            // Обробка вибору часу
-            document.querySelectorAll('.time-list').forEach(list => {
-                list.addEventListener('click', function (event) {
-                    const target = event.target;
-                    if (target.tagName === "A") {
-                        event.preventDefault();
-                        document.querySelectorAll('.time-list a').forEach(a => a.classList.remove('selected'));
-                        target.classList.add('selected');
-
-                        const sessionId = target.dataset.sessionId;
-                        loadAvailableSeats(sessionId);
-                    }
+            document.querySelectorAll('.time-list a').forEach(a => {
+                a.addEventListener('click', e => {
+                    e.preventDefault();
+                    document.querySelectorAll('.time-list a').forEach(el => el.classList.remove('selected'));
+                    a.classList.add('selected');
+                    loadAvailableSeats(a.dataset.sessionId);
                 });
             });
         });

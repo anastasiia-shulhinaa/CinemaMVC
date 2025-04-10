@@ -1,0 +1,91 @@
+﻿@model IEnumerable<CinemaInfrastructure.ViewModels.SeatViewModel>
+
+@{
+    var seats = Model.OrderBy(s => s.RowNumber).ThenBy(s => s.SeatNumber).ToList();
+    int seatSize = 50, margin = 5;
+
+    // Define the number of seats per row
+    var seatsPerRow = new Dictionary<int, int>
+    {
+        { 1, 6 },  // 1st row has 6 seats
+        { 2, 7 },  // 2nd row has 7 seats
+        { 3, 7 },  // 3rd row has 7 seats
+        { 4, 7 },  // 4th row has 7 seats
+        { 5, 7 },  // 5th row has 7 seats
+        { 6, 9 }   // 6th row has 9 seats
+    };
+}
+
+<div class="hall-structure" style="position: relative;">
+    <link href="~/css/hall-layout.css" rel="stylesheet" />
+    <span class="screen">
+        <img src="https://www.palladium-cinema.com.ua/desktop/img/screen.png" alt="Екран">
+    </span>
+
+    <div class="seats-container">
+        @foreach (var rowGroup in seats.GroupBy(s => s.RowNumber))
+        {
+            <div class="row">
+                <span class="number-of-row">@rowGroup.Key</span>
+                @foreach (var seat in rowGroup.OrderBy(s => s.SeatNumber))
+                {
+                    <div class="seat"
+                         data-seat="@($"{seat.RowNumber}-{seat.SeatNumber}")"
+                         data-id="@seat.Id"
+                         title="Ряд @seat.RowNumber, Місце @seat.SeatNumber">
+                        @seat.SeatNumber
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .hall-structure {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .seats-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .row {
+        display: flex;
+        justify-content: center;
+        margin: 5px 0;
+    }
+
+    .seat {
+        display: inline-block;
+        width: 50px; /* Fixed width for square shape */
+        height: 50px; /* Fixed height for square shape */
+        margin: 4px;
+        background-color: #eee;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+        display: flex; /* Center the seat number */
+        align-items: center; /* Center vertically */
+        justify-content: center; /* Center horizontally */
+    }
+
+        .seat:hover {
+            background-color: #ddd;
+            transform: scale(1.05);
+        }
+
+        .seat.selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+    .number-of-row {
+        margin-right: 10px; /* Spacing for row number */
+        font-weight: bold; /* Make row number bold */
+    }
+</style>

@@ -1,0 +1,77 @@
+﻿@model IEnumerable<CinemaInfrastructure.ViewModels.SeatViewModel>
+
+@{
+    var grouped = Model.GroupBy(s => s.RowNumber).OrderBy(g => g.Key);
+}
+
+<div class="hall-structure">
+    <link href="~/css/hall-layout.css" rel="stylesheet" />
+    <span class="screen"><img src="https://www.palladium-cinema.com.ua/desktop/img/screen.png" alt="Екран" /></span>
+
+    <div class="seats-container">
+        @foreach (var row in grouped)
+        {
+            <div class="row">
+                <span class="number-of-row">@row.Key</span>
+                @foreach (var seat in row.OrderBy(s => s.SeatNumber))
+                {
+                    <div class="seat"
+                         data-seat="@($"{seat.RowNumber}-{seat.SeatNumber}")"
+                         data-id="@seat.Id"
+                         title="Ряд @seat.RowNumber, Місце @seat.SeatNumber">
+                        @seat.SeatNumber
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .hall-structure {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .seats-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .row {
+        display: flex;
+        justify-content: center;
+        margin: 5px 0;
+    }
+
+    .seat {
+        display: inline-block;
+        width: 50px; /* Fixed width for square shape */
+        height: 50px; /* Fixed height for square shape */
+        margin: 4px;
+        background-color: #eee;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+        display: flex; /* Center the seat number */
+        align-items: center; /* Center vertically */
+        justify-content: center; /* Center horizontally */
+    }
+
+        .seat:hover {
+            background-color: #ddd;
+            transform: scale(1.05);
+        }
+
+        .seat.selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+    .number-of-row {
+        margin-right: 10px; /* Spacing for row number */
+        font-weight: bold; /* Make row number bold */
+    }
+</style>

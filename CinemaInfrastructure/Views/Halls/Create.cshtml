@@ -18,15 +18,15 @@
 
     <div class="form-group">
         <label asp-for="TotalSeats" class="control-label"></label>
-        <input asp-for="TotalSeats" class="form-control" />
+        <select asp-for="TotalSeats" class="form-control">
+            <option value="">Оберіть кількість місць</option>
+            <option value="43">43 місця</option>
+            <option value="36">36 місць</option>
+            <option value="24">24 місця</option>
+        </select>
         <span asp-validation-for="TotalSeats" class="text-danger"></span>
     </div>
 
     <button type="submit" class="btn btn-primary mt-3">Додати</button>
 </form>
 
-@section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
-}

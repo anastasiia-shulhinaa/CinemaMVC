@@ -52,20 +52,58 @@ namespace CinemaInfrastructure.Controllers
             return View(hall);
         }
 
+        // This method generates the seats for the hall based on total seats
         private void GenerateSeatsForHall(int hallId, int totalSeats)
         {
-            int seatsPerRow = 5;
-
             var seats = new List<Seat>();
 
-            for (int i = 1; i <= totalSeats; i++)
+            // Define the seat layouts
+            switch (totalSeats)
             {
-                seats.Add(new Seat
-                {
-                    HallId = hallId,
-                    SeatNumber = i,
-                    RowNumber = (i - 1) / seatsPerRow + 1
-                });
+                case 43:
+                    // 6 rows: 1st row has 6 seats, 2-5 have 7 seats, 6th has 9 seats
+                    for (int i = 1; i <= 43; i++)
+                    {
+                        int rowNumber = (i == 1) ? 1 : (i <= 30 ? (i - 1) / 7 + 1 : 6);
+                        seats.Add(new Seat
+                        {
+                            HallId = hallId,
+                            SeatNumber = i,
+                            RowNumber = rowNumber
+                        });
+                    }
+                    break;
+
+                case 36:
+                    // 5 rows: 1-4 have 7 seats, 5th row has 8 seats
+                    for (int i = 1; i <= 36; i++)
+                    {
+                        int rowNumber = (i <= 28) ? (i - 1) / 7 + 1 : 5;
+                        seats.Add(new Seat
+                        {
+                            HallId = hallId,
+                            SeatNumber = i,
+                            RowNumber = rowNumber
+                        });
+                    }
+                    break;
+
+                case 24:
+                    // 4 rows with 6 seats each
+                    for (int i = 1; i <= 24; i++)
+                    {
+                        int rowNumber = (i - 1) / 6 + 1;
+                        seats.Add(new Seat
+                        {
+                            HallId = hallId,
+                            SeatNumber = i,
+                            RowNumber = rowNumber
+                        });
+                    }
+                    break;
+
+                default:
+                    throw new ArgumentException("Invalid total seat count.");
             }
 
             _context.Seats.AddRange(seats);
@@ -79,29 +117,25 @@ namespace CinemaInfrastructure.Controllers
             {
                 return RedirectToAction("Index", "Cinemas");
             }
-            // Створюємо список кінотеатрів з уже вибраним значенням cinemaId.
+            // Create a list of cinemas with the already selected cinemaId.
             ViewData["CinemaId"] = new SelectList(_context.Cinemas, "Id", "Name", cinemaId);
             return View();
         }
 
         // POST: Halls/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("CinemaId,Name,TotalSeats,Id")] Hall hall)
         {
             var cinema = await _context.Cinemas.FindAsync(hall.CinemaId);
-
             hall.Cinema = cinema;
 
             ModelState.Clear();
             TryValidateModel(hall);
-            // Якщо агрегована сутність Cinema не встановлена, завантажуємо її з бази даних
+
             if (hall.Cinema == null)
             {
                 hall.Cinema = await _context.Cinemas.FirstOrDefaultAsync(c => c.Id == hall.CinemaId);
-                // Очищаємо стан моделі і повторно валідуємо модель
                 ModelState.Clear();
                 TryValidateModel(hall);
             }
@@ -110,8 +144,10 @@ namespace CinemaInfrastructure.Controllers
             {
                 _context.Add(hall);
                 await _context.SaveChangesAsync();
+
+                // Generate seats based on the selected total seats
                 GenerateSeatsForHall(hall.Id, hall.TotalSeats);
-                // Для редиректу отримуємо назву кінотеатру (або використовуємо вже завантажену Hall.Cinema)
+
                 string cinemaName = hall.Cinema?.Name ?? "";
                 return RedirectToAction("Index", new { id = hall.CinemaId, name = cinemaName });
             }
@@ -138,8 +174,6 @@ namespace CinemaInfrastructure.Controllers
         }
 
         // POST: Halls/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("CinemaId,Name,TotalSeats,Id")] Hall hall)

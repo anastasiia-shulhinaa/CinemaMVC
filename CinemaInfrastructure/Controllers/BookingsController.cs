@@ -20,6 +20,30 @@ namespace CinemaInfrastructure.Controllers
             _context = context;
             _userManager = userManager;
         }
+        public IActionResult SelectSeat(int sessionId)
+        {
+            var session = _context.Sessions
+                .Include(s => s.Schedule.Hall)
+                .ThenInclude(h => h.Seats)
+                .FirstOrDefault(s => s.Id == sessionId);
+
+            if (session == null)
+                return NotFound();
+
+            var viewModel = new BookingFormModel
+            {
+                SessionId = sessionId,
+                SessionSeats = session.Schedule.Hall.Seats.Select(seat => new SeatViewModel
+                {
+                    Id = seat.Id,
+                    RowNumber = seat.RowNumber,
+                    SeatNumber = seat.SeatNumber,
+                    IsAvailable = !seat.SessionSeats.Any(b => b.SessionId == sessionId)
+                }).ToList()
+            };
+
+            return View(viewModel);
+        }
 
         [Authorize]
         public async Task<IActionResult> Create(int sessionId)

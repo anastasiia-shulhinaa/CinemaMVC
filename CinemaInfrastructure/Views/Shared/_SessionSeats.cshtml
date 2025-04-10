@@ -1,29 +1,14 @@
 ﻿@model IEnumerable<CinemaInfrastructure.ViewModels.SeatViewModel>
 
-<div class="seats-container">
-    @foreach (var seat in Model)
+@{
+    var seatCount = Model.Count();
+    string layoutName = seatCount switch
     {
-        <div class="seat"
-             data-seat="@($"{seat.RowNumber}-{seat.SeatNumber}")"
-             data-id="@seat.Id"
-             title="Ряд @seat.RowNumber, Місце @seat.SeatNumber">
-            @seat.SeatNumber
-        </div>
-    }
-</div>
+        24 => "_Layout24",
+        36 => "_Layout36",
+        43 => "_Layout43",
+        _ => "_LayoutDefault"
+    };
+}
 
-<style>
-    .seat {
-        display: inline-block;
-        margin: 4px;
-        padding: 8px 12px;
-        background-color: #eee;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-
-        .seat.selected {
-            background-color: #4CAF50;
-            color: white;
-        }
-</style>
+@await Html.PartialAsync(layoutName, Model)
