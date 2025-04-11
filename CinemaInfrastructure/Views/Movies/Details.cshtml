@@ -1,77 +1,427 @@
-﻿@model CinemaDomain.Model.Movie
-
+﻿@model CinemaInfrastructure.ViewModels.MovieWithSessionViewModel
 @{
-    ViewData["Title"] = "Деталі фільму";
+    ViewData["Title"] = "Movie Details & Create Session";
 }
 
-<div>
-    <h1>@Model.Title</h1>
+<main class="container my-5">
+    <h1 class="section-title text-center mb-5">@Model.Movie.Title</h1>
 
-    <div>
-        <p><strong>Опис:</strong> @Model.Description</p>
-        <p><strong>Мова:</strong> @Model.Language</p>
-        <p><strong>Тривалість:</strong> @Model.Duration</p>
-        <p><strong>Рік випуску:</strong> @Model.ReleaseYear</p>
-        <p><strong>Рейтинг:</strong> @Model.Rating</p>
-
-        <p>
-            <strong>Категорії:</strong>
-            @if (Model.Categories != null && Model.Categories.Any())
+    <div class="movie-details-container">
+        <!-- Movie Poster with Trailer Play Button -->
+        <div class="movie-poster position-relative">
+            @if (!string.IsNullOrEmpty(Model.Movie.BannerUrl))
             {
-                @string.Join(", ", Model.Categories.Select(c => c.Name))
+                <img src="@Model.Movie.BannerUrl" alt="@Model.Movie.Title Poster" class="img-fluid rounded shadow" />
+                @if (!string.IsNullOrEmpty(Model.Movie.TrailerLink))
+                {
+                    <button type="button" class="play-slide position-absolute top-50 start-50 translate-middle"
+                            data-link="@Model.Movie.TrailerLink"
+                            aria-label="Play trailer for @Model.Movie.Title">
+                        <img src="~/img/play.png" alt="Play Trailer" class="play-icon" />
+                    </button>
+                }
             }
             else
             {
-                @:Не вказано
+                <div class="no-poster-placeholder">
+                    <p>Постер відсутній</p>
+                </div>
             }
-        </p>
+        </div>
 
-        <p>
-            <strong>Режисери:</strong>
-            @if (Model.Directors != null && Model.Directors.Any())
-            {
-                @string.Join(", ", Model.Directors.Select(d => d.FullName))
-            }
-            else
-            {
-                @:Не вказано
-            }
-        </p>
-
-        <p>
-            <strong>Актори:</strong>
-            @if (Model.Actors != null && Model.Actors.Any())
-            {
-                @string.Join(", ", Model.Actors.Select(a => a.FullName))
-            }
-            else
-            {
-                @:Не вказано
-            }
-        </p>
-
-        <p>
-            <strong>Трейлер:</strong>
-            @if (!string.IsNullOrEmpty(Model.TrailerLink))
-            {
-                <a href="@Model.TrailerLink" target="_blank">Переглянути трейлер</a>
-            }
-            else
-            {
-                @:Не доступно
-            }
-        </p>
+        <!-- Movie Details -->
+        <div class="movie-info card shadow-sm">
+            <div class="card-body">
+                <h2 class="info-title">Інформація про фільм</h2>
+                <div class="info-item">
+                    <strong>Опис:</strong>
+                    <p>@Model.Movie.Description</p>
+                </div>
+                <div class="info-item">
+                    <strong>Мова:</strong>
+                    <span>@Model.Movie.Language</span>
+                </div>
+                <div class="info-item">
+                    <strong>Тривалість:</strong>
+                    <span>@Model.Movie.Duration хв</span>
+                </div>
+                <div class="info-item">
+                    <strong>Рік випуску:</strong>
+                    <span>@Model.Movie.ReleaseYear</span>
+                </div>
+                <div class="info-item">
+                    <strong>Рейтинг:</strong>
+                    <span class="rating">⭐ @Model.Movie.Rating</span>
+                </div>
+                <div class="info-item">
+                    <strong>Категорії:</strong>
+                    <span>
+                        @if (Model.Movie.Categories != null && Model.Movie.Categories.Any())
+                        {
+                            @string.Join(", ", Model.Movie.Categories.Select(c => c.Name))
+                        }
+                        else
+                        {
+                            @:Не вказано
+                        }
+                    </span>
+                </div>
+                <div class="info-item">
+                    <strong>Режисери:</strong>
+                    <span>
+                        @if (Model.Movie.Directors != null && Model.Movie.Directors.Any())
+                        {
+                            @string.Join(", ", Model.Movie.Directors.Select(d => d.FullName))
+                        }
+                        else
+                        {
+                            @:Не вказано
+                        }
+                    </span>
+                </div>
+                <div class="info-item">
+                    <strong>Актори:</strong>
+                    <span>
+                        @if (Model.Movie.Actors != null && Model.Movie.Actors.Any())
+                        {
+                            @string.Join(", ", Model.Movie.Actors.Select(a => a.FullName))
+                        }
+                        else
+                        {
+                            @:Не вказано
+                        }
+                    </span>
+                </div>
+            </div>
+        </div>
     </div>
 
-
-    <div style="margin-top:20px;">
-        <a asp-action="Index" style="padding:10px 20px; background-color:gray; color:white; text-decoration:none; margin-right:10px;">
-            Повернутись до переліку
-        </a>
-
-        <a asp-controller="Sessions" asp-action="CreateUser" 
-           style="padding:10px 20px; background-color:#d63384; color:white; text-decoration:none;">
-            Створити сеанс
-        </a>
+    <!-- Trailer Modal -->
+    <div class="trailer-modal" id="trailerModal">
+        <div class="trailer-modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="trailer-container">
+                <iframe id="trailerVideo" frameborder="0" allowfullscreen></iframe>
+            </div>
+        </div>
     </div>
-</div>
+
+    <h3 class="mb-3 text-center">Створити сеанс</h3>
+
+    <form asp-controller="Sessions" asp-action="CreateSessionFromMovie" method="post">
+        <input type="hidden" name="MovieId" value="@Model.Movie.Id" />
+
+        <div class="form-group mb-3">
+            <label>Тип сеансу</label>
+            <select class="form-control" id="sessionType" name="IsPrivate">
+                <option value="false">Публічний (інші можуть приєднатись)</option>
+                <option value="true">Приватний (весь зал для себе)</option>
+            </select>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="CinemaId">Кінотеатр</label>
+            <select id="CinemaId" name="CinemaId" class="form-control" required>
+                <option value="">-- Оберіть кінотеатр --</option>
+                @foreach (var cinema in Model.Cinemas)
+                {
+                    <option value="@cinema.Id">@cinema.Name</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="HallId">Зал</label>
+            <select id="HallId" name="HallId" class="form-control" required>
+                <option value="">-- Оберіть зал --</option>
+            </select>
+        </div>
+
+        <div class="form-group mb-3">
+            <label for="ScheduleId">Час початку</label>
+            <select id="ScheduleId" name="ScheduleId" class="form-control" required>
+                <option value="">-- Оберіть розклад --</option>
+            </select>
+        </div>
+
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-success">Створити сеанс</button>
+        </div>
+    </form>
+</main>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#CinemaId').change(function () {
+                var cinemaId = $(this).val();
+                $('#HallId').empty().append('<option value="">-- Завантаження... --</option>');
+                $.get('/Sessions/GetHalls', { cinemaId: cinemaId }, function (data) {
+                    $('#HallId').empty().append('<option value="">-- Оберіть зал --</option>');
+                    data.forEach(h => {
+                        $('#HallId').append(`<option value="${h.id}">${h.name}</option>`);
+                    });
+                });
+            });
+
+            $('#HallId').change(function () {
+                var hallId = $(this).val();
+                $('#ScheduleId').empty().append('<option value="">-- Завантаження... --</option>');
+                $.get('/Sessions/GetSchedules', { hallId: hallId }, function (data) {
+                    $('#ScheduleId').empty().append('<option value="">-- Оберіть розклад --</option>');
+                    data.forEach(s => {
+                        $('#ScheduleId').append(`<option value="${s.id}">${s.startTime}</option>`);
+                    });
+                });
+            });
+        });
+    </script>
+}
+
+
+<style>
+    /* General Styles */
+    .container {
+        max-width: 1400px;
+    }
+
+    .section-title {
+        color: #800020;
+        font-weight: 700;
+        font-size: 2rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        position: relative;
+    }
+
+        .section-title::after {
+            content: '';
+            width: 60px;
+            height: 4px;
+            background-color: #800020;
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+    /* Movie Details Container */
+    .movie-details-container {
+        display: flex;
+        gap: 30px;
+        flex-wrap: wrap;
+    }
+
+    .movie-poster {
+        flex: 1;
+        min-width: 300px;
+        max-width: 400px;
+    }
+
+        .movie-poster img {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+    .play-slide {
+        background: rgba(0, 0, 0, 0.5);
+        border: none;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.3s ease;
+    }
+
+        .play-slide:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+    .play-icon {
+        width: 30px;
+        height: 30px;
+    }
+
+    .no-poster-placeholder {
+        width: 100%;
+        height: 500px;
+        background-color: #f0e4d7;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        color: #800020;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    .movie-info {
+        flex: 2;
+        min-width: 300px;
+        background-color: #fefefe; /* Off-white background */
+        border-radius: 12px;
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+
+    .info-title {
+        color: #800020;
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+    }
+
+    .info-item {
+        margin-bottom: 1rem;
+        font-size: 1rem;
+        color: #1a2a44; /* Deep navy instead of grey */
+    }
+
+        .info-item strong {
+            color: #800020;
+            font-weight: 600;
+            display: inline-block;
+            width: 120px;
+        }
+
+        .info-item p {
+            margin: 0;
+            color: #1a2a44; /* Deep navy */
+        }
+
+        .info-item span {
+            color: #1a2a44; /* Deep navy */
+        }
+
+    .rating {
+        color: #d4af37; /* Soft gold for the star */
+    }
+
+    /* Trailer Modal */
+    .trailer-modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .trailer-modal-content {
+        position: relative;
+        width: 80%;
+        max-width: 800px;
+        background-color: #fefefe;
+        border-radius: 12px;
+        padding: 20px;
+    }
+
+    .close-modal {
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        font-size: 2rem;
+        color: #1a2a44; /* Deep navy */
+        cursor: pointer;
+    }
+
+        .close-modal:hover {
+            color: #d4af37; /* Soft gold on hover */
+        }
+
+    .trailer-container {
+        position: relative;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
+        height: 0;
+        overflow: hidden;
+    }
+
+    #trailerVideo {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-transform: uppercase;
+        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+    }
+
+    .btn-secondary {
+        background-color: tan; /* Muted teal instead of grey */
+        border-color: tan;
+        color: #fff;
+    }
+
+        .btn-secondary:hover {
+            background-color: chocolate; /* Darker teal on hover */
+            border-color: chocolate;
+            transform: scale(1.05);
+        }
+
+    .btn-primary {
+        background-color: #800020;
+        border-color: #800020;
+        color: #fff;
+    }
+
+        .btn-primary:hover {
+            background-color: #660018;
+            border-color: #660018;
+            transform: scale(1.05);
+        }
+
+    @@media (max-width: 767px) {
+        .movie-details-container {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .movie-poster {
+            max-width: 100%;
+        }
+
+        .movie-info {
+            width: 100%;
+        }
+
+        .info-item strong {
+            display: block;
+            width: auto;
+            margin-bottom: 0.25rem;
+        }
+
+        .trailer-modal-content {
+            width: 90%;
+        }
+    }
+</style>
+

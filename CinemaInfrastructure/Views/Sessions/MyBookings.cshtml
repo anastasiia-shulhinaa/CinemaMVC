@@ -1,0 +1,54 @@
+﻿@model CinemaInfrastructure.ViewModels.MyBookingsViewModel
+@{
+    ViewData["Title"] = "My Bookings";
+}
+
+<main class="container my-5">
+    <h1 class="section-title text-center mb-5">Мої бронювання</h1>
+
+    <h2>Приватні бронювання</h2>
+    @if (Model.PrivateBookings != null && Model.PrivateBookings.Any())
+    {
+        <div class="list-group">
+            @foreach (var booking in Model.PrivateBookings)
+            {
+                if (booking.Session != null) // Check if Session is not null
+                {
+                    <div class="list-group-item">
+                        <h5>Приватне бронювання для фільму: @booking.Session.Movie.Title</h5>
+                        <p>Дата бронювання: @booking.BookingDate.ToString("dd/MM/yyyy HH:mm")</p>
+                        <p>Кількість місць: @booking.NumberOfSeats</p>
+                        <p>Ціна за приватне бронювання: @(booking.PrivateBookingPrice.HasValue ? booking.PrivateBookingPrice.Value.ToString("C") : "Ціна не вказана")</p>
+                    </div>
+                }
+            }
+        </div>
+    }
+    else
+    {
+        <p>У вас немає приватних бронювань.</p>
+    }
+
+    <h2>Бронювання квитків</h2>
+    @if (Model.TicketBookings != null && Model.TicketBookings.Any())
+    {
+        <div class="list-group">
+            @foreach (var booking in Model.TicketBookings)
+            {
+                if (booking.Session != null) // Check if Session is not null
+                {
+                    <div class="list-group-item">
+                        <h5>Бронювання для фільму: @booking.Session.Movie.Title</h5>
+                        <p>Дата бронювання: @booking.BookingDate.ToString("dd/MM/yyyy HH:mm")</p>
+                        <p>Кількість місць: @booking.NumberOfSeats</p>
+                        <p>Сесія: @booking.Session.Schedule?.StartTime.ToString("HH:mm") ?? "Час не вказано"</p> <!-- Using null conditional operator -->
+                    </div>
+                }
+            }
+        </div>
+    }
+    else
+    {
+        <p>У вас немає бронювань квитків.</p>
+    }
+</main>

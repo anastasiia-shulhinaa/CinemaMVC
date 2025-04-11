@@ -3,16 +3,21 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using CinemaDomain.Model;
 using CinemaInfrastructure.ViewModels;
+using System.Security.Claims;
+using CinemaInfrastructure.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace CinemaInfrastructure.Controllers
 {
     public class SessionsController : Controller
     {
         private readonly DbcinemaContext _context;
+        private readonly UserManager<User> _userManager; // Using IdentityUser
 
-        public SessionsController(DbcinemaContext context)
+        public SessionsController(DbcinemaContext context, UserManager<User> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         [HttpGet]
@@ -134,50 +139,54 @@ namespace CinemaInfrastructure.Controllers
         }
 
 
-        // User Create Session
-        // GET: Display the initial form
-        public IActionResult CreateUser()
+        // View to create a session for a selected movie
+        public async Task<IActionResult> CreateSessionFromMovie(int movieId)
         {
-            var model = new CreateSessionViewModel
+            var movie = await _context.Movies.FindAsync(movieId);
+            if (movie == null) return NotFound();
+
+            var cinemas = await _context.Cinemas
+                .Include(c => c.Halls)
+                .ToListAsync();
+
+            var viewModel = new MovieWithSessionViewModel
             {
-                Movies = _context.Movies.ToList(),   
-                Cinemas = _context.Cinemas.ToList(), 
-                Halls = new List<Hall>(),            
-                Schedules = new List<Schedule>()     
+                Movie = movie,
+                Cinemas = cinemas
             };
 
-            model.Movies = _context.Movies.ToList();
-            model.Cinemas = _context.Cinemas.ToList();
-            model.Halls = model.Halls ?? new List<Hall>();
-            model.Schedules = model.Schedules ?? new List<Schedule>();
-
-            return View(model);
+            return View(viewModel);
         }
 
-
         [HttpPost]
-        public IActionResult CreateUser(CreateSessionViewModel model)
+        public async Task<IActionResult> CreateSessionFromMovie(int movieId, int hallId, int scheduleId, bool isPrivate)
         {
-            if (!ModelState.IsValid)
-            {
-                model.Movies = _context.Movies.ToList();
-                model.Cinemas = _context.Cinemas.ToList();
-                model.Halls = _context.Halls.Where(h => h.CinemaId == model.SelectedCinemaId).ToList();
-                model.Schedules = _context.Schedules.Where(s => s.HallId == model.SelectedHallId).ToList();
-                return View(model);
-            }
-
             var session = new Session
             {
-                MovieId = model.SelectedMovieId.Value,
-                ScheduleId = model.SelectedScheduleId.Value,
+                MovieId = movieId,
+                ScheduleId = scheduleId,
+                CreatedAt = DateTime.Now,
                 IsActive = true
             };
 
             _context.Sessions.Add(session);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
-            return RedirectToAction("Index");
+            if (isPrivate)
+            {
+                var booking = new Booking
+                {
+                    SessionId = session.Id,
+                    IsPrivateBooking = true,
+                    BookingDate = DateTime.Now,
+                    UserId = _userManager.GetUserId(User) // Replace with actual user
+                };
+
+                _context.Bookings.Add(booking);
+                await _context.SaveChangesAsync();
+            }
+
+            return RedirectToAction("MyBookings");
         }
 
 
@@ -295,6 +304,30 @@ namespace CinemaInfrastructure.Controllers
         private bool SessionExists(int id)
         {
             return _context.Sessions.Any(e => e.Id == id);
+        }
+        // My Bookings Action
+        public async Task<IActionResult> MyBookings()
+        {
+            var userId = _userManager.GetUserId(User);
+            if (userId == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var bookings = await _context.Bookings
+                .Include(b => b.Session) // Ensure the session is included
+                .ThenInclude(s => s.Movie) // Include related movie
+                .Include(b => b.SessionSeats)
+                .Where(b => b.UserId == userId)
+                .ToListAsync();
+
+            var model = new MyBookingsViewModel
+            {
+                PrivateBookings = bookings.Where(b => b.IsPrivateBooking).ToList(),
+                TicketBookings = bookings.Where(b => !b.IsPrivateBooking).ToList()
+            };
+
+            return View(model);
         }
     }
 }

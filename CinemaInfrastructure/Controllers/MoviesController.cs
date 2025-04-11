@@ -5,6 +5,7 @@ using X.PagedList;
 using X.PagedList.Mvc.Core;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using CinemaInfrastructure.ViewModels;
 
 
 
@@ -100,6 +101,24 @@ namespace CinemaInfrastructure.Controllers
             return PartialView("_MoviesListPartial", pagedMovies);
         }
 
+        public IActionResult DetailsWithSession(int id)
+        {
+            var movie = _context.Movies
+                .Include(m => m.Categories)
+                .Include(m => m.Directors)
+                .Include(m => m.Actors)
+                .FirstOrDefault(m => m.Id == id);
+
+            var cinemas = _context.Cinemas.ToList();
+
+            var viewModel = new MovieWithSessionViewModel
+            {
+                Movie = movie,
+                Cinemas = cinemas
+            };
+
+            return View("Details", viewModel);
+        }
 
 
         // GET: Movies by Category \ Release year \ Rating 
