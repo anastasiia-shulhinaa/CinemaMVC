@@ -1,41 +1,455 @@
 ﻿@model IEnumerable<CinemaDomain.Model.Schedule>
 
-@{
-    ViewData["Title"] = "Index";
-}
+<main class="container my-5">
+    <h1 class="text-center mb-5 section-title">Розклад Сеансів</h1>
 
-<h1>Index</h1>
+    <!-- Anti-Forgery Token -->
+    @Html.AntiForgeryToken()
 
-<p>
-    <a asp-action="Create" asp-route-hallId="@Model.FirstOrDefault()?.HallId" class="btn btn-primary">Додати розклад</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.StartTime)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Hall)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.StartTime)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Hall.Name)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
+    <!-- Hall Selection -->
+    <form id="hallForm" class="filter-section row g-3 align-items-end mb-5 p-4 rounded shadow-sm">
+        <div class="col-md-3 col-sm-6">
+            <div class="filter-group">
+                <label for="hallDropdown" class="form-label small mb-1">Зал</label>
+                <select class="form-select" id="hallDropdown" name="hallId" onchange="updateCalendar()">
+                    <option value="">-- Виберіть зал --</option>
+                    @foreach (var hall in ViewBag.Halls)
+                    {
+                        <option value="@hall.Id" selected="@(hall.Id == ViewBag.SelectedHallId ? "selected" : null)">@hall.Name (@hall.CinemaName)</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </form>
+
+    <!-- Calendar and Schedule Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Календар Сеансів</h5>
+        </div>
+        <div class="card-body">
+            <div id="calendar"></div>
+            <div class="mt-4" id="scheduleForm" style="display: none;">
+                <h6>Додати розклад для залу</h6>
+                <form id="addScheduleForm">
+                    <input type="hidden" id="hallId" name="hallId" />
+                    <div class="mb-3">
+                        <label class="form-label small mb-1">Часи сеансів (додайте один або кілька, з інтервалом 3 години)</label>
+                        <div id="timeInputs">
+                            <div class="input-group mb-2 time-input-group">
+                                <input type="time" class="form-control" name="startTimes[]" required />
+                                <button type="button" class="btn btn-danger btn-sm remove-time">Видалити</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm mt-2" id="addTime"><i class="fas fa-plus me-1"></i> Додати ще час</button>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="isActive" name="isActive" checked />
+                        <label class="form-check-label" for="isActive">Активний</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Створити розклад на місяць</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- FullCalendar CSS -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet" />
+
+<style>
+    /* General Styles */
+    .container {
+        max-width: 1400px;
+    }
+
+    .section-title {
+        color: #800020;
+        font-weight: 700;
+        font-size: 2.5rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+        .section-title::after {
+            content: '';
+            width: 80px;
+            height: 4px;
+            background-color: #800020;
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+    /* Filter Section */
+    .filter-section {
+        background-color: #fefefe;
+        border: 1px solid #e5e5e5;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .filter-group {
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        color: #800020;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .form-select, .form-control {
+        border: 1px solid #d1d1d1;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+        color: #800020;
+        background-color: #fff;
+        transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+        .form-select:focus, .form-control:focus {
+            border-color: #800020;
+            box-shadow: 0 0 0 0.2rem rgba(128, 0, 32, 0.15);
+            outline: none;
+        }
+
+        .form-select option {
+            color: #800020;
+            background-color: #fff;
+        }
+
+            .form-select option:checked {
+                color: #800020;
+                background-color: #f0e4d7;
+                font-weight: 500;
+            }
+
+            .form-select option:hover {
+                background-color: #f0e4d7;
+            }
+
+    /* Card Styles */
+    .card {
+        background-color: #fefefe;
+        border: 1px solid #e5e5e5;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-header {
+        background-color: #fefefe;
+        border-bottom: 1px solid #e5e5e5;
+        padding: 1rem;
+        color: #800020;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+        color: #800020;
+    }
+
+    /* Buttons */
+    .btn-primary {
+        background-color: #800020;
+        border-color: #800020;
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+    }
+
+        .btn-primary:hover {
+            background-color: #660018;
+            border-color: #660018;
+            transform: scale(1.05);
+        }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+    }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #c82333;
+            transform: scale(1.05);
+        }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    /* Calendar */
+    #calendar {
+        max-width: 100%;
+        margin: 0 auto;
+    }
+
+    .fc-event {
+        background-color: #800020;
+        border-color: #800020;
+        color: #fff;
+        font-size: 0.85rem;
+        border-radius: 4px;
+    }
+
+    /* Form */
+    .time-input-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-check-label {
+        color: #800020;
+    }
+
+    .text-muted {
+        color: #b88b8b !important;
+    }
+
+    /* Responsive */
+    @@media (max-width: 767px) {
+        .filter-section
+
+    {
+        padding: 1.5rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .fc-button {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .time-input-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+        .time-input-group .btn-danger {
+            margin-top: 0.5rem;
+        }
+
+    }
+</style>
+
+@section Scripts {
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Get CSRF token
+            var csrfToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+            var calendarEl = document.getElementById('calendar');
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                events: function (fetchInfo, successCallback, failureCallback) {
+                    var hallId = document.getElementById('hallDropdown').value;
+                    if (hallId) {
+                        fetch(`/Schedules/GetSchedules?hallId=${hallId}`, {
+                            method: 'GET',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        })
+                        .then(response => response.json())
+                        .then(data => successCallback(data))
+                        .catch(error => failureCallback(error));
+                    }
+                },
+                eventClick: function (info) {
+                    var scheduleId = info.event.id;
+                    var startTime = new Date(info.event.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    var isActive = info.event.extendedProps.isActive;
+
+                    var modalHtml = `
+                        <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="scheduleModalLabel">Редагувати сеанс</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="editScheduleForm">
+                                            <input type="hidden" name="id" value="${scheduleId}" />
+                                            <div class="mb-3">
+                                                <label class="form-label">Час початку</label>
+                                                <input type="time" class="form-control" name="startTime" value="${startTime}" required />
+                                            </div>
+                                            <div class="form-check mb-3">
+                                                <input type="checkbox" class="form-check-input" name="isActive" ${isActive ? 'checked' : ''} />
+                                                <label class="form-check-label">Активний</label>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-primary" onclick="saveSchedule(${scheduleId})">Зберегти</button>
+                                        <button type="button" class="btn btn-danger" onclick="deleteSchedule(${scheduleId})">Видалити</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    document.body.insertAdjacentHTML('beforeend', modalHtml);
+                    var modal = new bootstrap.Modal(document.getElementById('scheduleModal'));
+                    modal.show();
+                },
+                locale: 'uk',
+                buttonText: {
+                    today: 'Сьогодні',
+                    month: 'Місяць',
+                    week: 'Тиждень',
+                    day: 'День'
+                }
+            });
+            calendar.render();
+
+            // Update calendar when hall changes
+            window.updateCalendar = function () {
+                var hallId = document.getElementById('hallDropdown').value;
+                document.getElementById('scheduleForm').style.display = hallId ? 'block' : 'none';
+                document.getElementById('hallId').value = hallId;
+                calendar.refetchEvents();
+            };
+
+            // Add more time inputs
+            document.getElementById('addTime').addEventListener('click', function () {
+                var timeInputs = document.getElementById('timeInputs');
+                var newInput = `
+                    <div class="input-group mb-2 time-input-group">
+                        <input type="time" class="form-control" name="startTimes[]" required />
+                        <button type="button" class="btn btn-danger btn-sm remove-time">Видалити</button>
+                    </div>`;
+                timeInputs.insertAdjacentHTML('beforeend', newInput);
+            });
+
+            // Remove time input
+            document.addEventListener('click', function (e) {
+                if (e.target.classList.contains('remove-time')) {
+                    e.target.parentElement.remove();
+                }
+            });
+
+            // Client-side validation for 3-hour gaps
+            function validateTimeInputs() {
+                var timeInputs = document.querySelectorAll('input[name="startTimes[]"]');
+                var times = Array.from(timeInputs).map(input => {
+                    if (!input.value) return null;
+                    var [hours, minutes] = input.value.split(':').map(Number);
+                    return hours * 60 + minutes;
+                }).filter(t => t !== null);
+
+                times.sort((a, b) => a - b);
+
+                for (var i = 0; i < times.length - 1; i++) {
+                    if (times[i + 1] - times[i] < 180) { // 180 minutes = 3 hours
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            // Create schedules
+            document.getElementById('addScheduleForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                if (!validateTimeInputs()) {
+                    alert('Часи сеансів повинні мати інтервал щонайменше 3 години (наприклад, 10:00 і 13:00).');
+                    return;
+                }
+
+                var formData = new FormData(this);
+                var startTimes = formData.getAll('startTimes[]');
+                var hallId = formData.get('hallId');
+                var isActive = formData.get('isActive') === 'on';
+
+                fetch('/Schedules/Create', {
+                    method: 'POST',
+                    body: JSON.stringify({ hallId: hallId, startTimes: startTimes, isActive: isActive }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': csrfToken
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(text); });
+                    }
+                    calendar.refetchEvents();
+                    document.getElementById('addScheduleForm').reset();
+                    document.getElementById('timeInputs').innerHTML = `
+                        <div class="input-group mb-2 time-input-group">
+                            <input type="time" class="form-control" name="startTimes[]" required />
+                            <button type="button" class="btn btn-danger btn-sm remove-time">Видалити</button>
+                        </div>`;
+                })
+                .catch(error => alert('Помилка створення розкладу: ' + error.message));
+            });
+
+            function saveSchedule(id) {
+                var form = document.getElementById('editScheduleForm');
+                var formData = new FormData(form);
+                var startTime = formData.get('startTime');
+                var isActive = formData.get('isActive') === 'on';
+
+                fetch(`/Schedules/Edit/${id}`, {
+                    method: 'POST',
+                    body: JSON.stringify({ id: id, startTime: startTime, isActive: isActive }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': csrfToken
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.text().then(text => { throw new Error(text); });
+                    }
+                    calendar.refetchEvents();
+                    bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
+                    document.getElementById('scheduleModal').remove();
+                })
+                .catch(error => alert('Помилка оновлення розкладу: ' + error.message));
+            }
+
+            function deleteSchedule(id) {
+                if (confirm('Ви впевнені, що хочете видалити цей сеанс?')) {
+                    fetch(`/Schedules/Delete/${id}`, {
+                        method: 'POST',
+                        headers: {
+                            'RequestVerificationToken': csrfToken
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.text().then(text => { throw new Error(text); });
+                        }
+                        calendar.refetchEvents();
+                        bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
+                        document.getElementById('scheduleModal').remove();
+                    })
+                    .catch(error => alert('Помилка видалення розкладу: ' + error.message));
+                }
+            }
+
+            // Initialize form visibility
+            updateCalendar();
+        });
+    </script>
 }
-    </tbody>
-</table>

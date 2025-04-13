@@ -1,214 +1,127 @@
 ﻿@model IEnumerable<CinemaDomain.Model.Session>
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<User> UserManager
+@inject IHttpContextAccessor HttpContextAccessor
 
 @{
     ViewData["Title"] = "FilMix Cinema - Now Showing & Coming Soon";
+    bool isAdmin = User.IsInRole("admin");
+    bool isAdminInUserMode = isAdmin && Context.Session?.GetString("AdminMode") == "user";
 }
 
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"]</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://bootswatch.com/5/lux/bootstrap.min.css">
-    <style>
-        .movie-card {
-            position: relative;
-            overflow: hidden;
-            border-radius: 10px;
-        }
-
-            .movie-card img {
-                width: 100%;
-                border-radius: 10px;
-                object-fit: cover;
-                max-height: 250px;
-            }
-
-        .custom-session-btn {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px solid white;
-            color: black;
-            font-size: 20px;
-            font-weight: bold;
-            padding: 10px 25px;
-            border-radius: 30px;
-            backdrop-filter: blur(5px);
-            transition: all 0.3s ease-in-out;
-            cursor: pointer;
-            box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.4);
-            text-decoration: none !important;
-        }
-
-            .custom-session-btn:hover {
-                background: #800020;
-                color: white;
-                border-color: #800020;
-                transform: scale(1.05);
-            }
-
-        .name-section-vertical {
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            font-size: 1.1rem;
-            color: #a29a91;
-            margin-right: 10px;
-            font-weight: 400;
-            margin-top: 30px; /* Adjust vertical position */
-        }
-
-            .name-section-vertical strong {
-                color: #5c534c;
-            }
-
-        .film-slider {
-            width: 270px;
-            max-height: 500px;
-            margin-right: 20px;
-        }
-
-        .poster {
-            position: relative;
-        }
-
-            .poster img {
-                border-radius: 12px;
-                height: 350px;
-                object-fit: cover;
-                loading: lazy; /* Added lazy loading */
-            }
-
-        .play-slide {
-            z-index: 2;
-            cursor: pointer;
-            opacity: 0.85;
-            transition: opacity 0.3s ease;
-            background: none; /* Make button background transparent */
-            border: none;
-            padding: 0;
-        }
-
-            .play-slide:hover {
-                opacity: 1;
-            }
-
-            .play-slide img {
-                height: 50px; /* Adjust size of play icon */
-                width: 50px;
-            }
-
-        .data {
-            font-size: 1rem;
-            color: #5c534c;
-            margin-top: 10px;
-        }
-
-        .ticket-icon img {
-            height: 22px;
-            margin-top: 5px;
-        }
-
-        .now-playing-slider {
-            overflow-x: auto;
-            scroll-behavior: smooth;
-            white-space: nowrap;
-            padding-bottom: 10px;
-        }
-
-        .owl-stage {
-            display: flex;
-        }
-
-        .owl-item {
-            display: inline-block;
-        }
-
-        .visually-hidden {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="container mt-4">
-        <section class="row mb-5">
-            <div class="col">
-                <div class="movie-card">
-                    <img src="/cinema_icon1.jpg" alt="Promotional banner for FilMix Cinema">
-                    <a asp-controller="Movies" asp-action="Index" class="custom-session-btn">
-                        Створити кіносеанс
-                    </a>
-                </div>
+<div class="home-content">
+    @if (isAdmin && !isAdminInUserMode)
+    {
+        <!-- Admin Dashboard -->
+        <section class="admin-dashboard">
+            <h2 class="section-title"><i class="fas fa-user-shield"></i> Панель керування</h2>
+            <div class="dashboard-actions">
+                <a asp-controller="Movies" asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> Додати фільм</a>
+                <a asp-controller="Cinemas" asp-action="Index" class="btn btn-primary"><i class="fas fa-building"></i> Кінотеатри</a>
+                <a asp-controller="Sessions" asp-action="Create" class="btn btn-primary"><i class="fas fa-clock"></i> Сеанси</a>
             </div>
         </section>
-
-        <aside class="d-flex align-items-start">
-            <div class="name-section-vertical text-center">
-                <h3>Зараз в прокаті</h3>
-                <strong>FilMix</strong>
+    }
+    else
+    {
+        <!-- User or Guest View -->
+        <section class="welcome-section">
+            <h2 class="section-title"><i class="fas fa-film"></i> Вітаємо на FilMix</h2>
+            <div class="movie-card mb-4">
+                <img src="/cinema_icon1.jpg" alt="Promotional banner for FilMix Cinema">
+                <a asp-controller="Movies" asp-action="Index" class="custom-session-btn">
+                    Створити сеанс
+                </a>
             </div>
 
-            <section class="now-playing-slider w-100">
-                <h3 class="visually-hidden">Coming Soon Movies</h3>
-                <div class="owl-stage">
-                    @foreach (var session in Model)
-                    {
-                        var movie = session.Movie;
-                        var date = session.Schedule?.StartTime ?? DateTime.Now;
-                        var startDate = date.ToString("d MMMM", new System.Globalization.CultureInfo("uk-UA"));
+            <aside class="d-flex align-items-start">
+                <div class="name-section-vertical text-center">
+                    <h3>Зараз у прокаті</h3>
+                    <strong>FilMix</strong>
+                </div>
 
-                        <article class="owl-item">
-                            <div class="film-slider text-center">
-                                <div class="poster position-relative">
-                                    <button type="button" class="play-slide playYoutube1 position-absolute top-50 start-50 translate-middle" data-link="@movie.TrailerLink" aria-label="Play trailer for @movie.Title">
-                                        <img src="~/img/play.png" alt="Play" />
-                                    </button>
-                                    <a href="/Movies/Details/@movie.Id">
-                                        <img src="@movie.BannerUrl" alt="@movie.Title poster" class="img-fluid" loading="lazy" />
-                                    </a>
-                                </div>
+                <section class="now-playing-slider w-100">
+                    <h3 class="visually-hidden">Now Playing Movies</h3>
+                    <div class="owl-stage">
+                        @foreach (var session in Model)
+                        {
+                            var movie = session.Movie;
+                            var date = session.Schedule?.StartTime ?? DateTime.Now;
+                            var startDate = date.ToString("d MMMM", new System.Globalization.CultureInfo("uk-UA"));
 
-                                <div class="data">
-                                    @startDate
-                                    <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id" class="btn btn-link">інші дати</a>
+                            <article class="owl-item">
+                                <div class="film-slider text-center">
+                                    <div class="poster position-relative">
+                                        <button type="button" class="play-slide playYoutube1 position-absolute top-50 start-50 translate-middle" data-link="@movie.TrailerLink" aria-label="Play trailer for @movie.Title">
+                                            <img src="~/img/play.png" alt="Play" />
+                                        </button>
+                                        <a href="/Movies/Details/@movie.Id">
+                                            <img src="@movie.BannerUrl" alt="@movie.Title poster" class="img-fluid" loading="lazy" />
+                                        </a>
+                                    </div>
 
-                                    <div class="ticket-icon">
-                                        <img src="https://www.palladium-cinema.com.ua/desktop/img/bilet.png" alt="Ticket icon" />
+                                    <div class="data">
+                                        @startDate
+                                        <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id" class="btn btn-link">Інші дати</a>
+
+                                        <div class="ticket-icon">
+                                            <img src="https://www.palladium-cinema.com.ua/desktop/img/bilet.png" alt="Ticket icon" />
+                                        </div>
                                     </div>
                                 </div>
-                        </article>
-                    }
-                </div>
-            </section>
-        </aside>
-    </div>
+                            </article>
+                        }
+                    </div>
+                </section>
+            </aside>
 
+            @if (User.Identity.IsAuthenticated)
+            {
+                <div class="cinema-selection mt-3">
+                    <h3><i class="fas fa-theater-masks"></i> Кінотеатр</h3>
+                    <div class="dropdown cinema-dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="cinemaDropdownHome" data-bs-toggle="dropdown" aria-expanded="false">
+                            Виберіть кінотеатр
+                        </button>
+                        <ul class="dropdown-menu" id="cinemaListHome" aria-labelledby="cinemaDropdownHome">
+                            <!-- Populated via JavaScript -->
+                        </ul>
+                    </div>
+                </div>
+            }
+        </section>
+    }
+</div>
+
+@section Scripts {
     <script>
-        document.querySelectorAll('.playYoutube1').forEach(el => {
-            el.addEventListener('click', () => {
-                const url = el.getAttribute('data-link');
-                if (url) {
-                    window.open(url, '_blank');
-                }
+        document.addEventListener("DOMContentLoaded", function () {
+            // Play trailer buttons
+            document.querySelectorAll('.playYoutube1').forEach(el => {
+                el.addEventListener('click', () => {
+                    const url = el.getAttribute('data-link');
+                    if (url) {
+                        window.open(url, '_blank');
+                    }
+                });
             });
+
+            // Cinema dropdown
+        @if (User.Identity.IsAuthenticated)
+        {
+            @:fetch("/api/cinemas")
+            @:.then(response => response.json())
+            @:.then(data => {
+            @:    const dropdown = document.getElementById("cinemaListHome");
+            @:    dropdown.innerHTML = "";
+            @:    data.forEach(cinema => {
+            @:        const item = document.createElement("li");
+            @:        item.innerHTML = `<a class="dropdown-item cinema-selection" href="#" data-value="${cinema.id}">${cinema.name}</a>`;
+            @:        dropdown.appendChild(item);
+            @:    });
+            @:})
+            @:.catch(error => console.error("Error loading cinemas:", error));
+        }
         });
     </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
-
-
-
+}

@@ -46,17 +46,17 @@
         position: relative;
     }
 
-    .section-title::after {
-        content: '';
-        width: 80px;
-        height: 4px;
-        background-color: #800020;
-        position: absolute;
-        bottom: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-        border-radius: 2px;
-    }
+        .section-title::after {
+            content: '';
+            width: 80px;
+            height: 4px;
+            background-color: #800020;
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
 
     /* Filter Section */
     .filter-section {
@@ -86,59 +86,71 @@
         transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     }
 
-    .form-select:focus {
-        border-color: #800020;
-        box-shadow: 0 0 0 0.2rem rgba(128, 0, 32, 0.15);
-        outline: none;
-    }
+        .form-select:focus {
+            border-color: #800020;
+            box-shadow: 0 0 0 0.2rem rgba(128, 0, 32, 0.15);
+            outline: none;
+        }
 
-    .form-select option {
-        color: #800020;
-        background-color: #fff;
-    }
+        .form-select option {
+            color: #800020;
+            background-color: #fff;
+        }
 
-    .form-select option:checked {
-        color: #800020;
-        background-color: #f0e4d7;
-        font-weight: 500;
-    }
+            .form-select option:checked {
+                color: #800020;
+                background-color: #f0e4d7;
+                font-weight: 500;
+            }
 
-    .form-select option:hover {
-        background-color: #f0e4d7;
+            .form-select option:hover {
+                background-color: #f0e4d7;
+            }
+
+    /* Alert */
+    .alert-warning {
+        background-color: #fff3cd;
+        border-color: #ffeeba;
+        color: #856404;
     }
 
     @@media (max-width: 767px) {
-        .filter-section {
-            padding: 1.5rem;
-        }
+        .filter-section
 
-        .filter-group {
-            margin-bottom: 1rem;
-        }
+    {
+        padding: 1.5rem;
+    }
+
+    .filter-group {
+        margin-bottom: 1rem;
+    }
+
     }
 </style>
 
-<script>
-    function updateCinemas() {
-        const form = document.getElementById('filtersForm');
-        const formData = new FormData(form);
-        const params = new URLSearchParams(formData).toString();
+@section Scripts {
+    <script>
+        function updateCinemas() {
+            const form = document.getElementById('filtersForm');
+            const formData = new FormData(form);
+            const params = new URLSearchParams(formData).toString();
 
-        fetch(`/Cinemas/Filter?${params}`, {
-            method: 'GET',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.text();
-        })
-        .then(html => {
-            document.getElementById('cinemasList').innerHTML = html;
-        })
-        .catch(error => {
-            console.error('There was a problem with the fetch operation:', error);
-        });
-    }
-</script>
+            fetch(`/Cinemas/Filter?${params}`, {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text();
+            })
+            .then(html => {
+                document.getElementById('cinemasList').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+            });
+        }
+    </script>
+}

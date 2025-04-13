@@ -3,13 +3,13 @@
 <div class="row">
     @foreach (var item in Model)
     {
-        var cinema = item.Cinema; // Access the Cinema object
+        var cinema = item.Cinema;
         <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
+            <div class="card">
                 <!-- Cinema Photo -->
                 @if (!string.IsNullOrEmpty(cinema.PhotoUrl))
                 {
-                    <img src="@cinema.PhotoUrl" class="card-img-top" alt="@cinema.Name" style="height: 200px; object-fit: cover; border-top-left-radius: 8px; border-top-right-radius: 8px;" />
+                    <img src="@cinema.PhotoUrl" class="card-img-top" alt="@cinema.Name" />
                 }
 
                 <div class="card-header">
@@ -50,12 +50,12 @@
                     </div>
 
                     <!-- List of Halls -->
-                    <h6>Зали <span class="badge bg-info ms-2">@cinema.Halls.Count</span></h6>
+                    <h6>Зали (@cinema.Halls.Count)</h6>
                     @if (cinema.Halls.Any())
                     {
                         <div class="table-responsive">
-                            <table class="table table-striped table-bordered">
-                                <thead class="thead-dark">
+                            <table class="table table-striped">
+                                <thead>
                                     <tr>
                                         <th>Назва</th>
                                         <th>Кількість місць</th>
@@ -69,8 +69,8 @@
                                             <td>@hall.Name</td>
                                             <td>@hall.TotalSeats</td>
                                             <td>
-                                                <a asp-controller="Halls" asp-action="Schedule" asp-route-id="@hall.Id" class="btn btn-info btn-sm">Розклад</a>
-                                                <a asp-controller="Halls" asp-action="Edit" asp-route-id="@hall.Id" class="btn btn-warning btn-sm">Редагувати</a>
+                                                <a asp-controller="Schedules" asp-action="Index" asp-route-hallId="@hall.Id" class="btn btn-primary btn-sm">Розклад</a>
+                                                <a asp-controller="Halls" asp-action="Edit" asp-route-id="@hall.Id" class="btn btn-primary btn-sm">Редагувати</a>
                                                 <a asp-controller="Halls" asp-action="Delete" asp-route-id="@hall.Id" class="btn btn-danger btn-sm" onclick="return confirm('Ви впевнені, що хочете видалити зал @hall.Name?');">Видалити</a>
                                             </td>
                                         </tr>
@@ -86,8 +86,12 @@
 
                     <!-- Create Hall Button -->
                     <a asp-controller="Halls" asp-action="Create" asp-route-cinemaId="@cinema.Id" class="btn btn-primary mt-2">
-                        <i class="fas fa-plus me-2"></i>Створити зал
+                        <i class="fas fa-plus me-1"></i> Створити зал
                     </a>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <a asp-controller="Cinemas" asp-action="Details" asp-route-id="@cinema.Id" class="btn btn-primary">Деталі кінотеатру</a>
+                    <a asp-controller="Cinemas" asp-action="Edit" asp-route-id="@cinema.Id" class="btn btn-primary">Редагувати кінотеатр</a>
                 </div>
             </div>
         </div>
@@ -95,159 +99,135 @@
 </div>
 
 <style>
+    /* Card Styles */
     .card {
         background-color: #fefefe;
         border: 1px solid #e5e5e5;
         border-radius: 10px;
         box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s ease-in-out;
     }
 
-    .card:hover {
-        transform: translateY(-5px);
-    }
-
-    .card-header {
-        background-color: #1a2a44;
-        color: #fff;
-        padding: 1rem;
-        border-bottom: none;
+    .card-img-top {
+        height: 200px;
+        object-fit: cover;
         border-top-left-radius: 8px;
         border-top-right-radius: 8px;
     }
 
+    .card-header {
+        background-color: #fefefe;
+        border-bottom: 1px solid #e5e5e5;
+        padding: 1rem;
+        color: #800020;
+    }
+
     .card-body {
         padding: 1.5rem;
-        color: #333;
-    }
-
-    .card-body p {
-        margin-bottom: 0.75rem;
-    }
-
-    .card-body a {
         color: #800020;
-        text-decoration: none;
-        transition: color 0.2s ease-in-out;
     }
 
-    .card-body a:hover {
-        color: #660018;
+        .card-body p {
+            margin-bottom: 0.75rem;
+        }
+
+        .card-body a {
+            color: #800020;
+            text-decoration: none;
+        }
+
+            .card-body a:hover {
+                color: #660018;
+            }
+
+    .card-footer {
+        background-color: #fefefe;
+        border-top: 1px solid #e5e5e5;
+        padding: 1rem;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
     }
 
+    /* Map Container */
     .map-container {
         position: relative;
         overflow: hidden;
         border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
+    /* Table Styles */
     .table-responsive {
         overflow-x: auto;
     }
 
     .table {
         background-color: #fff;
+        border: 1px solid #e5e5e5;
         border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         margin-bottom: 0;
     }
 
-    .thead-dark {
-        background-color: #1a2a44;
-        color: #fff;
+        .table thead {
+            background-color: #fefefe;
+            color: #800020;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .table th {
+            font-weight: 500;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .table td {
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+            color: #800020;
+        }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #f9fafb;
     }
 
-    .thead-dark th {
-        font-weight: 500;
-        padding: 12px;
-        text-align: center;
-    }
-
-    .table td {
-        padding: 12px;
-        text-align: center;
-        vertical-align: middle;
-        color: #333;
-    }
-
+    /* Buttons */
     .btn-primary {
         background-color: #800020;
         border-color: #800020;
         color: #fff;
         border-radius: 8px;
-        padding: 0.5rem 1.25rem;
+        padding: 0.5rem 1rem;
         font-weight: 500;
-        text-transform: uppercase;
         transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
     }
 
-    .btn-primary:hover {
-        background-color: #660018;
-        border-color: #660018;
-        transform: scale(1.05);
-    }
-
-    .btn-info {
-        background-color: #17a2b8;
-        border-color: #17a2b8;
-        color: #fff;
-        border-radius: 8px;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.875rem;
-        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-    }
-
-    .btn-info:hover {
-        background-color: #138496;
-        border-color: #117a8b;
-        transform: scale(1.05);
-    }
-
-    .btn-warning {
-        background-color: #ffc107;
-        border-color: #ffc107;
-        color: #212529;
-        border-radius: 8px;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.875rem;
-        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-    }
-
-    .btn-warning:hover {
-        background-color: #e0a800;
-        border-color: #d39e00;
-        transform: scale(1.05);
-    }
+        .btn-primary:hover {
+            background-color: #660018;
+            border-color: #660018;
+            transform: scale(1.05);
+        }
 
     .btn-danger {
         background-color: #dc3545;
         border-color: #dc3545;
         color: #fff;
         border-radius: 8px;
-        padding: 0.25rem 0.5rem;
-        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
         transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
     }
 
-    .btn-danger:hover {
-        background-color: #c82333;
-        border-color: #bd2130;
-        transform: scale(1.05);
-    }
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #c82333;
+            transform: scale(1.05);
+        }
 
     .btn-sm {
         padding: 0.25rem 0.5rem;
-        font-size: 0.875rem;
+        font-size: 0.85rem;
     }
 
-    .badge {
-        font-size: 0.875rem;
-        padding: 0.5em 0.75em;
-        background-color: #17a2b8;
-    }
-
+    /* Misc */
     .text-muted {
         color: #b88b8b !important;
     }
@@ -257,14 +237,32 @@
         vertical-align: middle;
     }
 
+    /* Responsive Design */
     @@media (max-width: 767px) {
-        .card-body {
-            padding: 1rem;
+        .card-body
+
+    {
+        padding: 1rem;
+    }
+
+    .map-container iframe {
+        height: 150px;
+    }
+
+    .card-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+        .card-footer .btn {
+            width: 100%;
         }
 
-        .map-container iframe {
-            height: 150px;
-        }
+    .table th,
+    .table td {
+        font-size: 0.85rem;
+        padding: 8px;
+    }
+
     }
 </style>
-
