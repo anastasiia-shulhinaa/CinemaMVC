@@ -1,31 +1,157 @@
 ﻿@model CinemaDomain.Model.Cinema
 
-<h2>Додати кінотеатр</h2>
+@{
+    ViewData["Title"] = "Додати кінотеатр";
+}
 
-<form asp-action="Create" method="post">
-    <div class="form-group">
-        <label asp-for="Name"></label>
-        <input asp-for="Name" class="form-control" />
-        <span asp-validation-for="Name" class="text-danger"></span>
+<div class="container-fluid py-4">
+    <h1 class="mb-4 text-primary">Додати кінотеатр</h1>
+
+    <partial name="_Notification" />
+
+    <div class="card shadow-sm p-4">
+        <form asp-action="Create" method="post" enctype="multipart/form-data">
+            <div class="form-group mb-3">
+                <label asp-for="Name" class="form-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="City" class="form-label"></label>
+                <input asp-for="City" class="form-control" />
+                <span asp-validation-for="City" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Address" class="form-label"></label>
+                <input asp-for="Address" class="form-control" placeholder="Вулиця, номер будинку" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="PhoneNumber" class="form-label"></label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        +38
+                        <img src="https://flagcdn.com/w20/ua.png" alt="Ukrainian Flag" class="ms-1" style="width: 20px; vertical-align: middle;" />
+                    </span>
+                    <input asp-for="PhoneNumber" class="form-control" placeholder="0501234567" />
+                </div>
+                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="PhotoUrl" class="form-label">Фото</label>
+                <input type="file" name="photoFile" class="form-control" accept="image/*" />
+                <span class="text-danger" asp-validation-for="PhotoUrl"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Description" class="form-label"></label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="TotalCinemaHalls" class="form-label"></label>
+                <input asp-for="TotalCinemaHalls" type="number" class="form-control" />
+                <span asp-validation-for="TotalCinemaHalls" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary-custom"><i class="fas fa-save me-2"></i>Додати</button>
+                <a asp-action="Index" class="btn btn-secondary-custom"><i class="fas fa-arrow-left me-2"></i>Назад</a>
+            </div>
+        </form>
     </div>
+</div>
 
-    <div class="form-group">
-        <label asp-for="Address"></label>
-        <input asp-for="Address" class="form-control" />
-        <span asp-validation-for="Address" class="text-danger"></span>
-    </div>
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelector('input[name="PhoneNumber"]').addEventListener('input', function (e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+    </script>
+}
 
-    <div class="form-group">
-        <label asp-for="Description"></label>
-        <textarea asp-for="Description" class="form-control"></textarea>
-        <span asp-validation-for="Description" class="text-danger"></span>
-    </div>
+<style>
+    body {
+        background-color: #f5f5f5;
+    }
 
-    <div class="form-group">
-        <label asp-for="TotalCinemaHalls"></label>
-        <input asp-for="TotalCinemaHalls" type="number" class="form-control" />
-        <span asp-validation-for="TotalCinemaHalls" class="text-danger"></span>
-    </div>
+    h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1a2a44;
+    }
 
-    <button type="submit" class="btn btn-primary mt-3">Додати</button>
-</form>
+    .text-primary {
+        color: #1a2a44 !important;
+    }
+
+    .card {
+        background-color: #fff;
+        border-radius: 8px;
+        border: none;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #666;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border-color: #e0e4d7;
+        padding: 0.5rem 1rem;
+        transition: border-color 0.2s ease;
+    }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #1a2a44;
+            box-shadow: 0 0 0 0.2rem rgba(26, 42, 68, 0.25);
+        }
+
+    .input-group-text {
+        background-color: #f5f5f5;
+        border-color: #e0e4d7;
+        color: #666;
+        border-radius: 8px 0 0 8px;
+    }
+
+    .btn-primary-custom {
+        background-color: #1a2a44;
+        border-color: #1a2a44;
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+        .btn-primary-custom:hover {
+            background-color: #800020;
+            border-color: #800020;
+            transform: scale(1.05);
+        }
+
+    .btn-secondary-custom {
+        background-color: #666;
+        border-color: #666;
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+        .btn-secondary-custom:hover {
+            background-color: #555;
+            border-color: #555;
+            transform: scale(1.05);
+        }
+</style>

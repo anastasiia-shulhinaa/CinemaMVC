@@ -130,6 +130,7 @@ namespace CinemaInfrastructure.Controllers
             string title,
             int? page)
         {
+
             int pageSize = 18; // 6 фільмів в ряд, 3 рядки на сторінці
             int pageNumber = page ?? 1;
 
@@ -206,9 +207,9 @@ namespace CinemaInfrastructure.Controllers
             }
 
             var movie = await _context.Movies
-                .Include(m => m.Categories)   
-                .Include(m => m.Actors)       
-                .Include(m => m.Directors)     
+                .Include(m => m.Categories)
+                .Include(m => m.Actors)
+                .Include(m => m.Directors)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (movie == null)

@@ -1,22 +1,29 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using CinemaInfrastructure.Models;
 using CinemaInfrastructure.Enums;
 using CinemaInfrastructure.ViewModels;
+using Microsoft.Extensions.Logging; // For logging
 
 namespace CinemaInfrastructure.Controllers
 {
     public class AccountController : Controller
     {
-
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly ILogger<AccountController> _logger; // Add logger
 
-        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager)
+        public AccountController(
+            UserManager<User> userManager,
+            SignInManager<User> signInManager,
+            ILogger<AccountController> logger)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _logger = logger;
         }
+
         // GET: /Account/Register
         [HttpGet]
         public IActionResult Register()
@@ -26,6 +33,7 @@ namespace CinemaInfrastructure.Controllers
 
         // POST: /Account/Register
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!ModelState.IsValid)
@@ -45,6 +53,7 @@ namespace CinemaInfrastructure.Controllers
 
             if (result.Succeeded)
             {
+                _logger.LogInformation("User {Username} registered successfully.", model.Username);
                 return RedirectToAction("Login"); // Redirect to Login page
             }
 
@@ -57,8 +66,7 @@ namespace CinemaInfrastructure.Controllers
             foreach (var error in result.Errors)
             {
                 ModelState.AddModelError(string.Empty, error.Description);
-                // Log error messages for further investigation
-                Console.WriteLine($"Registration Error: {error.Description}"); // Or use a logging framework
+                _logger.LogWarning("Registration error for {Username}: {Error}", model.Username, error.Description);
             }
 
             return View(model);
@@ -73,7 +81,6 @@ namespace CinemaInfrastructure.Controllers
                 ReturnUrl = returnUrl // Set the ReturnUrl in the ViewModel
             };
             return View(model);
-
         }
 
         // POST: /Account/Login
@@ -84,29 +91,44 @@ namespace CinemaInfrastructure.Controllers
             if (!ModelState.IsValid)
             {
                 var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+                _logger.LogWarning("Login validation failed: {Errors}", string.Join(", ", errors));
                 return View(model);
             }
-            
-            var result = await _signInManager.PasswordSignInAsync(model.Username, model.Password, model.RememberMe, false);
+
+            // Check if the user exists
+            var user = await _userManager.FindByNameAsync(model.Username);
+            if (user == null)
+            {
+                _logger.LogWarning("Login attempt with non-existent username: {Username}", model.Username);
+                ViewData["Notification"] = new Notification
+                {
+                    Type = NotificationType.Error,
+                    Message = "User does not exist."
+                };
+                return View(model);
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(model.Username, model.Password, model.RememberMe, lockoutOnFailure: false);
 
             if (result.Succeeded)
             {
-                // перевіряємо, чи належить URL додатку
+                _logger.LogInformation("User {Username} logged in successfully.", model.Username);
+                // Check if the ReturnUrl is valid and local
                 if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                 {
                     return Redirect(model.ReturnUrl);
                 }
                 else
                 {
-
-                    return RedirectToAction("Index", "Home"); // Redirect after success
+                    return RedirectToAction("Index", "Home"); // Default redirect
                 }
             }
 
+            _logger.LogWarning("Failed login attempt for {Username}: Invalid password.", model.Username);
             ViewData["Notification"] = new Notification
             {
                 Type = NotificationType.Error,
-                Message = "Invalid username or password."
+                Message = "Invalid password."
             };
 
             return View(model);
@@ -117,9 +139,55 @@ namespace CinemaInfrastructure.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
+            var username = User.Identity?.Name ?? "Unknown";
             await _signInManager.SignOutAsync();
+            HttpContext.Session.Remove("AdminMode"); // Clear session on logout
+            _logger.LogInformation("User {Username} logged out successfully.", username);
             return RedirectToAction("Index", "Home");
         }
-    }
 
+        // POST: /Account/ToggleAdminMode
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "admin")]
+        public IActionResult ToggleAdminMode()
+        {
+            // Align with _Layout.cshtml: "user" for user mode, null for admin mode
+            var currentMode = HttpContext.Session.GetString("AdminMode");
+            if (currentMode == "user")
+            {
+                HttpContext.Session.Remove("AdminMode"); // Switch to admin mode
+                _logger.LogInformation("User {Username} switched to admin mode.", User.Identity?.Name);
+            }
+            else
+            {
+                HttpContext.Session.SetString("AdminMode", "user"); // Switch to user mode
+                _logger.LogInformation("User {Username} switched to user mode.", User.Identity?.Name);
+            }
+            return RedirectToAction("Index", "Home");
+        }
+
+        // GET: /Account/Profile
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> Profile()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null)
+            {
+                _logger.LogWarning("Profile access failed: User not found.");
+                return RedirectToAction("Login");
+            }
+
+            var model = new ProfileViewModel
+            {
+                Username = user.UserName,
+                Email = user.Email,
+                PhoneNumber = user.PhoneNumber,
+                DateOfBirth = user.DateOfBirth
+            };
+
+            return View(model);
+        }
+    }
 }

@@ -1,35 +1,39 @@
-﻿@model IEnumerable<CinemaInfrastructure.ViewModels.SeatViewModel>
+﻿@model IEnumerable<CinemaInfrastructure.ViewModels.HallSeatPreviewViewModel>
 
-@{
-    var grouped = Model.GroupBy(s => s.RowNumber).OrderBy(g => g.Key);
+@if (Model == null)
+{
+    <p class="text-danger">Помилка: схема залу недоступна.</p>
 }
+else
+{
+    var grouped = Model.GroupBy(s => s.RowNumber).OrderBy(g => g.Key);
 
-<div class="hall-structure">
-    <link href="~/css/hall-layout.css" rel="stylesheet" />
-    <span class="screen">
-        <img src="https://www.palladium-cinema.com.ua/desktop/img/screen.png" alt="Екран" />
-    </span>
+    <div class="hall-structure">
+        <span class="screen">
+            <img src="https://www.palladium-cinema.com.ua/desktop/img/screen.png" alt="Екран" />
+        </span>
 
-    <div class="seats-container">
-        @foreach (var row in grouped)
-        {
-            <div class="row">
-                <span class="number-of-row">@row.Key</span>
-                <div class="seats">
-                    @foreach (var seat in row.OrderBy(s => s.SeatNumber))
-                    {
-                        <div class="seat"
-                             data-seat="@($"Номер місця - {seat.RowNumber}, Номер ряду - {seat.SeatNumber}")"
-                             data-id="@seat.Id"
-                             title="Ряд @seat.RowNumber, Місце @seat.SeatNumber">
-                            @seat.SeatNumber
-                        </div>
-                    }
+        <div class="seats-container">
+            @foreach (var row in grouped)
+            {
+                <div class="row">
+                    <span class="number-of-row">@row.Key</span>
+                    <div class="seats">
+                        @foreach (var seat in row.OrderBy(s => s.SeatNumber))
+                        {
+                            <div class="seat"
+                                 data-seat="@($"Номер місця - {seat.RowNumber}, Номер ряду - {seat.SeatNumber}")"
+                                 data-id="@seat.Id"
+                                 title="Ряд @seat.RowNumber, Місце @seat.SeatNumber">
+                                @seat.SeatNumber
+                            </div>
+                        }
+                    </div>
                 </div>
-            </div>
-        }
+            }
+        </div>
     </div>
-</div>
+}
 
 <style>
     .hall-structure {
@@ -46,52 +50,49 @@
 
     .row {
         display: flex;
-        align-items: center; /* Align row number and seats vertically */
+        align-items: center;
         margin: 5px 0;
+        width: 100%;
+        max-width: 600px; /* Adjust based on your design */
     }
 
     .number-of-row {
-        margin-right: 10px; /* Spacing for row number */
-        font-weight: bold; /* Make row number bold */
-        width: 30px; /* Set a fixed width to align seat groups */
-        text-align: right; /* Align text to the right */
-    }
-
-    .number-of-row {
-        margin-right: 10px; /* Spacing for row number */
-        font-weight: bold; /* Make row number bold */
-        width: 30px; /* Set a fixed width to align seat groups */
-        text-align: right; /* Align text to the right */
-        color: #5c534c; /* Match text color with your homepage */
+        width: 30px; /* Fixed width for alignment */
+        text-align: right;
+        margin-right: 10px;
+        font-weight: bold;
+        color: #5c534c;
     }
 
     .seats {
-        display: flex; /* Display seats in a row */
+        display: flex;
+        flex: 1;
+        justify-content: center; /* Center the seats */
     }
 
     .seat {
         display: inline-block;
-        width: 50px; /* Fixed width for square shape */
-        height: 50px; /* Fixed height for square shape */
+        width: 50px;
+        height: 50px;
         margin: 4px;
-        background-color: #eee; /* Default color for seats */
+        background-color: #eee;
         border-radius: 5px;
         cursor: pointer;
         transition: background-color 0.3s, transform 0.2s;
-        display: flex; /* Center the seat number */
-        align-items: center; /* Center vertically */
-        justify-content: center; /* Center horizontally */
-        color: #5c534c; /* Text color for seat number */
-        font-weight: bold; /* Make seat number bold */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #5c534c;
+        font-weight: bold;
     }
 
         .seat:hover {
-            background-color: #ddd; /* Light hover effect */
-            transform: scale(1.05); /* Slight scaling on hover */
+            background-color: #ddd;
+            transform: scale(1.05);
         }
 
         .seat.selected {
-            background-color: #800020; /* Selected color that matches your homepage theme */
-            color: white; /* White text for selected seats */
+            background-color: #800020;
+            color: white;
         }
 </style>

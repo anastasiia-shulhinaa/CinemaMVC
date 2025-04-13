@@ -1,35 +1,71 @@
 ﻿@using CinemaInfrastructure.ViewModels
- @using CinemaInfrastructure.Enums
-
-
+@using CinemaInfrastructure.Enums
 
 @{
     var notification = (Notification)ViewData["Notification"];
+    var notificationClass = "bg-light text-dark"; // Default values
+    var iconClass = "fas fa-bell";
 
     if (notification != null)
     {
-        var notificationClass = "";
         switch (notification.Type)
         {
             case NotificationType.Success:
-                notificationClass = "alert-success";
+                notificationClass = "bg-success text-white";
+                iconClass = "fas fa-check-circle";
                 break;
             case NotificationType.Info:
-                notificationClass = "alert-secondary";
+                notificationClass = "bg-info text-white";
+                iconClass = "fas fa-info-circle";
                 break;
             case NotificationType.Error:
-                notificationClass = "alert-danger";
+                notificationClass = "bg-danger text-white";
+                iconClass = "fas fa-exclamation-circle";
                 break;
             default:
-                notificationClass = "";
+                notificationClass = "bg-light text-dark";
+                iconClass = "fas fa-bell";
                 break;
         }
-
-        <div class="container mb-5">
-            <div class="alert @notificationClass alert-dismissible fade show mb-5" role="alert">
-                @Html.Raw(notification.Message)
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        </div>
     }
 }
+
+@if (notification != null)
+{
+    <div class="container mb-4">
+        <div class="alert @notificationClass d-flex align-items-center rounded shadow-sm" role="alert">
+            <i class="@iconClass me-2" style="font-size: 1.5rem;"></i>
+            <div>@Html.Raw(notification.Message)</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+}
+
+<style>
+    .alert {
+        padding: 1rem;
+        border: none;
+        border-radius: 8px;
+        transition: opacity 0.3s ease;
+    }
+
+        .alert .btn-close {
+            filter: brightness(0) invert(1); /* White close button for contrast */
+        }
+
+    .bg-success {
+        background-color: #1a2a44 !important; /* Deep navy for success */
+    }
+
+    .bg-info {
+        background-color: #4a7a7d !important; /* Teal for info */
+    }
+
+    .bg-danger {
+        background-color: #800020 !important; /* Deep red for error */
+    }
+
+    .bg-light {
+        background-color: #f5f5f5 !important; /* Light gray for default */
+    }
+</style>

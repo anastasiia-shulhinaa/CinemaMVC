@@ -95,7 +95,7 @@ namespace CinemaInfrastructure.Controllers
                 })
                 .ToList();
 
-            return PartialView("_SessionSeats", seats);
+            return View(seats);
         }
 
         [Authorize]

@@ -15,13 +15,23 @@ builder.Services.AddDbContext<DbcinemaContext>(options =>
 
 builder.Services.AddDbContext<IdentityContext>(option => option.UseSqlServer(
     builder.Configuration.GetConnectionString("IdentityConnection")
-    ));   
+    ));
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<DbcinemaContext>(option => option.UseSqlServer(
       builder.Configuration.GetConnectionString("DefaultConnection")
       ));
 
+
+builder.Services.AddDbContext<DbcinemaContext>(option => option.UseSqlServer(
+     builder.Configuration.GetConnectionString("DefaultConnection")
+     ));
+
+builder.Services.AddControllersWithViews();
 builder.Services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<IdentityContext>();
+
+builder.Services.Configure<GoogleApiSettings>(
+    builder.Configuration.GetSection("GoogleApiSettings"));
+builder.Services.AddScoped<GoogleMapsUrlBuilder>();
 
 builder.Services.Configure<IdentityOptions>(options =>
 {
@@ -33,7 +43,12 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequiredUniqueChars = 1;
 });
 
-
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session timeout
+    options.Cookie.HttpOnly = true; // Security: Prevent client-side access to the cookie
+    options.Cookie.IsEssential = true; // Required for GDPR compliance
+});
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -52,14 +67,8 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-app.UseStaticFiles(); 
+app.UseStaticFiles();
 
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "img")
-    ),
-});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -73,7 +82,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.UseSession();
 app.MapStaticAssets();
 
 app.MapControllerRoute(

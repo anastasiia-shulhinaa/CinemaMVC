@@ -1,0 +1,17 @@
+﻿@model CinemaInfrastructure.ViewModels.ProfileViewModel
+
+@{
+    ViewData["Title"] = "Профіль";
+}
+
+<h1>Профіль</h1>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">@Model.Username</h5>
+        <p class="card-text"><strong>Email:</strong> @Model.Email</p>
+        <p class="card-text"><strong>Телефон:</strong> @Model.PhoneNumber</p>
+        <p class="card-text"><strong>Дата народження:</strong> @Model.DateOfBirth.ToString()</p>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Назад</a>
+    </div>
+</div>

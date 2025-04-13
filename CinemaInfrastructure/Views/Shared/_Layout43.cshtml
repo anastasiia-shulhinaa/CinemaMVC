@@ -1,45 +1,50 @@
-﻿@model IEnumerable<CinemaInfrastructure.ViewModels.SeatViewModel>
+﻿@model IEnumerable<CinemaInfrastructure.ViewModels.HallSeatPreviewViewModel>
 
-@{
+@if (Model == null)
+{
+    <p class="text-danger">Помилка: схема залу недоступна.</p>
+}
+else
+{
     var seats = Model.OrderBy(s => s.RowNumber).ThenBy(s => s.SeatNumber).ToList();
     int seatSize = 50, margin = 5;
 
-    // Define the number of seats per row
     var seatsPerRow = new Dictionary<int, int>
     {
-        { 1, 6 },  // 1st row has 6 seats
-        { 2, 7 },  // 2nd row has 7 seats
-        { 3, 7 },  // 3rd row has 7 seats
-        { 4, 7 },  // 4th row has 7 seats
-        { 5, 7 },  // 5th row has 7 seats
-        { 6, 9 }   // 6th row has 9 seats
+        { 1, 6 },
+        { 2, 7 },
+        { 3, 7 },
+        { 4, 7 },
+        { 5, 7 },
+        { 6, 9 }
     };
-}
 
-<div class="hall-structure" style="position: relative;">
-    <link href="~/css/hall-layout.css" rel="stylesheet" />
-    <span class="screen">
-        <img src="https://www.palladium-cinema.com.ua/desktop/img/screen.png" alt="Екран">
-    </span>
+    <div class="hall-structure" style="position: relative;">
+        <span class="screen">
+            <img src="https://www.palladium-cinema.com.ua/desktop/img/screen.png" alt="Екран">
+        </span>
 
-    <div class="seats-container">
-        @foreach (var rowGroup in seats.GroupBy(s => s.RowNumber))
-        {
-            <div class="row">
-                <span class="number-of-row">@rowGroup.Key</span>
-                @foreach (var seat in rowGroup.OrderBy(s => s.SeatNumber))
-                {
-                    <div class="seat"
-                         data-seat="@($"{seat.RowNumber}-{seat.SeatNumber}")"
-                         data-id="@seat.Id"
-                         title="Ряд @seat.RowNumber, Місце @seat.SeatNumber">
-                        @seat.SeatNumber
+        <div class="seats-container">
+            @foreach (var rowGroup in seats.GroupBy(s => s.RowNumber))
+            {
+                <div class="row">
+                    <span class="number-of-row">@rowGroup.Key</span>
+                    <div class="seats">
+                        @foreach (var seat in rowGroup.OrderBy(s => s.SeatNumber))
+                        {
+                            <div class="seat"
+                                 data-seat="@($"{seat.RowNumber}-{seat.SeatNumber}")"
+                                 data-id="@seat.Id"
+                                 title="Ряд @seat.RowNumber, Місце @seat.SeatNumber">
+                                @seat.SeatNumber
+                            </div>
+                        }
                     </div>
-                }
-            </div>
-        }
+                </div>
+            }
+        </div>
     </div>
-</div>
+}
 
 <style>
     .hall-structure {
@@ -56,22 +61,40 @@
 
     .row {
         display: flex;
-        justify-content: center;
+        align-items: center;
         margin: 5px 0;
+        width: 100%;
+        max-width: 600px; /* Adjust based on your design */
+    }
+
+    .number-of-row {
+        width: 30px; /* Fixed width for alignment */
+        text-align: right;
+        margin-right: 10px;
+        font-weight: bold;
+        color: #5c534c;
+    }
+
+    .seats {
+        display: flex;
+        flex: 1;
+        justify-content: center; /* Center the seats */
     }
 
     .seat {
         display: inline-block;
-        width: 50px; /* Fixed width for square shape */
-        height: 50px; /* Fixed height for square shape */
+        width: 50px;
+        height: 50px;
         margin: 4px;
         background-color: #eee;
         border-radius: 5px;
         cursor: pointer;
         transition: background-color 0.3s, transform 0.2s;
-        display: flex; /* Center the seat number */
-        align-items: center; /* Center vertically */
-        justify-content: center; /* Center horizontally */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #5c534c;
+        font-weight: bold;
     }
 
         .seat:hover {
@@ -80,12 +103,7 @@
         }
 
         .seat.selected {
-            background-color: #4CAF50;
+            background-color: #800020;
             color: white;
         }
-
-    .number-of-row {
-        margin-right: 10px; /* Spacing for row number */
-        font-weight: bold; /* Make row number bold */
-    }
 </style>

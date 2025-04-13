@@ -15,7 +15,20 @@ namespace CinemaInfrastructure.Controllers
             _context = context;
         }
 
+        public IActionResult TestSession()
+        {
+            // Set a test value in the session
+            HttpContext.Session.SetString("TestKey", "Session is working!");
+            return RedirectToAction("ReadSession");
+        }
 
+        public IActionResult ReadSession()
+        {
+            // Read the test value from the session
+            var value = HttpContext.Session.GetString("TestKey") ?? "Session not set";
+            ViewBag.SessionValue = value;
+            return View();
+        }
         public async Task<IActionResult> Index()
         {
             var today = DateTime.Today;

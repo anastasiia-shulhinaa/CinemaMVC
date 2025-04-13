@@ -2,18 +2,30 @@
 using Microsoft.EntityFrameworkCore;
 using CinemaDomain.Model;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
+using System.Threading.Tasks;
+using System.Linq;
+using CinemaInfrastructure.Enums;
+using CinemaInfrastructure.ViewModels;
+using Microsoft.AspNetCore.Mvc.Rendering; // Add this for SelectList
 
 namespace CinemaInfrastructure.Controllers
 {
+    [Authorize(Roles = "admin")]
     public class CinemasController : Controller
     {
-
         private readonly DbcinemaContext _context;
+        private readonly IWebHostEnvironment _webHostEnvironment;
+        private readonly GoogleMapsUrlBuilder _googleMapsUrlBuilder;
 
-        public CinemasController(DbcinemaContext context)
+        public CinemasController(DbcinemaContext context, IWebHostEnvironment webHostEnvironment, GoogleMapsUrlBuilder googleMapsUrlBuilder)
         {
             _context = context;
+            _webHostEnvironment = webHostEnvironment;
+            _googleMapsUrlBuilder = googleMapsUrlBuilder;
         }
+
         [HttpGet]
         public IActionResult GetCinemas()
         {
@@ -27,28 +39,77 @@ namespace CinemaInfrastructure.Controllers
         }
 
         // GET: Cinemas
-        public IActionResult Index()
+        public IActionResult Index(string sortBy = "Name", string sortOrder = "asc", string cityFilter = null)
         {
-            var cinemas = _context.Cinemas.ToList();
-            return View(cinemas);
+            var cinemasQuery = _context.Cinemas.Include(c => c.Halls).AsQueryable();
+
+            // Apply city filter
+            if (!string.IsNullOrEmpty(cityFilter))
+            {
+                cinemasQuery = cinemasQuery.Where(c => c.City == cityFilter);
+            }
+
+            // Apply sorting
+            switch (sortBy)
+            {
+                case "City":
+                    cinemasQuery = sortOrder == "asc"
+                        ? cinemasQuery.OrderBy(c => c.City)
+                        : cinemasQuery.OrderByDescending(c => c.City);
+                    break;
+                case "Name":
+                default:
+                    cinemasQuery = sortOrder == "asc"
+                        ? cinemasQuery.OrderBy(c => c.Name)
+                        : cinemasQuery.OrderByDescending(c => c.Name);
+                    break;
+            }
+
+            var cinemas = cinemasQuery.ToList();
+
+            // Generate embed URLs for each cinema
+            var cinemaViewModels = cinemas.Select(c => new CinemaViewModel
+            {
+                Cinema = c,
+                GoogleMapsEmbedUrl = _googleMapsUrlBuilder.GetEmbedUrl(c)
+            }).ToList();
+
+            // Create SelectList for cities dropdown
+            var allCities = _context.Cinemas.Select(c => c.City).Distinct().ToList();
+            ViewBag.CitiesSelectList = new SelectList(allCities, cityFilter);
+
+            ViewBag.SortBy = sortBy;
+            ViewBag.SortOrder = sortOrder;
+            ViewBag.CityFilter = cityFilter;
+
+            return View(cinemaViewModels);
         }
 
-        // GET: Cinemas/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: Cinemas/Filter
+        [HttpGet]
+        public IActionResult Filter(string city)
         {
-            if (id == null)
+            var cinemasQuery = _context.Cinemas.Include(c => c.Halls).AsQueryable();
+
+            if (!string.IsNullOrEmpty(city))
             {
-                return NotFound();
+                cinemasQuery = cinemasQuery.Where(c => c.City == city);
             }
 
-            var cinema = await _context.Cinemas
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (cinema == null)
-            {
-                return NotFound();
-            }
+            var cinemas = cinemasQuery.ToList();
 
-            return RedirectToAction("Index", "Halls", new { id = cinema.Id, name = cinema.Name });
+            // Generate embed URLs for each cinema
+            var cinemaViewModels = cinemas.Select(c => new CinemaViewModel
+            {
+                Cinema = c,
+                GoogleMapsEmbedUrl = _googleMapsUrlBuilder.GetEmbedUrl(c)
+            }).ToList();
+
+            // Create SelectList for cities dropdown (for partial view refresh)
+            var allCities = _context.Cinemas.Select(c => c.City).Distinct().ToList();
+            ViewBag.CitiesSelectList = new SelectList(allCities, city);
+
+            return PartialView("_CinemasListPartial", cinemaViewModels);
         }
 
         // GET: Cinemas/Create
@@ -58,18 +119,43 @@ namespace CinemaInfrastructure.Controllers
         }
 
         // POST: Cinemas/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Name,Address,Description,TotalCinemaHalls,Id")] Cinema cinema)
+        public async Task<IActionResult> Create(Cinema cinema, IFormFile photoFile)
         {
+            // Handle phone number: Remove +38 (Ukr) if present
+            if (!string.IsNullOrEmpty(cinema.PhoneNumber))
+            {
+                cinema.PhoneNumber = cinema.PhoneNumber.Replace("+38 (Ukr)", "").Trim();
+            }
+
+            // Handle file upload
+            if (photoFile != null && photoFile.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads/cinemas");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photoFile.FileName);
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await photoFile.CopyToAsync(stream);
+                }
+
+                cinema.PhotoUrl = $"/uploads/cinemas/{fileName}";
+            }
+
             if (ModelState.IsValid)
             {
                 _context.Add(cinema);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
+
             return View(cinema);
         }
 
@@ -90,15 +176,49 @@ namespace CinemaInfrastructure.Controllers
         }
 
         // POST: Cinemas/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Name,Address,Description,TotalCinemaHalls,Id")] Cinema cinema)
+        public async Task<IActionResult> Edit(int id, Cinema cinema, IFormFile photoFile)
         {
             if (id != cinema.Id)
             {
                 return NotFound();
+            }
+
+            // Handle phone number: Remove +38 (Ukr) if present
+            if (!string.IsNullOrEmpty(cinema.PhoneNumber))
+            {
+                cinema.PhoneNumber = cinema.PhoneNumber.Replace("+38 (Ukr)", "").Trim();
+            }
+
+            // Handle file upload
+            if (photoFile != null && photoFile.Length > 0)
+            {
+                var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads/cinemas");
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(photoFile.FileName);
+                var filePath = Path.Combine(uploadsFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await photoFile.CopyToAsync(stream);
+                }
+
+                // Delete old photo if it exists
+                if (!string.IsNullOrEmpty(cinema.PhotoUrl))
+                {
+                    var oldFilePath = Path.Combine(_webHostEnvironment.WebRootPath, cinema.PhotoUrl.TrimStart('/'));
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+                }
+
+                cinema.PhotoUrl = $"/uploads/cinemas/{fileName}";
             }
 
             if (ModelState.IsValid)
@@ -124,36 +244,43 @@ namespace CinemaInfrastructure.Controllers
             return View(cinema);
         }
 
-        // GET: Cinemas/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var cinema = await _context.Cinemas
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (cinema == null)
-            {
-                return NotFound();
-            }
-
-            return View(cinema);
-        }
-
         // POST: Cinemas/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             var cinema = await _context.Cinemas.FindAsync(id);
             if (cinema != null)
             {
+                // Delete associated photo file
+                if (!string.IsNullOrEmpty(cinema.PhotoUrl))
+                {
+                    var filePath = Path.Combine(_webHostEnvironment.WebRootPath, cinema.PhotoUrl.TrimStart('/'));
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                }
+
                 _context.Cinemas.Remove(cinema);
+                await _context.SaveChangesAsync();
+
+                // Set success notification
+                ViewData["Notification"] = new Notification
+                {
+                    Type = NotificationType.Success,
+                    Message = $"Кінотеатр \"{cinema.Name}\" успішно видалено разом із усіма пов'язаними залами."
+                };
+            }
+            else
+            {
+                ViewData["Notification"] = new Notification
+                {
+                    Type = NotificationType.Error,
+                    Message = "Кінотеатр не знайдено."
+                };
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 

@@ -178,6 +178,7 @@ namespace CinemaInfrastructure.Controllers
                 {
                     SessionId = session.Id,
                     IsPrivateBooking = true,
+                    PrivateBookingPrice = 1200,
                     BookingDate = DateTime.Now,
                     UserId = _userManager.GetUserId(User) // Replace with actual user
                 };
@@ -315,11 +316,14 @@ namespace CinemaInfrastructure.Controllers
             }
 
             var bookings = await _context.Bookings
-                .Include(b => b.Session) // Ensure the session is included
-                .ThenInclude(s => s.Movie) // Include related movie
-                .Include(b => b.SessionSeats)
-                .Where(b => b.UserId == userId)
-                .ToListAsync();
+    .Include(b => b.Session)
+        .ThenInclude(s => s.Movie)
+    .Include(b => b.Session)
+        .ThenInclude(s => s.Schedule)
+            .ThenInclude(sch => sch.Hall) // optional, only if you need Hall details
+    .Include(b => b.SessionSeats)
+    .Where(b => b.UserId == userId)
+    .ToListAsync();
 
             var model = new MyBookingsViewModel
             {

@@ -1,121 +1,492 @@
-﻿@using Microsoft.AspNetCore.Identity
-@inject DbcinemaContext _context
+﻿@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<User> SignInManager
+@inject UserManager<User> UserManager
+@inject IHttpContextAccessor HttpContextAccessor
 
-
-
-
+@{
+    var username = User.Identity?.Name ?? "Гість";
+    bool isAdmin = User.IsInRole("admin");
+    bool isAdminInUserMode = isAdmin && Context.Session?.GetString("AdminMode") == "user";
+}
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - FILMix</title>
-    <script type="importmap"></script>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap_state.min.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CinemaInfrastructure.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        .brand-title {
-        text-transform: none !important;
+        /* General Styles */
+        html, body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* More modern font */
+            background-color: #f8f9fa; /* Light grey background for body */
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: #333; /* Dark grey default text */
+        }
+
+        .container-fluid {
+            max-width: 1400px;
+            padding-left: 15px; /* Add some default horizontal padding */
+            padding-right: 15px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 1rem 1.5rem; /* Slightly increased horizontal padding */
+        }
+
+        .navbar-brand {
+            font-size: 1.75rem; /* Larger brand font */
+            font-weight: 700;
+            color: #800020 !important; /* Accent color */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+            .navbar-brand:hover {
+                color: #660018 !important;
+            }
+
+        .navbar-toggler {
+            border-color: #800020;
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(128, 0, 32, 1)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        .nav-link {
+            color: #333 !important; /* Dark grey nav link text */
+            font-weight: 500;
+            padding: 0.75rem 1rem; /* Slightly adjusted padding */
+            display: flex;
+            align-items: center;
+            transition: color 0.2s, border-bottom 0.2s;
+        }
+
+            .nav-link i {
+                margin-right: 0.75rem;
+                color: #d4af37; /* Soft gold icons */
+                font-size: 1.1rem; /* Slightly larger icons */
+            }
+
+            .nav-link:hover,
+            .nav-link.active {
+                color: #800020 !important; /* Accent color on hover/active */
+                border-bottom: 2px solid #800020;
+            }
+
+        /* Cinema Dropdown (for users only) */
+        .cinema-dropdown .dropdown-toggle {
+            background-color: #d4af37; /* Soft gold */
+            border-color: #d4af37;
+            color: #333; /* Dark grey text */
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.2s, transform 0.1s, color 0.2s;
+        }
+
+            .cinema-dropdown .dropdown-toggle:hover {
+                background-color: #b89b2f; /* Darker gold */
+                transform: scale(1.05);
+                color: #fff;
+            }
+
+        .cinema-dropdown .dropdown-menu {
+            background-color: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.1); /* Subtle border */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .cinema-dropdown .dropdown-item {
+            color: #333;
+            padding: 10px 20px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+            .cinema-dropdown .dropdown-item:hover {
+                background-color: #800020;
+                color: #fff;
+            }
+
+        /* User Profile Dropdown */
+        .user-profile .dropdown-toggle {
+            color: #333;
+            font-weight: 500;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            transition: background-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            text-decoration: none;
+        }
+
+            .user-profile .dropdown-toggle:hover {
+                background-color: #f0e4d7; /* Light beige hover */
+                color: #800020;
+            }
+
+            .user-profile .dropdown-toggle i {
+                margin-right: 0.75rem;
+                color: #d4af37;
+                font-size: 1.1rem;
+            }
+
+        .user-profile .dropdown-menu {
+            background-color: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .user-profile .dropdown-item {
+            color: #333;
+            padding: 10px 20px;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+            .user-profile .dropdown-item:hover {
+                background-color: #800020;
+                color: #fff;
+            }
+
+        /* Breadcrumbs (for admin pages only) */
+        .breadcrumb {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 12px 15px; /* Slightly adjusted padding */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            font-size: 0.9rem; /* Slightly smaller font */
+        }
+
+        .breadcrumb-item a {
+            color: #800020;
+            text-decoration: none;
+        }
+
+            .breadcrumb-item a:hover {
+                color: #660018;
+                text-decoration: underline;
+            }
+
+        .breadcrumb-item.active {
+            color: #333;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 20px;
+            flex: 1 0 auto;
+            padding-bottom: 70px; /* Adjust for potential footer overlap */
+            background-color: #fff; /* White background for content */
+            border-radius: 8px; /* Optional: Add a subtle rounded border to the content area */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.02); /* Optional: Subtle shadow */
+            margin-bottom: 1rem; /* Add some margin below the content */
+        }
+
+        /* Footer */
+        .footer {
+            background-color: #fff;
+            color: #555; /* Slightly lighter footer text */
+            padding: 0.75rem 0; /* Adjusted padding */
+            border-top: 1px solid #e0e4d7;
+            width: 100%;
+            flex-shrink: 0;
+            font-size: 0.8rem; /* Even smaller font size */
+            text-align: center; /* Center the footer text */
+        }
+
+            .footer a {
+                color: #800020;
+                text-decoration: none;
+            }
+
+                .footer a:hover {
+                    color: #660018;
+                    text-decoration: underline;
+                }
+
+        /* Buttons */
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            text-transform: uppercase;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, color 0.2s ease-in-out;
+            padding: 0.6rem 1.2rem; /* Adjusted button padding */
+            font-size: 0.9rem; /* Slightly smaller button font */
+            display: inline-flex; /* Ensure icon and text are aligned */
+            align-items: center;
+            justify-content: center; /* Center text within the button */
+        }
+
+            .btn i {
+                margin-right: 0.5rem; /* Add spacing between icon and text */
+            }
+
+        .btn-primary {
+            background-color: #800020;
+            border-color: #800020;
+            color: #fff;
+        }
+
+            .btn-primary:hover {
+                background-color: #660018;
+                border-color: #660018;
+                transform: scale(1.03); /* Slightly less aggressive scale */
+            }
+
+        .btn-secondary {
+            background-color: #4a7a7d;
+            border-color: #4a7a7d;
+            color: #fff;
+        }
+
+            .btn-secondary:hover {
+                background-color: #3b6163;
+                border-color: #3b6163;
+                transform: scale(1.03);
+            }
+
+        /* Responsive adjustments */
+        @@media (max-width: 992px) { /* Adjust breakpoint for larger tablets */
+            .navbar-nav {
+                margin-top: 0.5rem;
+            }
+
+            .nav-link {
+                padding: 0.6rem 1rem;
+                font-size: 1rem;
+            }
+
+                .nav-link i {
+                    margin-right: 0.5rem;
+                    font-size: 1rem;
+                }
+
+            .cinema-dropdown, .user-profile {
+                margin-left: 0.5rem;
+            }
+        }
+
+        @@media (max-width: 767px) {
+            .navbar-brand {
+                font-size: 1.5rem;
+            }
+
+            .nav-link {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+                .nav-link i {
+                    margin-right: 0.5rem;
+                    font-size: 0.9rem;
+                }
+
+            .cinema-dropdown .dropdown-toggle,
+            .user-profile .dropdown-toggle {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            .footer {
+                font-size: 0.75rem;
+                padding: 0.3rem 0;
+            }
+
+            .main-content {
+                padding-bottom: 50px;
+                padding: 15px;
+            }
+
+            .breadcrumb {
+                padding: 10px;
+                font-size: 0.85rem;
+            }
+
+            .btn {
+                font-size: 0.85rem;
+                padding: 0.5rem 1rem;
+            }
+
+            .me-2 {
+                margin-right: 0.25rem !important;
+            }
         }
     </style>
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-lg">
             <div class="container-fluid">
-                <a class="navbar-brand brand-title" asp-area="" asp-controller="Home" asp-action="Index">FILMix</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                aria-expanded="false" aria-label="Toggle navigation">
+                <a class="navbar-brand" asp-controller="Home" asp-action="Index">FilMix</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-
-                    </ul>
-                    <div class="d-flex align-items-center">
-                        @if (User.IsInRole("admin"))
+                <div class="collapse navbar-collapse" id="navbarContent">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        @if (isAdmin && !isAdminInUserMode)
                         {
-                            <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                                <ul class="navbar-nav flex-grow-1">
-                                    <li class="nav-item">
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Cinemas" asp-action="Index">Кінотеатри</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Sessions" asp-action="Index">Сеанси</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Movies" asp-action="AdminIndex">Фільми</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link text-dark" asp-area="" asp-controller="Roles" asp-action="Index">Ролі</a>
-                                    </li>
-
-                                </ul>
-                            </div>
-                        }
-                        @if (User.IsInRole("user"))
-                        {
-                            
-                        }
-                      
-
-                        
-                        @if(User.Identity.IsAuthenticated) {
-                            <div class="me-3">
-                                @User?.Identity?.Name
-                            </div>
-                            <form asp-controller="Account" asp-action="Logout" method="post">
-                                <button type="submit" class="btn btn-link">Вийти</button>
-                            </form>
+                            <!-- Admin mode navigation -->
+                            <li class="nav-item">
+                                <a class="nav-link @((ViewContext.RouteData.Values["Controller"]?.ToString() == "Movies" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index") ? "active" : "")" asp-controller="Movies" asp-action="Create">
+                                    <i class="fas fa-film"></i> Керування фільмами
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @((ViewContext.RouteData.Values["Controller"]?.ToString() == "Cinemas") ? "active" : "") btn" asp-controller="Cinemas" asp-action="Index">
+                                    <i class="fas fa-calendar-alt"></i> Керування кінотеатрами
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @((ViewContext.RouteData.Values["Controller"]?.ToString() == "Show") ? "active" : "")" asp-controller="Sessions" asp-action="Create">
+                                    <i class="fas fa-clock"></i> Сеанси
+                                </a>
+                            </li>
                         }
                         else
                         {
-                            <a asp-controller="Account" asp-action="Login" class="btn bg-light text-dark me-3">Увійти</a>
-                            <a asp-controller="Account" asp-action="Register" class="btn bg-light text-dark me-3">Реєстрація</a>
-
+                            <!-- User mode navigation -->
+                            <li class="nav-item">
+                                <a class="nav-link @((ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index") ? "active" : "")" asp-controller="Home" asp-action="Index">
+                                    Головна
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @((ViewContext.RouteData.Values["Controller"]?.ToString() == "Movies" && ViewContext.RouteData.Values["Action"]?.ToString() == "Select") ? "active" : "")" asp-controller="Movies" asp-action="Index">
+                                    Обрати фільм
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link @((ViewContext.RouteData.Values["Controller"]?.ToString() == "Orders") ? "active" : "")" asp-controller="Bookings" asp-action="MyBookings">
+                                    Мої квитки
+                                </a>
+                            </li>
+                            <li class="nav-item cinema-dropdown">
+                                <a class="dropdown-toggle btn" href="#" role="button" id="cinemaDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Оберіть кінотеатр
+                                </a>
+                                <ul class="dropdown-menu" id="cinemaList" aria-labelledby="cinemaDropdown">
+                                    <!-- Populated via JavaScript -->
+                                </ul>
+                            </li>
                         }
-
-                       
-                        
-
-
+                    </ul>
+                    <div class="d-flex align-items-center">
+                        @if (User.Identity.IsAuthenticated)
+                        {
+                            <div class="user-profile">
+                                <a class="dropdown-toggle" href="#" role="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user-circle me-2"></i> @username
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Account" asp-action="Profile">Профіль</a>
+                                    </li>
+                                    <li>
+                                        <form method="post" asp-controller="Account" asp-action="Logout" style="display: inline;">
+                                            <button type="submit" class="dropdown-item">Вийти</button>
+                                        </form>
+                                    </li>
+                                    @if (isAdmin)
+                                    {
+                                        @if (isAdminInUserMode)
+                                        {
+                                            <li>
+                                                <form method="post" asp-controller="Account" asp-action="ToggleAdminMode" style="display: inline;">
+                                                    <button type="submit" class="dropdown-item">Увімкнути адмін-режим</button>
+                                                </form>
+                                            </li>
+                                        }
+                                        else
+                                        {
+                                            <li>
+                                                <form method="post" asp-controller="Account" asp-action="ToggleAdminMode" style="display: inline;">
+                                                    <button type="submit" class="dropdown-item">Увійти як користувач</button>
+                                                </form>
+                                            </li>
+                                        }
+                                    }
+                                </ul>
+                            </div>
+                        }
+                        else
+                        {
+                            <a asp-controller="Account" asp-action="Login" class="btn btn-primary me-2">Увійти</a>
+                            <a asp-controller="Account" asp-action="Register" class="btn btn-primary">Реєстрація</a>
+                        }
                     </div>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
+
+    <div class="main-content">
+        @if (isAdmin && !isAdminInUserMode)
+        {
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Головна</a></li>
+                    @if (ViewContext.RouteData.Values["Controller"] != null)
+                    {
+                        <li class="breadcrumb-item"><a asp-controller="@ViewContext.RouteData.Values["Controller"]" asp-action="Index">@ViewContext.RouteData.Values["Controller"]</a></li>
+                    }
+                    @if (ViewContext.RouteData.Values["Action"]?.ToString() != "Index")
+                    {
+                        <li class="breadcrumb-item active" aria-current="page">@ViewContext.RouteData.Values["Action"]</li>
+                    }
+                </ol>
+            </nav>
+        }
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - CinemaInfrastructure - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="footer text-muted">
+        <div class="container-fluid">
+            © 2025 - FILMix - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Fetch cinemas for dropdown (for users only)
+        @if (User.IsInRole("user") || (isAdmin && isAdminInUserMode))
+        {
+            @:fetch("/api/cinemas")
+            @:.then(response => response.json())
+            @:.then(data => {
+            @:    let dropdown = document.getElementById("cinemaList");
+            @:    dropdown.innerHTML = "";
+            @:    data.forEach(cinema => {
+            @:        let item = document.createElement("li");
+            @:        item.innerHTML = `<a class="dropdown-item cinema-selection" href="#" data-value="${cinema.id}">${cinema.name}</a>`;
+            @:        dropdown.appendChild(item);
+            @:    });
+            @:})
+            @:.catch(error => console.error("Error loading cinemas:", error));
+        }
+        });
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        fetch("/api/cinemas")
-            .then(response => response.json())
-            .then(data => {
-                let dropdown = document.getElementById("cinemaList");
-                dropdown.innerHTML = "";
-                data.forEach(cinema => {
-                    let item = document.createElement("li");
-                    item.innerHTML = `<a class="dropdown-item cinema-selection" href="#" data-value="${cinema.Id}">${cinema.Name}</a>`;
-                    dropdown.appendChild(item);
-                });
-            })
-            .catch(error => console.error("Error loading cinemas:", error));
-    });
-</script>
