@@ -6,5 +6,6 @@ namespace CinemaInfrastructure.ViewModels
     {
         public Movie Movie { get; set; }
         public List<Cinema> Cinemas { get; set; }
+        public int? SelectedCinemaId { get; set; } // Stores the pre-selected cinema ID
     }
 }
