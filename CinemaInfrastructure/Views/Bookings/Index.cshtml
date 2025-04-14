@@ -1,0 +1,305 @@
+﻿@model IEnumerable<CinemaInfrastructure.Controllers.BookingViewModel>
+
+<main class="container my-5">
+    <h1 class="text-center mb-5 section-title">Бронювання</h1>
+
+    <!-- Bar Chart for Bookings by Day of the Week -->
+    <div class="row">
+        <div class="col-12">
+            <div id="bookingsByDayChart"></div>
+        </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Список Бронювань</h5>
+        </div>
+        <div class="card-body">
+            @Html.AntiForgeryToken() <!-- Add anti-forgery token -->
+            @if (!Model.Any())
+            {
+                <p class="text-muted">Бронювань ще немає.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Фільм</th>
+                                <th>Кількість місць</th>
+                                <th>Приватне бронювання</th>
+                                <th>Ціна</th>
+                                <th>Користувач (пошта)</th>
+                                <th>Дата бронювання</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookingsTable">
+                            @foreach (var booking in Model)
+                            {
+                                <tr data-booking-id="@booking.Id">
+                                    <td>@booking.MovieTitle</td>
+                                    <td>@booking.NumberOfSeats</td>
+                                    <td>@(booking.IsPrivateBooking ? "Так" : "Ні")</td>
+                                    <td data-calculated-price="@((booking.CalculatedPrice).ToString("C"))">
+                                        @if (booking.IsPrivateBooking)
+                                        {
+                                            @(booking.PrivateBookingPrice.HasValue ? booking.PrivateBookingPrice.Value.ToString("C") : "N/A")
+                                        }
+                                        else
+                                        {
+                                            @((booking.CalculatedPrice).ToString("C"))
+                                        }
+                                    </td>
+                                    <td>@booking.UserEmail</td>
+                                    <td>@booking.BookingDate.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td>
+                                        <a asp-action="Edit" asp-route-id="@booking.Id" class="btn btn-primary btn-sm">Редагувати</a>
+                                        <a href="javascript:void(0)" class="btn btn-danger btn-sm delete-booking" data-id="@booking.Id">Видалити</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</main>
+
+<!-- Reuse the same CSS as Sessions/Index.cshtml -->
+<style>
+    /* General Styles */
+    .container {
+        max-width: 1400px;
+    }
+
+    .section-title {
+        color: #800020;
+        font-weight: 700;
+        font-size: 2.5rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+        .section-title::after {
+            content: '';
+            width: 80px;
+            height: 4px;
+            background-color: #800020;
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+    /* Card Styles */
+    .card {
+        background-color: #fefefe;
+        border: 1px solid #e5e5e5;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-header {
+        background-color: #fefefe;
+        border-bottom: 1px solid #e5e5e5;
+        padding: 1rem;
+        color: #800020;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+        color: #800020;
+    }
+
+    /* Table Styles */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table {
+        background-color: #fff;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        margin-bottom: 0;
+    }
+
+        .table thead {
+            background-color: #fefefe;
+            color: #800020;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .table th {
+            font-weight: 500;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .table td {
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+            color: #800020;
+        }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #f9fafb;
+    }
+
+    /* Misc */
+    .text-muted {
+        color: #b88b8b !important;
+    }
+
+    /* Responsive */
+    @@media (max-width: 767px) {
+        .card-body
+
+    {
+        padding: 1rem;
+    }
+
+    .table th,
+    .table td {
+        font-size: 0.85rem;
+        padding: 8px;
+    }
+
+    }
+</style>
+
+@section Scripts {
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJ+Y3vyBMOcHGqFtXJrQAB16fr1cqa1M6nHCk=" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        google.charts.load('current', { 'packages': ['corechart'] });
+        google.charts.setOnLoadCallback(drawCharts);
+
+        function drawCharts() {
+            drawBookingsByDay();
+        }
+
+        function drawBookingsByDay() {
+            const bookings = @Html.Raw(Json.Serialize(Model.Select(b => new { SessionDate = b.SessionDate })));
+
+            const dayCounts = {};
+            const dayNames = {
+                0: 'Неділя',
+                1: 'Понеділок',
+                2: 'Вівторок',
+                3: 'Середа',
+                4: 'Четвер',
+                5: 'П’ятниця',
+                6: 'Субота'
+            };
+
+            Object.keys(dayNames).forEach(day => {
+                dayCounts[day] = 0;
+            });
+
+            bookings.forEach(booking => {
+                const date = new Date(booking.sessionDate);
+                if (!isNaN(date.getTime()) && date.getFullYear() > 1970) {
+                    const dayOfWeek = date.getDay();
+                    dayCounts[dayOfWeek] = (dayCounts[dayOfWeek] || 0) + 1;
+                }
+            });
+
+            const dataTable = new google.visualization.DataTable();
+            dataTable.addColumn('string', 'День тижня');
+            dataTable.addColumn('number', 'К-сть бронювань');
+
+            Object.keys(dayNames).forEach(day => {
+                const ukrainianDay = dayNames[day];
+                dataTable.addRow([ukrainianDay, dayCounts[day]]);
+            });
+
+            const options = {
+                title: 'Бронювання за днями тижня сеансів',
+                width: '100%',
+                height: 400,
+                chartArea: { width: '60%', height: '70%' },
+                hAxis: {
+                    title: 'Кількість бронювань',
+                    titleTextStyle: { fontSize: 14, bold: true },
+                    textStyle: { fontSize: 12 }
+                },
+                vAxis: {
+                    title: 'День тижня сеансу',
+                    titleTextStyle: { fontSize: 14, bold: true },
+                    textStyle: { fontSize: 12 }
+                },
+                legend: { position: 'none' },
+                backgroundColor: '#fefefe',
+                titleTextStyle: { fontSize: 16, bold: true },
+                animation: {
+                    startup: true,
+                    duration: 1000,
+                    easing: 'out'
+                }
+            };
+
+            const chart = new google.visualization.ColumnChart(document.getElementById('bookingsByDayChart'));
+            chart.draw(dataTable, options);
+
+            if (bookings.every(booking => {
+                const date = new Date(booking.sessionDate);
+                return isNaN(date.getTime()) || date.getFullYear() <= 1970;
+            })) {
+                document.getElementById('bookingsByDayChart').innerHTML = '<p class="text-muted text-center">Немає даних для відображення.</p>';
+            }
+        }
+
+        $(document).ready(function () {
+            var csrfToken = $('input[name="__RequestVerificationToken"]').val();
+            console.log('CSRF Token:', csrfToken);
+            if (!csrfToken) {
+                console.error('CSRF token not found!');
+            }
+
+            $(document).on('click', '.delete-booking', function () {
+                if (!confirm('Чи точно бажаєте видалити?')) return;
+                var bookingId = $(this).data('id');
+                console.log('Deleting booking ID:', bookingId);
+                $.ajax({
+                    url: `/Bookings/Delete/${bookingId}`,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': csrfToken
+                    },
+                    success: function (response) {
+                        console.log('Delete response:', response);
+                        $(`tr[data-booking-id="${bookingId}"]`).remove();
+                        if ($('#bookingsTable tr').length === 0) {
+                            $('#bookingsTable').parent().prepend('<p class="text-muted">Бронювань ще немає.</p>');
+                        }
+                        drawBookingsByDay();
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Delete error:', xhr, status, error);
+                        let errorMessage = 'Помилка видалення бронювання.';
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.message) {
+                                errorMessage += ' ' + xhr.responseJSON.message;
+                            }
+                            if (xhr.responseJSON.error) {
+                                errorMessage += ' Деталі: ' + xhr.responseJSON.error;
+                            }
+                            if (xhr.responseJSON.details) {
+                                errorMessage += ' (' + xhr.responseJSON.details + ')';
+                            }
+                        }
+                        alert(errorMessage);
+                    }
+                });
+            });
+        });
+    </script>
+}

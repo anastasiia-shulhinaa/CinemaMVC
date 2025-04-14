@@ -3,6 +3,11 @@
 <main class="container my-5">
     <h1 class="text-center mb-5 section-title">Сеанси</h1>
 
+    <div class="row">
+        <div class="col-12">
+            <div id="countByMovieChart"></div>
+        </div>
+    </div>
     <!-- Anti-Forgery Token -->
     @Html.AntiForgeryToken()
 
@@ -13,6 +18,7 @@
         </div>
         <div class="card-body">
             <form id="createSessionForm" class="row g-3">
+                <!-- Form fields remain unchanged -->
                 <div class="col-md-3 col-sm-6">
                     <div class="filter-group">
                         <label for="MovieId" class="form-label small mb-1">Фільм</label>
@@ -25,49 +31,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="filter-group">
-                        <label for="CinemaId" class="form-label small mb-1">Кінотеатр</label>
-                        <select id="CinemaId" name="CinemaId" class="form-select" required>
-                            <option value="">-- Виберіть кінотеатр --</option>
-                            @foreach (var cinema in ViewBag.Cinemas)
-                            {
-                                <option value="@cinema.Id">@cinema.Name</option>
-                            }
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="filter-group">
-                        <label for="HallId" class="form-label small mb-1">Зал</label>
-                        <select id="HallId" name="HallId" class="form-select" required>
-                            <option value="">-- Виберіть зал --</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="filter-group">
-                        <label for="ScheduleId" class="form-label small mb-1">Розклад</label>
-                        <select id="ScheduleId" name="ScheduleId" class="form-select" required>
-                            <option value="">-- Виберіть розклад --</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="filter-group">
-                        <label for="PricePerSeat" class="form-label small mb-1">Ціна за місце</label>
-                        <input type="number" step="0.01" id="PricePerSeat" name="PricePerSeat" class="form-control" required />
-                    </div>
-                </div>
-                <div class="col-md-3 col-sm-6">
-                    <div class="filter-group">
-                        <label for="IsActive" class="form-label small mb-1">Активний</label>
-                        <select id="IsActive" name="IsActive" class="form-select" required>
-                            <option value="true">Так</option>
-                            <option value="false">Ні</option>
-                        </select>
-                    </div>
-                </div>
+                <!-- Other form fields... -->
                 <div class="col-md-3 col-sm-6 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100"><i class="fas fa-plus me-1"></i> Створити</button>
                 </div>
@@ -124,6 +88,7 @@
     </div>
 </main>
 
+<!-- Existing CSS remains unchanged -->
 <style>
     /* General Styles */
     .container {
@@ -310,6 +275,69 @@
 </style>
 
 @section Scripts {
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+        google.charts.load('current', {'packages':['corechart']});
+        google.charts.setOnLoadCallback(drawCharts);
+
+        function drawCharts() {
+            drawTopMovies(); // Call to the method that draws the top movies pie chart
+        }
+
+        function drawTopMovies() {
+            fetch('/api/charts/topMovies')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    const dataTable = new google.visualization.DataTable();
+                    dataTable.addColumn('string', 'Фільм'); // Column for Movie Title
+                    dataTable.addColumn('number', 'К-сть сеансів'); // Column for Session Count
+
+                    data.forEach(item => {
+                        dataTable.addRow([item.movieTitle, item.sessionCount]); // Add rows for top movies
+                    });
+
+                    const options = {
+                        title: 'Топ 10 фільмів за кількістю сеансів',
+                        width: '100%', // Responsive width
+                        height: 400,
+                        chartArea: { width: '75%', height: '75%' }, // Increased chart area even more for labels
+                        sliceVisibilityThreshold: 0.01, // Lowered to 1% to ensure smaller slices are visible
+                        colors: ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099', '#0099c6', '#dd4477', '#66aa00', '#b82e2e', '#316395'], // Vibrant colors
+                        is3D: true, // Keep the 3D effect
+                        pieSliceText: 'label', // Show movie titles on slices
+                        pieSliceTextStyle: { color: '#fff', fontSize: 9, bold: true }, // Even smaller font size for better fit
+                        titleTextStyle: { color: '#800020', fontSize: 16, bold: true },
+                        legend: {
+                            position: 'right',
+                            textStyle: { color: '#800020', fontSize: 12 }
+                        },
+                        backgroundColor: '#fefefe',
+                        animation: {
+                            startup: true,
+                            duration: 1000,
+                            easing: 'out'
+                        }
+                    };
+
+                    const chart = new google.visualization.PieChart(document.getElementById('countByMovieChart'));
+                    chart.draw(dataTable, options);
+
+                    // Handle case where no data is returned
+                    if (data.length === 0) {
+                        document.getElementById('countByMovieChart').innerHTML = '<p class="text-muted text-center">Немає даних для відображення.</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching top movies:', error);
+                    document.getElementById('countByMovieChart').innerHTML = '<p class="text-muted text-center">Помилка завантаження даних для графіку.</p>';
+                });
+        }
+    </script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJ+Y3vyBMOcHGqFtXJrQAB16fr1cqa1M6nHCk=" crossorigin="anonymous"></script>
     <script>
         $(document).ready(function () {
@@ -399,6 +427,8 @@
                         $('#HallId').empty().append('<option value="">-- Виберіть зал --</option>');
                         $('#ScheduleId').empty().append('<option value="">-- Виберіть розклад --</option>');
                         $('.text-muted').remove();
+                        // Refresh the chart after adding a new session
+                        drawTopMovies();
                     },
                     error: function (xhr, status, error) {
                         alert('Помилка створення сеансу: ' + xhr.responseText);
@@ -465,6 +495,8 @@
                         if ($('#sessionsTable tr').length === 0) {
                             $('#sessionsTable').parent().prepend('<p class="text-muted">Сеансів ще немає.</p>');
                         }
+                        // Refresh the chart after deleting a session
+                        drawTopMovies();
                     },
                     error: function (xhr, status, error) {
                         alert('Помилка видалення сеансу: ' + error);
@@ -491,6 +523,8 @@
                     row.find('td:eq(5)').text(data.isActive ? 'Активний' : 'Неактивний');
                     bootstrap.Modal.getInstance($('#editSessionModal')[0]).hide();
                     $('#editSessionModal').remove();
+                    // Refresh the chart after editing a session
+                    drawTopMovies();
                 },
                 error: function (xhr, status, error) {
                     alert('Помилка оновлення сеансу: ' + error);

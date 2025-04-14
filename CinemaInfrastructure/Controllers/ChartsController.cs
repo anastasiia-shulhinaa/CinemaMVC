@@ -33,6 +33,29 @@ using Microsoft.EntityFrameworkCore;
 
         return new JsonResult(responseItems); // Return the results as JSON
     }
+
+    [HttpGet("bookingsByDayOfWeek")]
+    public async Task<IActionResult> GetBookingsByDayOfWeek()
+    {
+        var bookingsByDay = await cinemaContext.Bookings
+            .GroupBy(b => b.BookingDate.DayOfWeek)
+            .Select(g => new
+            {
+                DayOfWeek = g.Key.ToString(),
+                BookingCount = g.Count()
+            })
+            .ToListAsync();
+
+        // Ensure all days of the week are represented, even if there are zero bookings
+        var daysOfWeek = Enum.GetNames(typeof(DayOfWeek)).ToList();
+        var result = daysOfWeek.Select(day => new
+        {
+            DayOfWeek = day,
+            BookingCount = bookingsByDay.FirstOrDefault(b => b.DayOfWeek == day)?.BookingCount ?? 0
+        }).OrderBy(d => (int)Enum.Parse<DayOfWeek>(d.DayOfWeek)).ToList();
+
+        return Ok(result);
+    }
 }
 
 

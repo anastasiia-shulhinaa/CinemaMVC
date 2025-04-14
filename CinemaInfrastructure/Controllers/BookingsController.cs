@@ -21,6 +21,46 @@ namespace CinemaInfrastructure.Controllers
             _userManager = userManager;
         }
 
+        public async Task<IActionResult> Index()
+        {
+            var bookings = await _context.Bookings
+                .Include(b => b.Session)
+                .ThenInclude(s => s.Movie)
+                .Include(b => b.Session)
+                .ThenInclude(s => s.Schedule) // Include Schedule
+                .Include(b => b.SessionSeats)
+                .ToListAsync();
+
+            // Create a view model to include user email, calculated price, and session date
+            var bookingViewModels = new List<BookingViewModel>();
+            foreach (var booking in bookings)
+            {
+                var user = await _userManager.FindByIdAsync(booking.UserId);
+
+                // Calculate price for non-private bookings by summing SessionSeats.Price
+                decimal calculatedPrice = 0;
+                if (!booking.IsPrivateBooking && booking.SessionSeats != null && booking.SessionSeats.Any())
+                {
+                    calculatedPrice = booking.SessionSeats.Sum(ss => ss.Price);
+                }
+
+                bookingViewModels.Add(new BookingViewModel
+                {
+                    Id = booking.Id,
+                    SessionId = booking.SessionId,
+                    MovieTitle = booking.Session?.Movie?.Title ?? "Невідомий фільм", // Null check
+                    NumberOfSeats = booking.NumberOfSeats,
+                    IsPrivateBooking = booking.IsPrivateBooking,
+                    PrivateBookingPrice = booking.PrivateBookingPrice,
+                    CalculatedPrice = calculatedPrice,
+                    UserEmail = user?.Email ?? "Невідомий",
+                    BookingDate = booking.BookingDate,
+                    SessionDate = booking.Session?.Schedule?.StartTime ?? default(DateTime) // Null check with default
+                });
+            }
+
+            return View(bookingViewModels);
+        }
         public IActionResult SelectSeat(int sessionId)
         {
             var session = _context.Sessions
@@ -258,5 +298,123 @@ namespace CinemaInfrastructure.Controllers
 
             return View(bookings);
         }
+
+
+        [HttpGet]
+        [Route("Bookings/GetBooking/{id}")]
+        public async Task<IActionResult> GetBooking(int id)
+        {
+            var booking = await _context.Bookings.FindAsync(id);
+            if (booking == null)
+            {
+                return NotFound();
+            }
+            return Json(new { id = booking.Id, isPrivateBooking = booking.IsPrivateBooking, privateBookingPrice = booking.PrivateBookingPrice });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var booking = await _context.Bookings.FindAsync(id);
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            var model = new BookingEditModel
+            {
+                Id = booking.Id,
+                IsPrivateBooking = booking.IsPrivateBooking,
+                PrivateBookingPrice = booking.PrivateBookingPrice
+            };
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(BookingEditModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var booking = await _context.Bookings.FindAsync(model.Id);
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            booking.IsPrivateBooking = model.IsPrivateBooking;
+            booking.PrivateBookingPrice = model.IsPrivateBooking ? model.PrivateBookingPrice : null;
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [Route("Bookings/Delete/{id}")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            try
+            {
+                var booking = await _context.Bookings
+                    .Include(b => b.SessionSeats) // Include SessionSeats to delete them
+                    .FirstOrDefaultAsync(b => b.Id == id);
+
+                if (booking == null)
+                {
+                    return NotFound(new { message = $"Booking with ID {id} not found." });
+                }
+
+                // Delete associated SessionSeats
+                if (booking.SessionSeats != null && booking.SessionSeats.Any())
+                {
+                    _context.SessionSeats.RemoveRange(booking.SessionSeats);
+                }
+
+                // Delete the Booking
+                _context.Bookings.Remove(booking);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Booking deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting booking ID {id}: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner Exception: {ex.InnerException.Message}");
+                    Console.WriteLine($"Inner Stack Trace: {ex.InnerException.StackTrace}");
+                }
+
+                return StatusCode(500, new { message = "An error occurred while deleting the booking.", error = ex.Message, details = ex.InnerException?.Message ?? "No inner exception." });
+            }
+        }
+
+
+    }
+
+    public class BookingViewModel
+    {
+        public int Id { get; set; }
+        public int SessionId { get; set; }
+        public string MovieTitle { get; set; }
+        public int? NumberOfSeats { get; set; }
+        public bool IsPrivateBooking { get; set; }
+        public decimal? PrivateBookingPrice { get; set; }
+        public decimal PricePerSeat { get; set; } // For calculating price
+        public decimal CalculatedPrice { get; set; } // For non-private bookings
+        public string UserEmail { get; set; }
+        public DateTime BookingDate { get; set; }
+        public DateTime SessionDate { get; set; } // Added for chart
+    }
+
+    public class BookingEditModel
+    {
+        public int Id { get; set; }
+        public bool IsPrivateBooking { get; set; }
+        public decimal? PrivateBookingPrice { get; set; }
     }
 }
