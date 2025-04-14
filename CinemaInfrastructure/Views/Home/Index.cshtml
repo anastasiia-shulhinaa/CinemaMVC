@@ -9,6 +9,7 @@
     bool isAdminInUserMode = isAdmin && Context.Session?.GetString("AdminMode") == "user";
     string? selectedCinemaId = Context.Session?.GetString("SelectedCinemaId");
     bool hasCinemaFilter = !string.IsNullOrEmpty(selectedCinemaId) && selectedCinemaId != "0";
+    string currentUserId = UserManager.GetUserId(User); // Get the current user's ID
 }
 
 <div class="home-content">
@@ -30,7 +31,7 @@
         <section class="welcome-section">
             <h2 class="section-title"><i class="fas fa-film"></i> Вітаємо на FilMix</h2>
             <div class="movie-card mb-4">
-                <img src="/cinema_icon1.jpg" alt="Promotional banner for FilMix Cinema">
+                <img src="img/cinema_icon1.jpg" alt="Promotional banner for FilMix Cinema">
                 <a asp-controller="Movies" asp-action="Index" class="custom-session-btn">
                     Створити сеанс
                 </a>
@@ -59,6 +60,12 @@
                                     var movie = session.Movie;
                                     var date = session.Schedule?.StartTime ?? DateTime.Now;
                                     var startDate = date.ToString("d MMMM", new System.Globalization.CultureInfo("uk-UA"));
+                                    bool isOwnPrivateBooking = session.Bookings.Any(b => b.IsPrivateBooking && b.UserId == currentUserId);
+                                    int totalSeatsInHall = session.Schedule.Hall.TotalSeats;
+                                    int totalBookedSeats = session.Bookings.Sum(b =>
+                                    b.IsPrivateBooking && b.NumberOfSeats == null
+                                    ? totalSeatsInHall
+                                    : b.NumberOfSeats.GetValueOrDefault(0)); // Fixed typo: GetValueOr -> GetValueOrDefault
 
                                     <article class="owl-item">
                                         <div class="film-slider text-center">
@@ -74,6 +81,11 @@
                                             <div class="data">
                                                 @startDate
                                                 <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id" class="btn btn-link">Інші дати</a>
+
+                                                @if (isOwnPrivateBooking)
+                                                {
+                                                    <p class="text-success">(Ваш приватний сеанс)</p>
+                                                }
 
                                                 <div class="ticket-icon">
                                                     <img src="https://www.palladium-cinema.com.ua/desktop/img/bilet.png" alt="Ticket icon" />
@@ -105,6 +117,12 @@
                                         var movie = session.Movie;
                                         var date = session.Schedule?.StartTime ?? DateTime.Now;
                                         var startDate = date.ToString("d MMMM", new System.Globalization.CultureInfo("uk-UA"));
+                                        bool isOwnPrivateBooking = session.Bookings.Any(b => b.IsPrivateBooking && b.UserId == currentUserId);
+                                        int totalSeatsInHall = session.Schedule.Hall.TotalSeats;
+                                        int totalBookedSeats = session.Bookings.Sum(b =>
+                                        b.IsPrivateBooking && b.NumberOfSeats == null
+                                        ? totalSeatsInHall
+                                        : b.NumberOfSeats.GetValueOrDefault(0)); // Fixed typo: GetValueOr/Color -> GetValueOrDefault
 
                                         <article class="owl-item">
                                             <div class="film-slider text-center">
@@ -120,6 +138,12 @@
                                                 <div class="data">
                                                     @startDate
                                                     <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id" class="btn btn-link">Інші дати</a>
+
+
+                                                    @if (isOwnPrivateBooking)
+                                                    {
+                                                        <p class="text-success">(Ваш приватний сеанс)</p>
+                                                    }
 
                                                     <div class="ticket-icon">
                                                         <img src="https://www.palladium-cinema.com.ua/desktop/img/bilet.png" alt="Ticket icon" />

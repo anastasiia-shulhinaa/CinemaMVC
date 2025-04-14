@@ -186,7 +186,12 @@ else
 
             <div class="form-group mb-3" id="seatSelectionGroup" style="display: none;">
                 <label>Оберіть місця</label>
-                <div id="seatMap" class="seat-map"></div>
+                <div id="seatMap" class="hall-structure">
+                    <span class="screen"><img src="https://www.palladium-cinema.com.ua/desktop/img/screen.png" alt="Екран" /></span>
+                    <div class="seats-container">
+                        <!-- Seats will be populated dynamically via JavaScript -->
+                    </div>
+                </div>
                 <input type="hidden" id="selectedSeats" name="SelectedSeatIds" />
                 <small class="form-text text-muted">Виберіть місця, які хочете забронювати.</small>
             </div>
@@ -273,7 +278,7 @@ else
                 }
                 selectedSeats = [];
                 $('#selectedSeats').val('');
-                $('#seatMap').empty();
+                $('.seats-container').empty();
                 updateTotalPrice();
                 loadAvailableTimes();
             });
@@ -300,7 +305,7 @@ else
                 loadAvailableTimes();
                 selectedSeats = [];
                 $('#selectedSeats').val('');
-                $('#seatMap').empty();
+                $('.seats-container').empty();
                 updateTotalPrice();
             });
 
@@ -313,30 +318,32 @@ else
 
                 if (hallId && startTime && selectedDate && !isPrivate) {
                     $.get('/Movies/GetSeatsForHall', { hallId: hallId, selectedDate: selectedDate, startTime: startTime }, function (data) {
-                        $('#seatMap').empty();
+                        $('.seats-container').empty();
                         let currentRow = null;
                         let rowDiv = null;
 
                         data.forEach(seat => {
                             if (currentRow !== seat.row) {
                                 currentRow = seat.row;
-                                rowDiv = $('<div class="seat-row"></div>').appendTo('#seatMap');
-                                $('<span class="row-label"></span>').text(`Ряд ${seat.row}: `).appendTo(rowDiv);
+                                rowDiv = $('<div class="row"></div>').appendTo('.seats-container');
+                                $('<span class="number-of-row"></span>').text(currentRow).appendTo(rowDiv);
+                                $('<div class="seats"></div>').appendTo(rowDiv);
                             }
 
                             const seatDiv = $('<div class="seat"></div>')
                                 .attr('data-id', seat.id)
                                 .text(seat.number)
-                                .addClass(seat.isAvailable ? 'available' : 'unavailable')
-                                .appendTo(rowDiv);
+                                .addClass(seat.isAvailable ? '' : 'booked')
+                                .attr('title', `Ряд ${seat.row}, Місце ${seat.number}`)
+                                .appendTo(rowDiv.find('.seats'));
 
                             if (!seat.isAvailable) {
-                                seatDiv.addClass('disabled');
+                                seatDiv.addClass('booked');
                             }
                         });
 
                         // Add click event for seat selection
-                        $('.seat.available').click(function () {
+                        $('.seat').not('.booked').click(function () {
                             const seatId = $(this).data('id');
                             if ($(this).hasClass('selected')) {
                                 $(this).removeClass('selected');
@@ -350,7 +357,7 @@ else
                         });
                     });
                 } else {
-                    $('#seatMap').empty();
+                    $('.seats-container').empty();
                     selectedSeats = [];
                     $('#selectedSeats').val('');
                 }
@@ -593,54 +600,69 @@ else
     }
 
     /* Seat Selection Styles */
-    .seat-map {
+    .hall-structure {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .seats-container {
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        margin-top: 10px;
+        align-items: center;
+        margin-top: 20px;
     }
 
-    .seat-row {
+    .row {
         display: flex;
         align-items: center;
-        gap: 5px;
+        margin: 5px 0;
+        width: 100%;
+        max-width: 600px;
     }
 
-    .row-label {
-        width: 60px;
+    .number-of-row {
+        width: 30px;
+        text-align: right;
+        margin-right: 10px;
         font-weight: bold;
+        color: #5c534c;
+    }
+
+    .seats {
+        display: flex;
+        flex: 1;
+        justify-content: center;
     }
 
     .seat {
-        width: 30px;
-        height: 30px;
+        display: inline-block;
+        width: 50px;
+        height: 50px;
+        margin: 4px;
+        background-color: #eee;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-        cursor: pointer;
-        background-color: #f0f0f0;
+        color: #5c534c;
+        font-weight: bold;
     }
 
-        .seat.available {
-            background-color: #28a745;
-            color: white;
+        .seat:hover {
+            background-color: #ddd;
+            transform: scale(1.05);
         }
 
         .seat.selected {
-            background-color: #007bff;
+            background-color: #800020;
             color: white;
         }
 
-        .seat.unavailable {
-            background-color: #dc3545;
-            color: white;
+        .seat.booked {
+            background-color: #e0e0e0;
             cursor: not-allowed;
-        }
-
-        .seat.disabled {
-            pointer-events: none;
         }
 
     @@media (max-width: 767px) {
