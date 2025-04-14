@@ -74,21 +74,6 @@
                     </div>
                 </section>
             </aside>
-
-            @if (User.Identity.IsAuthenticated)
-            {
-                <div class="cinema-selection mt-3">
-                    <h3><i class="fas fa-theater-masks"></i> Кінотеатр</h3>
-                    <div class="dropdown cinema-dropdown">
-                        <button class="btn btn-primary dropdown-toggle" type="button" id="cinemaDropdownHome" data-bs-toggle="dropdown" aria-expanded="false">
-                            Виберіть кінотеатр
-                        </button>
-                        <ul class="dropdown-menu" id="cinemaListHome" aria-labelledby="cinemaDropdownHome">
-                            <!-- Populated via JavaScript -->
-                        </ul>
-                    </div>
-                </div>
-            }
         </section>
     }
 </div>
@@ -105,23 +90,5 @@
                     }
                 });
             });
-
-            // Cinema dropdown
-        @if (User.Identity.IsAuthenticated)
-        {
-            @:fetch("/api/cinemas")
-            @:.then(response => response.json())
-            @:.then(data => {
-            @:    const dropdown = document.getElementById("cinemaListHome");
-            @:    dropdown.innerHTML = "";
-            @:    data.forEach(cinema => {
-            @:        const item = document.createElement("li");
-            @:        item.innerHTML = `<a class="dropdown-item cinema-selection" href="#" data-value="${cinema.id}">${cinema.name}</a>`;
-            @:        dropdown.appendChild(item);
-            @:    });
-            @:})
-            @:.catch(error => console.error("Error loading cinemas:", error));
-        }
-        });
     </script>
 }

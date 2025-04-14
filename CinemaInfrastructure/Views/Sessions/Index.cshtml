@@ -1,81 +1,501 @@
 ﻿@model IEnumerable<CinemaDomain.Model.Session>
 
-@{
-    ViewData["Title"] = "Доступні сеанси";
-}
+<main class="container my-5">
+    <h1 class="text-center mb-5 section-title">Сеанси</h1>
 
-<h1>Доступні сеанси</h1>
+    <!-- Anti-Forgery Token -->
+    @Html.AntiForgeryToken()
 
-<p>
-    <a asp-controller="Sessions" asp-action="Create" class="btn btn-primary">Створення сеансу</a>
-</p>
-
-<div class="row">
-    <div class="col-12">
-        <div id="countByMovieChart"></div>
+    <!-- Create Session Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Додати Сеанс</h5>
+        </div>
+        <div class="card-body">
+            <form id="createSessionForm" class="row g-3">
+                <div class="col-md-3 col-sm-6">
+                    <div class="filter-group">
+                        <label for="MovieId" class="form-label small mb-1">Фільм</label>
+                        <select id="MovieId" name="MovieId" class="form-select" required>
+                            <option value="">-- Виберіть фільм --</option>
+                            @foreach (var movie in ViewBag.Movies)
+                            {
+                                <option value="@movie.Id">@movie.Title</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="filter-group">
+                        <label for="CinemaId" class="form-label small mb-1">Кінотеатр</label>
+                        <select id="CinemaId" name="CinemaId" class="form-select" required>
+                            <option value="">-- Виберіть кінотеатр --</option>
+                            @foreach (var cinema in ViewBag.Cinemas)
+                            {
+                                <option value="@cinema.Id">@cinema.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="filter-group">
+                        <label for="HallId" class="form-label small mb-1">Зал</label>
+                        <select id="HallId" name="HallId" class="form-select" required>
+                            <option value="">-- Виберіть зал --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="filter-group">
+                        <label for="ScheduleId" class="form-label small mb-1">Розклад</label>
+                        <select id="ScheduleId" name="ScheduleId" class="form-select" required>
+                            <option value="">-- Виберіть розклад --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="filter-group">
+                        <label for="PricePerSeat" class="form-label small mb-1">Ціна за місце</label>
+                        <input type="number" step="0.01" id="PricePerSeat" name="PricePerSeat" class="form-control" required />
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <div class="filter-group">
+                        <label for="IsActive" class="form-label small mb-1">Активний</label>
+                        <select id="IsActive" name="IsActive" class="form-select" required>
+                            <option value="true">Так</option>
+                            <option value="false">Ні</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 col-sm-6 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-plus me-1"></i> Створити</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>Дата створення</th>
-            <th>Статус</th>
-            <th>Фільм</th>
-            <th>Розклад</th>
-            <th>Дії</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@item.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
-                <td>@(item.IsActive ? "Active" : "Inactive")</td>
-                <td>@item.Movie.Title</td>
-                <td>@($"{item.Schedule.StartTime:HH:mm} ({item.Schedule.StartTime} min)")</td>
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Edit</a>
-                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Details</a>
-                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Delete</a>
-                </td>
-            </tr>
+    <!-- Sessions Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Список Сеансів</h5>
+        </div>
+        <div class="card-body">
+            @if (!Model.Any())
+            {
+                <p class="text-muted">Сеансів ще немає.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Фільм</th>
+                                <th>Кінотеатр</th>
+                                <th>Зал</th>
+                                <th>Розклад</th>
+                                <th>Створено</th>
+                                <th>Статус</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionsTable">
+                            @foreach (var session in Model)
+                            {
+                                <tr data-session-id="@session.Id">
+                                    <td>@session.Movie.Title</td>
+                                    <td>@session.Schedule.Hall.Cinema.Name</td>
+                                    <td>@session.Schedule.Hall.Name</td>
+                                    <td>@session.Schedule.StartTime.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td>@session.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td>@(session.IsActive ? "Активний" : "Неактивний")</td>
+                                    <td>
+                                        <a href="javascript:void(0)" class="btn btn-primary btn-sm edit-session" data-id="@session.Id">Редагувати</a>
+                                        <a href="javascript:void(0)" class="btn btn-danger btn-sm delete-session" data-id="@session.Id">Видалити</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</main>
+
+<style>
+    /* General Styles */
+    .container {
+        max-width: 1400px;
+    }
+
+    .section-title {
+        color: #800020;
+        font-weight: 700;
+        font-size: 2.5rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+        .section-title::after {
+            content: '';
+            width: 80px;
+            height: 4px;
+            background-color: #800020;
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
         }
-    </tbody>
-</table>
+
+    /* Card Styles */
+    .card {
+        background-color: #fefefe;
+        border: 1px solid #e5e5e5;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .card-header {
+        background-color: #fefefe;
+        border-bottom: 1px solid #e5e5e5;
+        padding: 1rem;
+        color: #800020;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+        color: #800020;
+    }
+
+    /* Form Styles */
+    .filter-group {
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        color: #800020;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .form-select, .form-control {
+        border: 1px solid #d1d1d1;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-size: 0.95rem;
+        color: #800020;
+        background-color: #fff;
+        transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+
+        .form-select:focus, .form-control:focus {
+            border-color: #800020;
+            box-shadow: 0 0 0 0.2rem rgba(128, 0, 32, 0.15);
+            outline: none;
+        }
+
+        .form-select option {
+            color: #800020;
+            background-color: #fff;
+        }
+
+            .form-select option:checked {
+                color: #800020;
+                background-color: #f0e4d7;
+                font-weight: 500;
+            }
+
+            .form-select option:hover {
+                background-color: #f0e4d7;
+            }
+
+    /* Table Styles */
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table {
+        background-color: #fff;
+        border: 1px solid #e5e5e5;
+        border-radius: 8px;
+        margin-bottom: 0;
+    }
+
+        .table thead {
+            background-color: #fefefe;
+            color: #800020;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .table th {
+            font-weight: 500;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .table td {
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+            color: #800020;
+        }
+
+    .table-striped tbody tr:nth-of-type(odd) {
+        background-color: #f9fafb;
+    }
+
+    /* Buttons */
+    .btn-primary {
+        background-color: #800020;
+        border-color: #800020;
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+    }
+
+        .btn-primary:hover {
+            background-color: #660018;
+            border-color: #660018;
+            transform: scale(1.05);
+        }
+
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        color: #fff;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+    }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #c82333;
+            transform: scale(1.05);
+        }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    /* Misc */
+    .text-muted {
+        color: #b88b8b !important;
+    }
+
+    /* Responsive */
+    @@media (max-width: 767px) {
+        .card-body
+
+    {
+        padding: 1rem;
+    }
+
+    .table th,
+    .table td {
+        font-size: 0.85rem;
+        padding: 8px;
+    }
+
+    }
+</style>
 
 @section Scripts {
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script type="text/javascript">
-        google.charts.load('current', {'packages':['corechart']});
-        google.charts.setOnLoadCallback(drawCharts);
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJ+Y3vyBMOcHGqFtXJrQAB16fr1cqa1M6nHCk=" crossorigin="anonymous"></script>
+    <script>
+        $(document).ready(function () {
+            var csrfToken = $('input[name="__RequestVerificationToken"]').val();
 
-        function drawCharts() {
-            drawTopMovies(); // Call to the method that draws the top movies pie chart
-        }
-
-        function drawTopMovies() {
-            fetch('/api/charts/topMovies')
-                .then(response => response.json())
-                .then(data => {
-                    const dataTable = new google.visualization.DataTable();
-                    dataTable.addColumn('string', 'Фільм'); // Column for Movie Title
-                    dataTable.addColumn('number', 'К-сть сеансів'); // Column for Session Count
-
-                    data.forEach(item => {
-                        dataTable.addRow([item.movieTitle, item.sessionCount]); // Add rows for top movies
+            // Populate halls based on cinema
+            $('#CinemaId').change(function () {
+                const cinemaId = $(this).val();
+                if (cinemaId) {
+                    $.ajax({
+                        url: '/Sessions/GetHalls',
+                        type: 'GET',
+                        data: { cinemaId: cinemaId },
+                        success: function (data) {
+                            $('#HallId').empty().append('<option value="">-- Виберіть зал --</option>');
+                            $.each(data, function (i, hall) {
+                                $('#HallId').append(`<option value="${hall.id}">${hall.name}</option>`);
+                            });
+                            $('#ScheduleId').empty().append('<option value="">-- Виберіть розклад --</option>');
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Помилка завантаження залів:', error);
+                        }
                     });
+                } else {
+                    $('#HallId').empty().append('<option value="">-- Виберіть зал --</option>');
+                    $('#ScheduleId').empty().append('<option value="">-- Виберіть розклад --</option>');
+                }
+            });
 
-                    const options = {
-                        title: 'Топ 10 фільмів за кількістю сеансів',
-                        width: 700,
-                        height: 400,
-                        is3D: true, // Optional: for 3D effect
-                    };
+            // Populate schedules based on hall
+            $('#HallId').change(function () {
+                const hallId = $(this).val();
+                if (hallId) {
+                    $.ajax({
+                        url: '/Sessions/GetSchedules',
+                        type: 'GET',
+                        data: { hallId: hallId },
+                        success: function (data) {
+                            $('#ScheduleId').empty().append('<option value="">-- Виберіть розклад --</option>');
+                            $.each(data, function (i, schedule) {
+                                $('#ScheduleId').append(`<option value="${schedule.id}">${schedule.startTime}</option>`);
+                            });
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Помилка завантаження розкладів:', error);
+                        }
+                    });
+                } else {
+                    $('#ScheduleId').empty().append('<option value="">-- Виберіть розклад --</option>');
+                }
+            });
 
-                    const chart = new google.visualization.PieChart(document.getElementById('countByMovieChart'));
-                    chart.draw(dataTable, options);
+            // Create session
+            $('#createSessionForm').submit(function (e) {
+                e.preventDefault();
+                var formData = {
+                    MovieId: parseInt($('#MovieId').val()),
+                    ScheduleId: parseInt($('#ScheduleId').val()),
+                    PricePerSeat: parseFloat($('#PricePerSeat').val()),
+                    IsActive: $('#IsActive').val() === 'true'
+                };
+
+                $.ajax({
+                    url: '/Sessions/Create',
+                    type: 'POST',
+                    data: JSON.stringify(formData),
+                    contentType: 'application/json',
+                    headers: {
+                        'RequestVerificationToken': csrfToken
+                    },
+                    success: function (data) {
+                        $('#sessionsTable').append(`
+                            <tr data-session-id="${data.id}">
+                                <td>${$('#MovieId option:selected').text()}</td>
+                                <td>${$('#CinemaId option:selected').text()}</td>
+                                <td>${$('#HallId option:selected').text()}</td>
+                                <td>${$('#ScheduleId option:selected').text()}</td>
+                                <td>${new Date(data.createdAt).toLocaleString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                                <td>${formData.IsActive ? 'Активний' : 'Неактивний'}</td>
+                                <td>
+                                    <a href="javascript:void(0)" class="btn btn-primary btn-sm edit-session" data-id="${data.id}">Редагувати</a>
+                                    <a href="javascript:void(0)" class="btn btn-danger btn-sm delete-session" data-id="${data.id}">Видалити</a>
+                                </td>
+                            </tr>`);
+                        $('#createSessionForm')[0].reset();
+                        $('#HallId').empty().append('<option value="">-- Виберіть зал --</option>');
+                        $('#ScheduleId').empty().append('<option value="">-- Виберіть розклад --</option>');
+                        $('.text-muted').remove();
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Помилка створення сеансу: ' + xhr.responseText);
+                    }
                 });
+            });
+
+            // Edit session
+            $(document).on('click', '.edit-session', function () {
+                var sessionId = $(this).data('id');
+                $.ajax({
+                    url: `/Sessions/GetSession/${sessionId}`,
+                    type: 'GET',
+                    success: function (data) {
+                        var modalHtml = `
+                            <div class="modal fade" id="editSessionModal" tabindex="-1" aria-labelledby="editSessionModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editSessionModalLabel">Редагувати сеанс</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form id="editSessionForm">
+                                                <input type="hidden" name="Id" value="${data.id}" />
+                                                <div class="mb-3">
+                                                    <label class="form-label small mb-1">Активний</label>
+                                                    <select name="IsActive" class="form-select">
+                                                        <option value="true" ${data.isActive ? 'selected' : ''}>Так</option>
+                                                        <option value="false" ${!data.isActive ? 'selected' : ''}>Ні</option>
+                                                    </select>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-primary" onclick="saveSession(${data.id})">Зберегти</button>
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>`;
+                        $('body').append(modalHtml);
+                        var modal = new bootstrap.Modal($('#editSessionModal')[0]);
+                        modal.show();
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Помилка завантаження сеансу: ' + error);
+                    }
+                });
+            });
+
+            // Delete session
+            $(document).on('click', '.delete-session', function () {
+                if (!confirm('Ви впевнені, що хочете видалити цей сеанс?')) return;
+                var sessionId = $(this).data('id');
+                $.ajax({
+                    url: `/Sessions/Delete/${sessionId}`,
+                    type: 'POST',
+                    headers: {
+                        'RequestVerificationToken': csrfToken
+                    },
+                    success: function () {
+                        $(`tr[data-session-id="${sessionId}"]`).remove();
+                        if ($('#sessionsTable tr').length === 0) {
+                            $('#sessionsTable').parent().prepend('<p class="text-muted">Сеансів ще немає.</p>');
+                        }
+                    },
+                    error: function (xhr, status, error) {
+                        alert('Помилка видалення сеансу: ' + error);
+                    }
+                });
+            });
+        });
+
+        function saveSession(id) {
+            var formData = {
+                Id: id,
+                IsActive: $('#editSessionForm select[name="IsActive"]').val() === 'true'
+            };
+            $.ajax({
+                url: `/Sessions/Edit/${id}`,
+                type: 'POST',
+                data: JSON.stringify(formData),
+                contentType: 'application/json',
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (data) {
+                    var row = $(`tr[data-session-id="${id}"]`);
+                    row.find('td:eq(5)').text(data.isActive ? 'Активний' : 'Неактивний');
+                    bootstrap.Modal.getInstance($('#editSessionModal')[0]).hide();
+                    $('#editSessionModal').remove();
+                },
+                error: function (xhr, status, error) {
+                    alert('Помилка оновлення сеансу: ' + error);
+                }
+            });
         }
     </script>
 }

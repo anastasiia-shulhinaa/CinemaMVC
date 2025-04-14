@@ -1,18 +1,20 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CinemaDomain.Model;
-using CinemaInfrastructure.ViewModels;
-using System.Security.Claims;
-using CinemaInfrastructure.Models;
+using CinemaInfrastructure;
 using Microsoft.AspNetCore.Identity;
+using CinemaInfrastructure.Models;
 
 namespace CinemaInfrastructure.Controllers
 {
     public class SessionsController : Controller
     {
         private readonly DbcinemaContext _context;
-        private readonly UserManager<User> _userManager; // Using IdentityUser
+        private readonly UserManager<User> _userManager;
 
         public SessionsController(DbcinemaContext context, UserManager<User> userManager)
         {
@@ -20,6 +22,23 @@ namespace CinemaInfrastructure.Controllers
             _userManager = userManager;
         }
 
+        // GET: Sessions
+        public async Task<IActionResult> Index()
+        {
+            var sessions = await _context.Sessions
+                .Include(s => s.Movie)
+                .Include(s => s.Schedule)
+                .ThenInclude(sch => sch.Hall)
+                .ThenInclude(h => h.Cinema)
+                .ToListAsync();
+
+            ViewBag.Movies = await _context.Movies.Select(m => new { m.Id, m.Title }).ToListAsync();
+            ViewBag.Cinemas = await _context.Cinemas.Select(c => new { c.Id, c.Name }).ToListAsync();
+
+            return View(sessions);
+        }
+
+        // GET: Sessions/GetHalls
         [HttpGet]
         public IActionResult GetHalls(int cinemaId)
         {
@@ -27,117 +46,151 @@ namespace CinemaInfrastructure.Controllers
                 .Where(h => h.CinemaId == cinemaId)
                 .Select(h => new { id = h.Id, name = h.Name })
                 .ToList();
-
             return Json(halls);
         }
 
+        // GET: Sessions/GetSchedules
         [HttpGet]
         public IActionResult GetSchedules(int hallId)
         {
             var schedules = _context.Schedules
-                .Where(s => s.HallId == hallId && s.IsActive) // Only active schedules
-                .Select(s => new { id = s.Id, startTime = s.StartTime.ToString("HH:mm") })
+                .Where(s => s.HallId == hallId && s.IsActive)
+                .Select(s => new { id = s.Id, startTime = s.StartTime.ToString("dd.MM.yyyy HH:mm") })
                 .ToList();
             return Json(schedules);
         }
 
-        // GET: Sessions
-        public async Task<IActionResult> Index()
+        // GET: Sessions/GetSession
+        [HttpGet]
+        public async Task<IActionResult> GetSession(int id)
         {
-            var sessions = await _context.Sessions
-                .Include(s => s.Movie) // Include the related Movie
-                .Include(s => s.Schedule)
-                .ThenInclude(sch => sch.Hall) // Include Hall details if necessary
-                .ToListAsync(); // Fetch all sessions
-
-            return View(sessions); // Pass sessions to the view
+            var session = await _context.Sessions
+                .Where(s => s.Id == id)
+                .Select(s => new { s.Id, s.IsActive })
+                .FirstOrDefaultAsync();
+            if (session == null)
+            {
+                return NotFound();
+            }
+            return Json(session);
         }
 
-        // GET: Sessions/Create
-        public IActionResult Create()
-        {
-            ViewBag.Cinemas = _context.Cinemas.ToList();
-            ViewBag.Movies = _context.Movies.ToList(); // Add movies for selection
-            ViewBag.Schedules = _context.Schedules.ToList(); // Add schedules for selection
-            ViewBag.Halls = _context.Halls.ToList(); // Add halls for selection
-            return View();
-        }
-
-
+        // POST: Sessions/Create
         // POST: Sessions/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("MovieId, ScheduleId")] Session session, decimal PricePerSeat)
+        public async Task<IActionResult> Create([FromBody] CreateSessionDto dto)
         {
+            if (dto == null || !ModelState.IsValid)
+            {
+                return BadRequest("Неправильні дані.");
+            }
+
             // Load the Movie
-            session.Movie = await _context.Movies.FindAsync(session.MovieId);
+            var movie = await _context.Movies.FindAsync(dto.MovieId);
+            if (movie == null)
+            {
+                return BadRequest("Вибраний фільм не існує.");
+            }
 
             // Load the Schedule, including Hall and its associated Cinema
-            session.Schedule = await _context.Schedules
+            var schedule = await _context.Schedules
                 .Include(s => s.Hall)
                 .ThenInclude(h => h.Cinema)
-                .FirstOrDefaultAsync(s => s.Id == session.ScheduleId);
-
-            if (session.Movie == null)
+                .FirstOrDefaultAsync(s => s.Id == dto.ScheduleId);
+            if (schedule == null || !schedule.IsActive)
             {
-                ModelState.AddModelError("MovieId", "The selected movie does not exist.");
+                return BadRequest("Вибраний розклад недійсний або неактивний.");
             }
 
-            if (session.Schedule == null)
+            // Check for overlapping sessions in the same hall
+            var scheduleEndTime = schedule.StartTime.AddHours(3);
+            var conflictingSessions = await _context.Sessions
+                .Include(s => s.Schedule)
+                .Where(s => s.Schedule.HallId == schedule.HallId && s.Schedule.IsActive)
+                .Where(s => s.Schedule.StartTime < scheduleEndTime && s.Schedule.StartTime.AddHours(3) > schedule.StartTime)
+                .AnyAsync();
+            if (conflictingSessions)
             {
-                ModelState.AddModelError("ScheduleId", "The selected schedule does not exist.");
+                return BadRequest("Цей розклад конфліктує з іншим сеансом у цьому залі.");
             }
 
-            if (session.Schedule != null && session.Schedule.Hall == null)
+            if (dto.PricePerSeat <= 0)
             {
-                ModelState.AddModelError("ScheduleId", "The selected schedule must have an associated hall.");
+                return BadRequest("Ціна за місце повинна бути більше нуля.");
             }
 
-            if (PricePerSeat <= 0)
+            var session = new Session
             {
-                ModelState.AddModelError("PricePerSeat", "Price must be greater than zero.");
-            }
-
-            session.IsActive = true;
-            session.CreatedAt = DateTime.UtcNow;
-
-            ModelState.Clear();
-            TryValidateModel(session);
-
-            if (!ModelState.IsValid)
-            {
-                ViewBag.Cinemas = _context.Cinemas.ToList();
-                ViewBag.Movies = _context.Movies.ToList();
-                ViewBag.Schedules = _context.Schedules.ToList();
-                return View(session);
-            }
+                MovieId = dto.MovieId,
+                ScheduleId = dto.ScheduleId,
+                CreatedAt = DateTime.UtcNow,
+                IsActive = dto.IsActive
+            };
 
             _context.Sessions.Add(session);
             await _context.SaveChangesAsync();
 
-            var hallId = session.Schedule?.Hall?.Id;
+            // Create SessionSeats
+            var seats = await _context.Seats
+                .Where(seat => seat.HallId == schedule.HallId)
+                .ToListAsync();
 
-            if (hallId != null)
+            var sessionSeats = seats.Select(seat => new SessionSeat
             {
-                var seats = await _context.Seats
-                    .Where(seat => seat.HallId == hallId)
-                    .ToListAsync();
+                SessionId = session.Id,
+                SeatId = seat.Id,
+                Price = dto.PricePerSeat
+            }).ToList();
 
-                var sessionSeats = seats.Select(seat => new SessionSeat
-                {
-                    SessionId = session.Id,
-                    SeatId = seat.Id,
-                    Price = PricePerSeat
-                    // BookingId remains null, so seat is available
-                }).ToList();
+            _context.SessionSeats.AddRange(sessionSeats);
+            await _context.SaveChangesAsync();
 
-                _context.SessionSeats.AddRange(sessionSeats);
-                await _context.SaveChangesAsync();
-            }
-
-            return RedirectToAction(nameof(Index));
+            return Json(new { id = session.Id, createdAt = session.CreatedAt.ToString("o"), isActive = session.IsActive });
         }
 
+        // POST: Sessions/Edit
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, [FromBody] EditSessionDto dto)
+        {
+            var session = await _context.Sessions.FindAsync(id);
+            if (session == null)
+            {
+                return NotFound("Сеанс не знайдено.");
+            }
+
+            session.IsActive = dto.IsActive;
+            _context.Update(session);
+            await _context.SaveChangesAsync();
+
+            return Json(new { id = session.Id, isActive = session.IsActive });
+        }
+
+        // POST: Sessions/Delete
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var session = await _context.Sessions
+                .Include(s => s.SessionSeats)
+                .Include(s => s.Bookings)
+                .FirstOrDefaultAsync(s => s.Id == id);
+            if (session == null)
+            {
+                return NotFound("Сеанс не знайдено.");
+            }
+
+            if (session.Bookings.Any())
+            {
+                return BadRequest("Неможливо видалити сеанс, оскільки на нього є бронювання.");
+            }
+
+            _context.SessionSeats.RemoveRange(session.SessionSeats);
+            _context.Sessions.Remove(session);
+            await _context.SaveChangesAsync();
+            return Ok();
+        }
 
         // View to create a session for a selected movie
         public async Task<IActionResult> CreateSessionFromMovie(int movieId)
@@ -159,153 +212,89 @@ namespace CinemaInfrastructure.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateSessionFromMovie(int movieId, int hallId, int scheduleId, bool isPrivate)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateSessionFromMovie(int movieId, int hallId, int scheduleId, bool isPrivate, decimal pricePerSeat)
         {
+            var schedule = await _context.Schedules
+                .Include(s => s.Hall)
+                .FirstOrDefaultAsync(s => s.Id == scheduleId && s.HallId == hallId && s.IsActive);
+            if (schedule == null)
+            {
+                return BadRequest("Вибраний розклад недійсний або неактивний.");
+            }
+
+            // Check for overlapping sessions
+            var scheduleEndTime = schedule.StartTime.AddHours(3);
+            var conflictingSessions = await _context.Sessions
+                .Include(s => s.Schedule)
+                .Where(s => s.Schedule.HallId == hallId && s.Schedule.IsActive)
+                .Where(s => s.Schedule.StartTime < scheduleEndTime && s.Schedule.StartTime.AddHours(3) > schedule.StartTime)
+                .AnyAsync();
+            if (conflictingSessions)
+            {
+                return BadRequest("Цей розклад конфліктує з іншим сеансом у цьому залі.");
+            }
+
+            if (pricePerSeat <= 0)
+            {
+                return BadRequest("Ціна за місце повинна бути більше нуля.");
+            }
+
             var session = new Session
             {
                 MovieId = movieId,
                 ScheduleId = scheduleId,
-                CreatedAt = DateTime.Now,
+                CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };
 
             _context.Sessions.Add(session);
             await _context.SaveChangesAsync();
 
+            // Create SessionSeats
+            var seats = await _context.Seats
+                .Where(seat => seat.HallId == hallId)
+                .ToListAsync();
+
+            var sessionSeats = seats.Select(seat => new SessionSeat
+            {
+                SessionId = session.Id,
+                SeatId = seat.Id,
+                Price = pricePerSeat
+            }).ToList();
+
+            _context.SessionSeats.AddRange(sessionSeats);
+
             if (isPrivate)
             {
+                var userId = _userManager.GetUserId(User);
+                if (userId == null)
+                {
+                    return RedirectToAction("Login", "Account");
+                }
+
                 var booking = new Booking
                 {
                     SessionId = session.Id,
                     IsPrivateBooking = true,
                     PrivateBookingPrice = 1200,
-                    BookingDate = DateTime.Now,
-                    UserId = _userManager.GetUserId(User) // Replace with actual user
+                    BookingDate = DateTime.UtcNow,
+                    UserId = userId
                 };
 
                 _context.Bookings.Add(booking);
-                await _context.SaveChangesAsync();
-            }
 
-            return RedirectToAction("MyBookings");
-        }
-
-
-        // GET: Sessions/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var session = await _context.Sessions
-                .Include(s => s.Movie)
-                .Include(s => s.Schedule)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (session == null)
-            {
-                return NotFound();
-            }
-
-            return View(session);
-        }
-
-
-        // GET: Sessions/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var session = await _context.Sessions.FindAsync(id);
-            if (session == null)
-            {
-                return NotFound();
-            }
-            ViewData["MovieId"] = new SelectList(_context.Movies, "Id", "Language", session.MovieId);
-            ViewData["ScheduleId"] = new SelectList(_context.Schedules, "Id", "Id", session.ScheduleId);
-            return View(session);
-        }
-
-        // POST: Sessions/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("MovieId,ScheduleId,CreatedAt,IsActive,Id")] Session session)
-        {
-            if (id != session.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
+                // Mark all seats as booked
+                foreach (var sessionSeat in sessionSeats)
                 {
-                    _context.Update(session);
-                    await _context.SaveChangesAsync();
+                    sessionSeat.BookingId = booking.Id;
                 }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!SessionExists(session.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["MovieId"] = new SelectList(_context.Movies, "Id", "Language", session.MovieId);
-            ViewData["ScheduleId"] = new SelectList(_context.Schedules, "Id", "Id", session.ScheduleId);
-            return View(session);
-        }
-
-        // GET: Sessions/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var session = await _context.Sessions
-                .Include(s => s.Movie)
-                .Include(s => s.Schedule)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (session == null)
-            {
-                return NotFound();
-            }
-
-            return View(session);
-        }
-
-        // POST: Sessions/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var session = await _context.Sessions.FindAsync(id);
-            if (session != null)
-            {
-                _context.Sessions.Remove(session);
             }
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("MyBookings");
         }
 
-        private bool SessionExists(int id)
-        {
-            return _context.Sessions.Any(e => e.Id == id);
-        }
         // My Bookings Action
         public async Task<IActionResult> MyBookings()
         {
@@ -316,14 +305,16 @@ namespace CinemaInfrastructure.Controllers
             }
 
             var bookings = await _context.Bookings
-    .Include(b => b.Session)
-        .ThenInclude(s => s.Movie)
-    .Include(b => b.Session)
-        .ThenInclude(s => s.Schedule)
-            .ThenInclude(sch => sch.Hall) // optional, only if you need Hall details
-    .Include(b => b.SessionSeats)
-    .Where(b => b.UserId == userId)
-    .ToListAsync();
+                .Include(b => b.Session)
+                    .ThenInclude(s => s.Movie)
+                .Include(b => b.Session)
+                    .ThenInclude(s => s.Schedule)
+                        .ThenInclude(sch => sch.Hall)
+                            .ThenInclude(h => h.Cinema)
+                .Include(b => b.SessionSeats)
+                    .ThenInclude(ss => ss.Seat)
+                .Where(b => b.UserId == userId)
+                .ToListAsync();
 
             var model = new MyBookingsViewModel
             {
@@ -333,5 +324,31 @@ namespace CinemaInfrastructure.Controllers
 
             return View(model);
         }
+    }
+
+    public class CreateSessionDto
+    {
+        public int MovieId { get; set; }
+        public int ScheduleId { get; set; }
+        public decimal PricePerSeat { get; set; }
+        public bool IsActive { get; set; }
+    }
+
+    public class EditSessionDto
+    {
+        public int Id { get; set; }
+        public bool IsActive { get; set; }
+    }
+
+    public class MovieWithSessionViewModel
+    {
+        public Movie Movie { get; set; }
+        public List<Cinema> Cinemas { get; set; }
+    }
+
+    public class MyBookingsViewModel
+    {
+        public List<Booking> PrivateBookings { get; set; }
+        public List<Booking> TicketBookings { get; set; }
     }
 }

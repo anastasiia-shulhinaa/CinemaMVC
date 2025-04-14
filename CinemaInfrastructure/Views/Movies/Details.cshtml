@@ -3,152 +3,164 @@
     ViewData["Title"] = "Movie Details & Create Session";
 }
 
-<main class="container my-5">
-    <h1 class="section-title text-center mb-5">@Model.Movie.Title</h1>
+@if (Model == null || Model.Movie == null)
+{
+    <div class="alert alert-danger" role="alert">
+        Фільм не знайдено.
+    </div>
+}
+else
+{
+    <main class="container my-5">
+        <h1 class="section-title text-center mb-5">@Model.Movie.Title</h1>
 
-    <div class="movie-details-container">
-        <!-- Movie Poster with Trailer Play Button -->
-        <div class="movie-poster position-relative">
-            @if (!string.IsNullOrEmpty(Model.Movie.BannerUrl))
-            {
-                <img src="@Model.Movie.BannerUrl" alt="@Model.Movie.Title Poster" class="img-fluid rounded shadow" />
-                @if (!string.IsNullOrEmpty(Model.Movie.TrailerLink))
+        <div class="movie-details-container">
+            <!-- Movie Poster with Trailer Play Button -->
+            <div class="movie-poster position-relative">
+                @if (!string.IsNullOrEmpty(Model.Movie.BannerUrl))
                 {
-                    <button type="button" class="play-slide position-absolute top-50 start-50 translate-middle"
-                            data-link="@Model.Movie.TrailerLink"
-                            aria-label="Play trailer for @Model.Movie.Title">
-                        <img src="~/img/play.png" alt="Play Trailer" class="play-icon" />
-                    </button>
+                    <img src="@Model.Movie.BannerUrl" alt="@Model.Movie.Title Poster" class="img-fluid rounded shadow" />
+                    @if (!string.IsNullOrEmpty(Model.Movie.TrailerLink))
+                    {
+                        <button type="button" class="play-slide position-absolute top-50 start-50 translate-middle"
+                                data-link="@Model.Movie.TrailerLink"
+                                aria-label="Play trailer for @Model.Movie.Title">
+                            <img src="~/img/play.png" alt="Play Trailer" class="play-icon" />
+                        </button>
+                    }
                 }
-            }
-            else
-            {
-                <div class="no-poster-placeholder">
-                    <p>Постер відсутній</p>
-                </div>
-            }
-        </div>
+                else
+                {
+                    <div class="no-poster-placeholder">
+                        <p>Постер відсутній</p>
+                    </div>
+                }
+            </div>
 
-        <!-- Movie Details -->
-        <div class="movie-info card shadow-sm">
-            <div class="card-body">
-                <h2 class="info-title">Інформація про фільм</h2>
-                <div class="info-item">
-                    <strong>Опис:</strong>
-                    <p>@Model.Movie.Description</p>
-                </div>
-                <div class="info-item">
-                    <strong>Мова:</strong>
-                    <span>@Model.Movie.Language</span>
-                </div>
-                <div class="info-item">
-                    <strong>Тривалість:</strong>
-                    <span>@Model.Movie.Duration хв</span>
-                </div>
-                <div class="info-item">
-                    <strong>Рік випуску:</strong>
-                    <span>@Model.Movie.ReleaseYear</span>
-                </div>
-                <div class="info-item">
-                    <strong>Рейтинг:</strong>
-                    <span class="rating">⭐ @Model.Movie.Rating</span>
-                </div>
-                <div class="info-item">
-                    <strong>Категорії:</strong>
-                    <span>
-                        @if (Model.Movie.Categories != null && Model.Movie.Categories.Any())
-                        {
-                            @string.Join(", ", Model.Movie.Categories.Select(c => c.Name))
-                        }
-                        else
-                        {
-                            @:Не вказано
-                        }
-                    </span>
-                </div>
-                <div class="info-item">
-                    <strong>Режисери:</strong>
-                    <span>
-                        @if (Model.Movie.Directors != null && Model.Movie.Directors.Any())
-                        {
-                            @string.Join(", ", Model.Movie.Directors.Select(d => d.FullName))
-                        }
-                        else
-                        {
-                            @:Не вказано
-                        }
-                    </span>
-                </div>
-                <div class="info-item">
-                    <strong>Актори:</strong>
-                    <span>
-                        @if (Model.Movie.Actors != null && Model.Movie.Actors.Any())
-                        {
-                            @string.Join(", ", Model.Movie.Actors.Select(a => a.FullName))
-                        }
-                        else
-                        {
-                            @:Не вказано
-                        }
-                    </span>
+            <!-- Movie Details -->
+            <div class="movie-info card shadow-sm">
+                <div class="card-body">
+                    <h2 class="info-title">Інформація про фільм</h2>
+                    <div class="info-item">
+                        <strong>Опис:</strong>
+                        <p>@Model.Movie.Description</p>
+                    </div>
+                    <div class="info-item">
+                        <strong>Мова:</strong>
+                        <span>@Model.Movie.Language</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Тривалість:</strong>
+                        <span>@Model.Movie.Duration хв</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Рік випуску:</strong>
+                        <span>@Model.Movie.ReleaseYear</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Рейтинг:</strong>
+                        <span class="rating">⭐ @Model.Movie.Rating</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Категорії:</strong>
+                        <span>
+                            @if (Model.Movie.Categories != null && Model.Movie.Categories.Any())
+                            {
+                                @string.Join(", ", Model.Movie.Categories.Select(c => c.Name))
+                            }
+                            else
+                            {
+                                @:Не вказано
+                            }
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Режисери:</strong>
+                        <span>
+                            @if (Model.Movie.Directors != null && Model.Movie.Directors.Any())
+                            {
+                                @string.Join(", ", Model.Movie.Directors.Select(d => d.FullName))
+                            }
+                            else
+                            {
+                                @:Не вказано
+                            }
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Актори:</strong>
+                        <span>
+                            @if (Model.Movie.Actors != null && Model.Movie.Actors.Any())
+                            {
+                                @string.Join(", ", Model.Movie.Actors.Select(a => a.FullName))
+                            }
+                            else
+                            {
+                                @:Не вказано
+                            }
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Trailer Modal -->
-    <div class="trailer-modal" id="trailerModal">
-        <div class="trailer-modal-content">
-            <span class="close-modal">&times;</span>
-            <div class="trailer-container">
-                <iframe id="trailerVideo" frameborder="0" allowfullscreen></iframe>
+        <!-- Trailer Modal -->
+        <div class="trailer-modal" id="trailerModal">
+            <div class="trailer-modal-content">
+                <span class="close-modal">×</span>
+                <div class="trailer-container">
+                    <iframe id="trailerVideo" frameborder="0" allowfullscreen></iframe>
+                </div>
             </div>
         </div>
-    </div>
 
-    <h3 class="mb-3 text-center">Створити сеанс</h3>
+        <h3 class="mb-3 text-center">Створити сеанс</h3>
 
-    <form asp-controller="Sessions" asp-action="CreateSessionFromMovie" method="post">
-        <input type="hidden" name="MovieId" value="@Model.Movie.Id" />
+        <form asp-controller="Sessions" asp-action="CreateSessionFromMovie" method="post">
+            <input type="hidden" name="MovieId" value="@Model.Movie.Id" />
 
-        <div class="form-group mb-3">
-            <label>Тип сеансу</label>
-            <select class="form-control" id="sessionType" name="IsPrivate">
-                <option value="false">Публічний (інші можуть приєднатись)</option>
-                <option value="true">Приватний (весь зал для себе)</option>
-            </select>
-        </div>
+            <div class="form-group mb-3">
+                <label>Тип сеансу</label>
+                <select class="form-control" id="sessionType" name="IsPrivate">
+                    <option value="false">Публічний (інші можуть приєднатись)</option>
+                    <option value="true">Приватний (весь зал для себе)</option>
+                </select>
+            </div>
 
-        <div class="form-group mb-3">
-            <label for="CinemaId">Кінотеатр</label>
-            <select id="CinemaId" name="CinemaId" class="form-control" required>
-                <option value="">-- Оберіть кінотеатр --</option>
-                @foreach (var cinema in Model.Cinemas)
-                {
-                    <option value="@cinema.Id">@cinema.Name</option>
-                }
-            </select>
-        </div>
+            <div class="form-group mb-3">
+                <label for="CinemaId">Кінотеатр</label>
+                <select id="CinemaId" name="CinemaId" class="form-control" required>
+                    <option value="">-- Оберіть кінотеатр --</option>
+                    @if (Model.Cinemas != null)
+                    {
+                        foreach (var cinema in Model.Cinemas)
+                        {
+                            <option value="@cinema.Id">@cinema.Name</option>
+                        }
+                    }
+                </select>
+            </div>
 
-        <div class="form-group mb-3">
-            <label for="HallId">Зал</label>
-            <select id="HallId" name="HallId" class="form-control" required>
-                <option value="">-- Оберіть зал --</option>
-            </select>
-        </div>
+            <div class="form-group mb-3">
+                <label for="HallId">Зал</label>
+                <select id="HallId" name="HallId" class="form-control" required>
+                    <option value="">-- Оберіть зал --</option>
+                </select>
+            </div>
 
-        <div class="form-group mb-3">
-            <label for="ScheduleId">Час початку</label>
-            <select id="ScheduleId" name="ScheduleId" class="form-control" required>
-                <option value="">-- Оберіть розклад --</option>
-            </select>
-        </div>
+            <div class="form-group mb-3">
+                <label for="ScheduleId">Час початку</label>
+                <select id="ScheduleId" name="ScheduleId" class="form-control" required>
+                    <option value="">-- Оберіть розклад --</option>
+                </select>
+            </div>
 
-        <div class="text-center mt-4">
-            <button type="submit" class="btn btn-success">Створити сеанс</button>
-        </div>
-    </form>
-</main>
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success">Створити сеанс</button>
+            </div>
+        </form>
+    </main>
+}
 
 @section Scripts {
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

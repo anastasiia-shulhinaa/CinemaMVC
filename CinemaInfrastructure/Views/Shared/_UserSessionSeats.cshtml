@@ -1,0 +1,111 @@
+﻿@model CinemaInfrastructure.ViewModels.UserSessionSeatsViewModel
+
+@if (Model == null || Model.Seats == null || !Model.Seats.Any())
+{
+    <p class="text-danger">Помилка: місця недоступні для цього сеансу.</p>
+}
+else
+{
+    <div class="hall-structure">
+        <span class="screen"><img src="https://www.palladium-cinema.com.ua/desktop/img/screen.png" alt="Екран" /></span>
+
+        <div class="seats-container">
+            @{
+                int currentSeatIndex = 0;
+                int rowNumber = 1;
+            }
+            @foreach (var seatsInRow in Model.LayoutRows)
+            {
+                <div class="row">
+                    <span class="number-of-row">@rowNumber</span>
+                    <div class="seats">
+                        @for (int i = 0; i < seatsInRow; i++)
+                        {
+                            if (currentSeatIndex < Model.Seats.Count)
+                            {
+                                var seat = Model.Seats[currentSeatIndex];
+                                var disabled = seat.IsAvailable ? "" : "booked";
+                                <div class="seat @disabled"
+                                     data-seat="@($"{seat.RowNumber}-{seat.SeatNumber}")"
+                                     data-id="@seat.Id"
+                                     data-price="@seat.Price"
+                                     title="Ряд @seat.RowNumber, Місце @seat.SeatNumber">
+                                    @seat.SeatNumber
+                                </div>
+                                currentSeatIndex++;
+                            }
+                        }
+                    </div>
+                </div>
+                rowNumber++;
+            }
+        </div>
+    </div>
+}
+
+<style>
+    .hall-structure {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .seats-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .row {
+        display: flex;
+        align-items: center;
+        margin: 5px 0;
+        width: 100%;
+        max-width: 600px;
+    }
+
+    .number-of-row {
+        width: 30px;
+        text-align: right;
+        margin-right: 10px;
+        font-weight: bold;
+        color: #5c534c;
+    }
+
+    .seats {
+        display: flex;
+        flex: 1;
+        justify-content: center;
+    }
+
+    .seat {
+        display: inline-block;
+        width: 50px;
+        height: 50px;
+        margin: 4px;
+        background-color: #eee;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #5c534c;
+        font-weight: bold;
+    }
+
+        .seat:hover {
+            background-color: #ddd;
+            transform: scale(1.05);
+        }
+
+        .seat.selected {
+            background-color: #800020;
+            color: white;
+        }
+
+        .seat.booked {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+        }
+</style>

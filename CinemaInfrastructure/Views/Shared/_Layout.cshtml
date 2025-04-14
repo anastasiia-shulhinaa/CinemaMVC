@@ -5,9 +5,9 @@
 @inject IHttpContextAccessor HttpContextAccessor
 
 @{
-    var username = User.Identity?.Name ?? "Гість";
+    string? username = User.Identity?.Name ?? "Гість";
     bool isAdmin = User.IsInRole("admin");
-    bool isAdminInUserMode = isAdmin && Context.Session?.GetString("AdminMode") == "user";
+    bool isAdminInUserMode = isAdmin && (Context.Session?.GetString("AdminMode") ?? "") == "user";
 }
 
 <!DOCTYPE html>
@@ -21,485 +21,92 @@
     <link rel="stylesheet" href="~/CinemaInfrastructure.styles.css" asp-append-version="true" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* CSS from above */
-        html, body {
-            font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-            background-color: #f9fafb;
-            margin: 0;
-            padding: 0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            color: #2d3748;
-        }
+        /* Your existing CSS */
+        /* Fix media queries (@@media should be @@media ) */
+        @@media (max-width: 992px) {
+            .navbar-nav
 
-        body {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .container-fluid {
-            max-width: 1280px;
-            padding: 0 20px;
-            margin: 0 auto;
-        }
-
-        .navbar {
-            background-color: #fff;
-            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
-            padding: 0.75rem 1.5rem;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .navbar-brand {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #800020 !important;
-            letter-spacing: 0.5px;
-            transition: color 0.2s ease;
-        }
-
-            .navbar-brand:hover {
-                color: #660018 !important;
-            }
-
-        .navbar-toggler {
-            border-color: rgba(128, 0, 32, 0.5);
-        }
-
-        .navbar-toggler-icon {
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(128, 0, 32, 0.7)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        {
+            margin-top: 0.5rem;
         }
 
         .nav-link {
-            color: #2d3748 !important;
-            font-weight: 400;
-            padding: 0.5rem 1rem;
-            display: flex;
-            align-items: center;
-            transition: all 0.2s ease;
-            border-radius: 4px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.95rem;
         }
-
-            .nav-link i {
-                margin-right: 0.5rem;
-                color: #d4af37;
-                font-size: 1rem;
-            }
-
-            .nav-link:hover,
-            .nav-link.active {
-                color: #800020 !important;
-                background-color: #f7e9e9;
-            }
 
         .dropdown-toggle {
-            color: #2d3748;
-            font-weight: 400;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
+            font-size: 0.95rem;
         }
 
-            .dropdown-toggle:hover {
-                background-color: #f0e4d7;
-                color: #800020;
-            }
-
-            .dropdown-toggle i {
-                margin-right: 0.5rem;
-                color: #d4af37;
-                font-size: 1rem;
-            }
-
-        .dropdown-menu {
-            background-color: #fff;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            border-radius: 6px;
-            margin-top: 0.25rem;
+        .movie-card img {
+            max-height: 240px;
         }
 
-        .dropdown-item {
-            color: #2d3748;
-            padding: 8px 16px;
-            transition: all 0.2s ease;
+        .film-slider {
+            width: 200px;
         }
 
-            .dropdown-item:hover {
-                background-color: #800020;
-                color: #fff;
-            }
-
-        .breadcrumb {
-            background-color: #fff;
-            border-radius: 6px;
-            padding: 10px 12px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-            margin: 1rem 0;
-            font-size: 0.85rem;
         }
 
-        .breadcrumb-item a {
-            color: #800020;
-            text-decoration: none;
+        @@media (max-width: 767px) {
+            .navbar-brand
+
+        {
+            font-size: 1.4rem;
         }
 
-            .breadcrumb-item a:hover {
-                color: #660018;
-            }
-
-        .breadcrumb-item.active {
-            color: #2d3748;
+        .nav-link,
+        .dropdown-toggle {
+            font-size: 0.9rem;
+            padding: 0.4rem 0.6rem;
         }
 
         .main-content {
-            flex: 1 0 auto;
-            padding: 1.5rem;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.03);
-            margin-bottom: 1.5rem;
-            min-height: calc(100vh - 150px);
-            padding-bottom: 60px;
-        }
-
-        .footer {
-            background-color: #fff;
-            color: #4a5568;
-            padding: 0.75rem 0;
-            border-top: 1px solid #e2e8f0;
-            text-align: center;
-            font-size: 0.8rem;
-            flex-shrink: 0;
-        }
-
-            .footer a {
-                color: #800020;
-                text-decoration: none;
-            }
-
-                .footer a:hover {
-                    color: #660018;
-                }
-
-        .btn {
-            border-radius: 6px;
-            font-weight: 400;
-            transition: all 0.2s ease;
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-        }
-
-            .btn i {
-                margin-right: 0.5rem;
-            }
-
-        .btn-primary {
-            background-color: #800020;
-            border-color: #800020;
-            color: #fff;
-        }
-
-            .btn-primary:hover {
-                background-color: #660018;
-                border-color: #660018;
-                transform: translateY(-1px);
-            }
-
-        .btn-secondary {
-            background-color: #4a7a7d;
-            border-color: #4a7a7d;
-            color: #fff;
-        }
-
-            .btn-secondary:hover {
-                background-color: #3b6163;
-                border-color: #3b6163;
-                transform: translateY(-1px);
-            }
-
-        .movie-card {
-            position: relative;
-            overflow: hidden;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        }
-
-            .movie-card img {
-                width: 100%;
-                border-radius: 8px;
-                object-fit: cover;
-                max-height: 280px;
-                transition: opacity 0.2s ease;
-            }
-
-            .movie-card:hover img {
-                opacity: 0.95;
-            }
-
-        .custom-session-btn {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px solid white;
-            color: black;
-            font-size: 20px;
-            font-weight: bold;
-            padding: 10px 25px;
-            border-radius: 30px;
-            backdrop-filter: blur(5px);
-            transition: all 0.3s ease-in-out;
-            cursor: pointer;
-            box-shadow: 0px 6px 14px rgba(0, 0, 0, 0.4);
-            text-decoration: none !important;
-        }
-
-            .custom-session-btn:hover {
-                background: #800020;
-                color: white;
-                border-color: #800020;
-                transform: scale(1.05);
-            }
-
-        .name-section-vertical {
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            font-size: 1rem;
-            color: #718096;
-            margin-right: 10px;
-            font-weight: 400;
-            margin-top: 20px;
-        }
-
-            .name-section-vertical strong {
-                color: #4a5568;
-            }
-
-        .film-slider {
-            width: 250px;
-            max-height: 450px;
-            margin-right: 15px;
-            display: inline-block;
-        }
-
-        .poster {
-            position: relative;
-        }
-
-            .poster img {
-                border-radius: 8px;
-                height: 320px;
-                object-fit: cover;
-                transition: opacity 0.2s ease;
-            }
-
-            .poster:hover img {
-                opacity: 0.9;
-            }
-
-        .play-slide {
-            z-index: 2;
-            cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.2s ease;
-            background: none;
-            border: none;
-            padding: 0;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-            .play-slide:hover {
-                opacity: 1;
-            }
-
-            .play-slide img {
-                height: 40px;
-                width: 40px;
-            }
-
-        .data {
-            font-size: 0.9rem;
-            color: #4a5568;
-            margin-top: 8px;
-            text-align: center;
-        }
-
-        .ticket-icon img {
-            height: 20px;
-            margin-top: 5px;
-        }
-
-        .now-playing-slider {
-            overflow-x: auto;
-            scroll-behavior: smooth;
-            white-space: nowrap;
-            padding-bottom: 10px;
-        }
-
-        .owl-stage {
-            display: flex;
-        }
-
-        .owl-item {
-            display: inline-block;
-        }
-
-        .visually-hidden {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            padding: 0;
-            margin: -1px;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            white-space: nowrap;
-            border: 0;
-        }
-
-        .home-content {
-            max-width: 1200px;
-            margin: 0 auto;
             padding: 1rem;
         }
 
-        .section-title {
-            font-size: 1.75rem;
-            color: #800020;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
+        .footer {
+            font-size: 0.75rem;
         }
 
-            .section-title i {
-                margin-right: 0.5rem;
-                color: #d4af37;
-            }
+        .btn {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.8rem;
+        }
 
-        .lead {
-            font-size: 1.1rem;
-            color: #4a5568;
-            margin-bottom: 1.5rem;
+        .section-title {
+            font-size: 1.5rem;
         }
 
         .dashboard-actions,
         .user-actions {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.5rem;
+            flex-direction: column;
+            align-items: stretch;
         }
 
         .cinema-selection {
-            max-width: 250px;
+            max-width: 100%;
         }
 
-        .cinema-dropdown .dropdown-toggle {
-            background-color: #800020;
-            border-color: #800020;
-            color: #fff;
-            width: 100%;
-            text-align: left;
-            padding: 0.5rem 1rem;
-            border-radius: 6px;
+        .movie-card img {
+            max-height: 200px;
         }
 
-            .cinema-dropdown .dropdown-toggle:hover {
-                background-color: #660018;
-            }
-
-        .cinema-dropdown .dropdown-menu {
-            width: 100%;
+        .film-slider {
+            width: 160px;
         }
 
-        @@media (max-width: 992px) {
-            .navbar-nav {
-                margin-top: 0.5rem;
-            }
-
-            .nav-link {
-                padding: 0.5rem 0.75rem;
-                font-size: 0.95rem;
-            }
-
-            .dropdown-toggle {
-                font-size: 0.95rem;
-            }
-
-            .movie-card img {
-                max-height: 240px;
-            }
-
-            .film-slider {
-                width: 200px;
-            }
+        .custom-session-btn {
+            font-size: 1rem;
+            padding: 8px 20px;
         }
 
-        @@media (max-width: 767px) {
-            .navbar-brand {
-                font-size: 1.4rem;
-            }
+        .name-section-vertical {
+            font-size: 0.9rem;
+            margin-right: 8px;
+        }
 
-            .nav-link,
-            .dropdown-toggle {
-                font-size: 0.9rem;
-                padding: 0.4rem 0.6rem;
-            }
-
-            .main-content {
-                padding: 1rem;
-            }
-
-            .footer {
-                font-size: 0.75rem;
-            }
-
-            .btn {
-                font-size: 0.85rem;
-                padding: 0.4rem 0.8rem;
-            }
-
-            .section-title {
-                font-size: 1.5rem;
-            }
-
-            .dashboard-actions,
-            .user-actions {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .cinema-selection {
-                max-width: 100%;
-            }
-
-            .movie-card img {
-                max-height: 200px;
-            }
-
-            .film-slider {
-                width: 160px;
-            }
-
-            .custom-session-btn {
-                font-size: 1rem;
-                padding: 8px 20px;
-            }
-
-            .name-section-vertical {
-                font-size: 0.9rem;
-                margin-right: 8px;
-            }
         }
     </style>
 </head>
@@ -552,7 +159,7 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link @((ViewContext.RouteData.Values["Controller"]?.ToString() == "Sessions") ? "active" : "")" asp-controller="Sessions" asp-action="Create">
+                                <a class="nav-link @((ViewContext.RouteData.Values["Controller"]?.ToString() == "Sessions") ? "active" : "")" asp-controller="Sessions" asp-action="Index">
                                     <i class="fas fa-clock"></i> Сеанси
                                 </a>
                             </li>
@@ -626,21 +233,43 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-        @if (!isAdmin || isAdminInUserMode)
-        {
-            @:fetch("/api/cinemas")
-            @:.then(response => response.json())
-            @:.then(data => {
-            @:    const dropdown = document.getElementById("cinemaList");
-            @:    dropdown.innerHTML = "";
-            @:    data.forEach(cinema => {
-            @:        const item = document.createElement("li");
-            @:        item.innerHTML = `<a class="dropdown-item cinema-selection" href="#" data-value="${cinema.id}">${cinema.name}</a>`;
-            @:        dropdown.appendChild(item);
-            @:    });
-            @:})
-            @:.catch(error => console.error("Error loading cinemas:", error));
-        }
+            console.log("DOMContentLoaded fired");
+            console.log("User authenticated: @User.Identity.IsAuthenticated");
+            console.log("isAdmin: @isAdmin, isAdminInUserMode: @isAdminInUserMode");
+            const cinemaDropdown = document.getElementById("cinemaDropdown");
+            if (cinemaDropdown) {
+                console.log("cinemaDropdown element found");
+                cinemaDropdown.addEventListener("shown.bs.dropdown", function () {
+                    console.log("Dropdown opened, fetching cinemas...");
+                    fetch("/api/cinemas")
+                        .then(response => {
+                            console.log("API response status:", response.status);
+                            if (!response.ok) throw new Error("API error");
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log("Cinemas data:", data);
+                            const dropdown = document.getElementById("cinemaList");
+                            dropdown.innerHTML = "";
+                            if (data && Array.isArray(data)) {
+                                data.forEach(cinema => {
+                                    const item = document.createElement("li");
+                                    item.innerHTML = `<a class="dropdown-item cinema-selection" href="#" data-value="${cinema.id}">${cinema.name}</a>`;
+                                    dropdown.appendChild(item);
+                                });
+                            } else {
+                                console.log("No valid cinema data");
+                                dropdown.innerHTML = '<li><span class="dropdown-item disabled">No cinemas available</span></li>';
+                            }
+                        })
+                        .catch(error => console.error("Error loading cinemas:", error));
+                });
+                cinemaDropdown.addEventListener("click", function () {
+                    console.log("cinemaDropdown clicked");
+                });
+            } else {
+                console.error("cinemaDropdown element not found");
+            }
         });
     </script>
     @await RenderSectionAsync("Scripts", required: false)

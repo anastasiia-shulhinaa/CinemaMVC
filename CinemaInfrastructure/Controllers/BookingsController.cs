@@ -13,18 +13,20 @@ namespace CinemaInfrastructure.Controllers
     public class BookingsController : Controller
     {
         private readonly DbcinemaContext _context;
-        private readonly UserManager<User> _userManager; // Using IdentityUser
+        private readonly UserManager<User> _userManager;
 
         public BookingsController(DbcinemaContext context, UserManager<User> userManager)
         {
             _context = context;
             _userManager = userManager;
         }
+
         public IActionResult SelectSeat(int sessionId)
         {
             var session = _context.Sessions
                 .Include(s => s.Schedule.Hall)
                 .ThenInclude(h => h.Seats)
+                .Include(s => s.SessionSeats)
                 .FirstOrDefault(s => s.Id == sessionId);
 
             if (session == null)
@@ -33,12 +35,13 @@ namespace CinemaInfrastructure.Controllers
             var viewModel = new BookingFormModel
             {
                 SessionId = sessionId,
-                SessionSeats = session.Schedule.Hall.Seats.Select(seat => new SeatViewModel
+                SessionSeats = session.SessionSeats.Select(ss => new SeatViewModel
                 {
-                    Id = seat.Id,
-                    RowNumber = seat.RowNumber,
-                    SeatNumber = seat.SeatNumber,
-                    IsAvailable = !seat.SessionSeats.Any(b => b.SessionId == sessionId)
+                    Id = ss.Id,
+                    RowNumber = ss.Seat.RowNumber,
+                    SeatNumber = ss.Seat.SeatNumber,
+                    Price = ss.Price,
+                    IsAvailable = ss.BookingId == null
                 }).ToList()
             };
 
@@ -63,7 +66,7 @@ namespace CinemaInfrastructure.Controllers
                 .Select(s => new TimeOption
                 {
                     SessionId = s.Id,
-                    StartTime = s.Schedule.StartTime // Selecting the full DateTime
+                    StartTime = s.Schedule.StartTime
                 })
                 .OrderBy(to => to.StartTime)
                 .ToListAsync();
@@ -81,21 +84,58 @@ namespace CinemaInfrastructure.Controllers
 
         [HttpGet]
         [Authorize]
-        public IActionResult GetSeatsForSession(int sessionId)
+        public async Task<IActionResult> GetSeatsForSession(int sessionId)
         {
-            var seats = _context.SessionSeats
-                .Include(ss => ss.Seat)
-                .Where(ss => ss.SessionId == sessionId && ss.BookingId == null)
+            var session = await _context.Sessions
+                .Include(s => s.SessionSeats)
+                    .ThenInclude(ss => ss.Seat)
+                .Include(s => s.Schedule)
+                    .ThenInclude(sch => sch.Hall)
+                .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+            if (session == null)
+            {
+                return NotFound("Session not found.");
+            }
+
+            // Determine the layout based on TotalSeats
+            int totalSeats = session.Schedule.Hall.TotalSeats;
+            int[] layoutRows;
+
+            switch (totalSeats)
+            {
+                case 43:
+                    layoutRows = new[] { 8, 8, 8, 6, 6 }; // layout43: 5 rows (8 seats in first 3 rows, 6 seats in last 2 rows)
+                    break;
+                case 36:
+                    layoutRows = new[] { 6, 6, 6, 6, 6, 6 }; // layout36: 6 rows of 6 seats
+                    break;
+                case 24:
+                    layoutRows = new[] { 6, 6, 6, 6 }; // layout24: 4 rows of 6 seats
+                    break;
+                default:
+                    layoutRows = new[] { 5, 5 }; // Default: 5 rows of 5 seats
+                    break;
+            }
+
+            var seats = session.SessionSeats
+                .OrderBy(ss => ss.Seat.RowNumber)
+                .ThenBy(ss => ss.Seat.SeatNumber)
                 .Select(ss => new SeatViewModel
                 {
                     Id = ss.Id,
                     RowNumber = ss.Seat.RowNumber,
                     SeatNumber = ss.Seat.SeatNumber,
-                    Price = ss.Price
+                    Price = ss.Price,
+                    IsAvailable = ss.BookingId == null
                 })
                 .ToList();
 
-            return View(seats);
+            return PartialView("_UserSessionSeats", new UserSessionSeatsViewModel
+            {
+                Seats = seats,
+                LayoutRows = layoutRows
+            });
         }
 
         [Authorize]
@@ -103,35 +143,58 @@ namespace CinemaInfrastructure.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmBooking(BookingFormModel model)
         {
-            var user = await _userManager.GetUserAsync(User); // Get the current user
+            var user = await _userManager.GetUserAsync(User);
             if (user == null)
                 return Unauthorized();
 
-            if (model.SelectedSeatIds == null || !model.SelectedSeatIds.Any())
+            if (string.IsNullOrEmpty(model.SelectedSeats))
             {
                 ModelState.AddModelError("", "You must select at least one seat.");
+                return RedirectToAction("Create", new { sessionId = model.SessionId });
+            }
+
+            var selectedSeatNumbers = System.Text.Json.JsonSerializer.Deserialize<List<string>>(model.SelectedSeats);
+            if (selectedSeatNumbers == null || !selectedSeatNumbers.Any())
+            {
+                ModelState.AddModelError("", "You must select at least one seat.");
+                return RedirectToAction("Create", new { sessionId = model.SessionId });
+            }
+
+            var sessionSeats = await _context.SessionSeats
+                .Include(ss => ss.Seat)
+                .Where(ss => ss.SessionId == model.SessionId)
+                .ToListAsync();
+
+            var selectedSessionSeats = sessionSeats
+                .Where(ss => selectedSeatNumbers.Contains($"{ss.Seat.RowNumber}-{ss.Seat.SeatNumber}"))
+                .ToList();
+
+            if (selectedSessionSeats.Count != selectedSeatNumbers.Count)
+            {
+                ModelState.AddModelError("", "Some selected seats are invalid or unavailable.");
+                return RedirectToAction("Create", new { sessionId = model.SessionId });
+            }
+
+            if (selectedSessionSeats.Any(ss => ss.BookingId != null))
+            {
+                ModelState.AddModelError("", "Some selected seats are already booked.");
                 return RedirectToAction("Create", new { sessionId = model.SessionId });
             }
 
             var booking = new Booking
             {
                 SessionId = model.SessionId,
-                BookingDate = DateTime.Now,
+                BookingDate = DateTime.UtcNow,
                 IsPrivateBooking = model.IsPrivate,
-                NumberOfSeats = model.SelectedSeatIds.Count,
-                UserId = user.Id, // Store the current user's ID
+                NumberOfSeats = selectedSessionSeats.Count,
+                UserId = user.Id,
                 PrivateBookingPrice = model.IsPrivate ? model.PrivateBookingPrice : null
             };
 
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
 
-            // Update seat bookings
-            var seats = await _context.SessionSeats
-                .Where(s => model.SelectedSeatIds.Contains(s.Id))
-                .ToListAsync();
-
-            foreach (var seat in seats)
+            foreach (var seat in selectedSessionSeats)
             {
                 seat.BookingId = booking.Id;
             }
@@ -144,11 +207,11 @@ namespace CinemaInfrastructure.Controllers
         [Authorize]
         public async Task<IActionResult> MyBookings()
         {
-            var user = await _userManager.GetUserAsync(User); // Get the current user
+            var user = await _userManager.GetUserAsync(User);
             var bookings = await _context.Bookings
                 .Include(b => b.Session)
                 .ThenInclude(s => s.Movie)
-                .Where(b => b.UserId == user.Id) // Filter by the current user
+                .Where(b => b.UserId == user.Id)
                 .ToListAsync();
 
             return View(bookings);

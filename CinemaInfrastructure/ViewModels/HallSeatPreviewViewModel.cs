@@ -1,5 +1,5 @@
 ﻿namespace CinemaInfrastructure.ViewModels
-{
+{ 
     public class HallSeatPreviewViewModel
     {
         public int Id { get; set; }

@@ -8,8 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using CinemaInfrastructure.ViewModels;
 
 
-
-namespace CinemaInfrastructure.Controllers
+namespace CinemaInfrastructure
 {
     public class MoviesController : Controller
     {
@@ -108,6 +107,11 @@ namespace CinemaInfrastructure.Controllers
                 .Include(m => m.Directors)
                 .Include(m => m.Actors)
                 .FirstOrDefault(m => m.Id == id);
+
+            if (movie == null)
+            {
+                return NotFound();
+            }
 
             var cinemas = _context.Cinemas.ToList();
 

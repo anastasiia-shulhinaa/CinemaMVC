@@ -1,20 +1,21 @@
 ﻿using CinemaDomain.Model;
 
-namespace CinemaInfrastructure.ViewModels;
-
-public class BookingFormModel
+namespace CinemaInfrastructure.ViewModels
 {
-    public int SessionId { get; set; }
-    public bool IsPrivate { get; set; }
-    public decimal? PrivateBookingPrice { get; set; }
-    public List<int> SelectedSeatIds { get; set; } = new();
-    public List<SeatViewModel> SessionSeats { get; set; } = new List<SeatViewModel>();
-    public Movie Movie { get; set; }
-    public List<TimeOption> AvailableTimes { get; set; } = new();
-}
+    public class BookingFormModel
+    {
+        public Movie Movie { get; set; }
+        public int SessionId { get; set; }
+        public List<TimeOption> AvailableTimes { get; set; }
+        public List<SeatViewModel> SessionSeats { get; set; }
+        public string SelectedSeats { get; set; }
+        public bool IsPrivate { get; set; }
+        public decimal? PrivateBookingPrice { get; set; }
+    }
 
-public class TimeOption
-{
-    public int SessionId { get; set; }
-    public DateTime StartTime { get; set; } // Changed to DateTime
+    public class TimeOption
+    {
+        public int SessionId { get; set; }
+        public DateTime StartTime { get; set; }
+    }
 }

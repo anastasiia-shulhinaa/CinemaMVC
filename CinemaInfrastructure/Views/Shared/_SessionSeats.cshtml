@@ -1,14 +1,91 @@
-﻿@model IEnumerable<CinemaInfrastructure.ViewModels.SeatViewModel>
+﻿@model IEnumerable<CinemaInfrastructure.ViewModels.HallSeatPreviewViewModel>
 
-@{
-    var seatCount = Model.Count();
-    string layoutName = seatCount switch
-    {
-        24 => "_Layout24",
-        36 => "_Layout36",
-        43 => "_Layout43",
-        _ => "_LayoutDefault"
-    };
+@if (Model == null)
+{
+    <p class="text-danger">Помилка: схема залу недоступна.</p>
+}
+else
+{
+    var grouped = Model.GroupBy(s => s.RowNumber).OrderBy(g => g.Key);
+
+    <div class="hall-structure">
+        <span class="screen"><img src="https://www.palladium-cinema.com.ua/desktop/img/screen.png" alt="Екран" /></span>
+
+        <div class="seats-container">
+            @foreach (var row in grouped)
+            {
+                <div class="row">
+                    <span class="number-of-row">@row.Key</span>
+                    <div class="seats">
+                        @foreach (var seat in row.OrderBy(s => s.SeatNumber))
+                        {
+                            <div class="seat"
+                                 data-seat="@($"{seat.RowNumber}-{seat.SeatNumber}")"
+                                 data-id="@seat.Id"
+                                 title="Ряд @seat.RowNumber, Місце @seat.SeatNumber">
+                                @seat.SeatNumber
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
 }
 
-@await Html.PartialAsync(layoutName, Model)
+<style>
+    .hall-structure {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .seats-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .row {
+        display: flex;
+        align-items: center;
+        margin: 5px 0;
+        width: 100%;
+        max-width: 600px;
+    }
+
+    .number-of-row {
+        width: 30px;
+        text-align: right;
+        margin-right: 10px;
+        font-weight: bold;
+        color: #5c534c;
+    }
+
+    .seats {
+        display: flex;
+        flex: 1;
+        justify-content: center;
+    }
+
+    .seat {
+        display: inline-block;
+        width: 50px;
+        height: 50px;
+        margin: 4px;
+        background-color: #eee;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #5c534c;
+        font-weight: bold;
+    }
+
+        .seat:hover {
+            background-color: #ddd;
+            transform: scale(1.05);
+        }
+</style>
