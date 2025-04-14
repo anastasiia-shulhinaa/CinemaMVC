@@ -5,7 +5,7 @@ using CinemaInfrastructure.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using CinemaInfrastructure.Models;
 
-namespace CinemaInfrastructure
+namespace CinemaInfrastructure.Controllers
 {
     public class SessionsController : Controller
     {

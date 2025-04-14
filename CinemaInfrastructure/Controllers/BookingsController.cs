@@ -54,28 +54,71 @@ namespace CinemaInfrastructure.Controllers
             var session = await _context.Sessions
                 .Include(s => s.Movie)
                 .Include(s => s.Schedule)
+                .ThenInclude(sch => sch.Hall)
+                .ThenInclude(h => h.Cinema)
                 .FirstOrDefaultAsync(s => s.Id == sessionId);
 
             if (session == null)
                 return NotFound();
 
+            string? selectedCinemaId = HttpContext.Session.GetString("SelectedCinemaId");
+            int? cinemaId = string.IsNullOrEmpty(selectedCinemaId) || !int.TryParse(selectedCinemaId, out int parsedId) ? null : parsedId;
+
             var today = DateTime.Today;
-            var availableTimes = await _context.Sessions
+            var sessionsQuery = _context.Sessions
                 .Include(s => s.Schedule)
-                .Where(s => s.MovieId == session.MovieId && s.IsActive && s.Schedule.StartTime >= today)
-                .Select(s => new TimeOption
+                .ThenInclude(sch => sch.Hall)
+                .ThenInclude(h => h.Cinema)
+                .Where(s => s.MovieId == session.MovieId && s.IsActive && s.Schedule.StartTime >= today);
+
+            // Apply cinema filter if a cinema is selected
+            if (cinemaId.HasValue && cinemaId != 0)
+            {
+                sessionsQuery = sessionsQuery.Where(s => s.Schedule.Hall.CinemaId == cinemaId.Value);
+            }
+
+            var availableSessions = await sessionsQuery
+                .Select(s => new
+                {
+                    s.Id,
+                    s.Schedule.StartTime,
+                    Cinema = s.Schedule.Hall.Cinema
+                })
+                .OrderBy(s => s.StartTime)
+                .ToListAsync();
+
+            // Group sessions by cinema if no cinema is selected
+            var groupedTimes = cinemaId.HasValue && cinemaId != 0
+                ? null
+                : availableSessions
+                    .GroupBy(s => s.Cinema)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(s => new TimeOption
+                        {
+                            SessionId = s.Id,
+                            StartTime = s.StartTime
+                        }).ToList()
+                    );
+
+            var availableTimes = cinemaId.HasValue && cinemaId != 0
+                ? availableSessions.Select(s => new TimeOption
                 {
                     SessionId = s.Id,
-                    StartTime = s.Schedule.StartTime
-                })
-                .OrderBy(to => to.StartTime)
-                .ToListAsync();
+                    StartTime = s.StartTime
+                }).ToList()
+                : availableSessions.Select(s => new TimeOption
+                {
+                    SessionId = s.Id,
+                    StartTime = s.StartTime
+                }).ToList();
 
             var model = new BookingFormModel
             {
                 Movie = session.Movie,
                 SessionId = sessionId,
                 AvailableTimes = availableTimes,
+                GroupedTimes = groupedTimes, // Dictionary of cinema-wise times if no cinema is selected
                 IsPrivate = false
             };
 
@@ -98,23 +141,22 @@ namespace CinemaInfrastructure.Controllers
                 return NotFound("Session not found.");
             }
 
-            // Determine the layout based on TotalSeats
             int totalSeats = session.Schedule.Hall.TotalSeats;
             int[] layoutRows;
 
             switch (totalSeats)
             {
                 case 43:
-                    layoutRows = new[] { 8, 8, 8, 6, 6 }; // layout43: 5 rows (8 seats in first 3 rows, 6 seats in last 2 rows)
+                    layoutRows = new[] { 8, 8, 8, 6, 6 };
                     break;
                 case 36:
-                    layoutRows = new[] { 6, 6, 6, 6, 6, 6 }; // layout36: 6 rows of 6 seats
+                    layoutRows = new[] { 6, 6, 6, 6, 6, 6 };
                     break;
                 case 24:
-                    layoutRows = new[] { 6, 6, 6, 6 }; // layout24: 4 rows of 6 seats
+                    layoutRows = new[] { 6, 6, 6, 6 };
                     break;
                 default:
-                    layoutRows = new[] { 5, 5 }; // Default: 5 rows of 5 seats
+                    layoutRows = new[] { 5, 5 };
                     break;
             }
 

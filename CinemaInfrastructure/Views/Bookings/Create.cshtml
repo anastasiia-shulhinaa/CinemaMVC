@@ -42,30 +42,60 @@
             </div>
             <div class="mt-4">
                 <h4 class="mb-3">Доступні дати показу</h4>
-                @if (!Model.AvailableTimes.Any())
+                @if (Model.GroupedTimes != null && Model.GroupedTimes.Any())
                 {
-                    <p class="text-muted">Наразі немає доступних сеансів для цього фільму.</p>
+                    // Case 1: No cinema selected, show sessions grouped by cinema
+                    foreach (var cinemaGroup in Model.GroupedTimes.OrderBy(g => g.Key.Name))
+                    {
+                        var cinema = cinemaGroup.Key;
+                        var times = cinemaGroup.Value;
+                        if (!times.Any()) continue;
+
+                        <h5>@cinema.Name</h5>
+                        <div class="date-film-slider d-flex flex-wrap gap-2" data-cinema-id="@cinema.Id">
+                            @foreach (var date in times.Select(t => t.StartTime.Date).Distinct().OrderBy(d => d))
+                            {
+                                <div class="date-item @(date == times.First().StartTime.Date ? "active" : "")"
+                                     data-date="@date.ToString("yyyy-MM-dd")"
+                                     data-cinema-id="@cinema.Id">
+                                    <div class="number-day">@date.Day</div>
+                                    <div class="day">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetShortestDayName(date.DayOfWeek)</div>
+                                </div>
+                            }
+                        </div>
+                        <div class="tabs-content">
+                            @foreach (var timeGroup in times.GroupBy(t => t.StartTime.Date))
+                            {
+                                <ul class="time-list @(timeGroup.Key == times.First().StartTime.Date ? "active" : "")"
+                                    data-date="@timeGroup.Key.ToString("yyyy-MM-dd")"
+                                    data-cinema-id="@cinema.Id">
+                                    @foreach (var item in timeGroup.OrderBy(t => t.StartTime.TimeOfDay))
+                                    {
+                                        <li>
+                                            <a href="#" data-session-id="@item.SessionId" data-start-time="@item.StartTime.ToString("HH:mm")">
+                                                @item.StartTime.ToString("HH:mm")
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                    }
                 }
-                else
+                else if (Model.AvailableTimes.Any())
                 {
+                    // Case 2: Cinema selected, show filtered sessions
                     <div class="date-film-slider d-flex flex-wrap gap-2">
                         @foreach (var date in Model.AvailableTimes.Select(t => t.StartTime.Date).Distinct().OrderBy(d => d))
                         {
-                            <div class="date-item @((date == Model.AvailableTimes.First().StartTime.Date) ? "active" : "")"
+                            <div class="date-item @(date == Model.AvailableTimes.First().StartTime.Date ? "active" : "")"
                                  data-date="@date.ToString("yyyy-MM-dd")">
                                 <div class="number-day">@date.Day</div>
                                 <div class="day">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetShortestDayName(date.DayOfWeek)</div>
                             </div>
                         }
                     </div>
-                }
-            </div>
-
-            <div class="mt-4">
-                <div class="tabs-content">
-                    <input type="hidden" id="SessionId" name="SessionId" value="@Model.SessionId" />
-                    @if (Model.AvailableTimes.Any())
-                    {
+                    <div class="tabs-content">
                         @foreach (var timeGroup in Model.AvailableTimes.GroupBy(t => t.StartTime.Date))
                         {
                             <ul class="time-list @(timeGroup.Key == Model.AvailableTimes.First().StartTime.Date ? "active" : "")"
@@ -80,8 +110,12 @@
                                 }
                             </ul>
                         }
-                    }
-                </div>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">Наразі немає доступних сеансів для цього фільму.</p>
+                }
             </div>
 
             <div class="about-film mt-4">
@@ -374,12 +408,12 @@
             updateSelectedSeatsInfo();
         }
 
-        function showTimesForDate(date) {
-            document.querySelectorAll('.time-list').forEach(list => {
+        function showTimesForDate(date, cinemaId) {
+            document.querySelectorAll(`.time-list${cinemaId ? `[data-cinema-id="${cinemaId}"]` : ''}`).forEach(list => {
                 list.classList.toggle('active', list.dataset.date === date);
             });
 
-            document.querySelectorAll('.time-list a').forEach(a => a.classList.remove('selected'));
+            document.querySelectorAll(`.time-list${cinemaId ? `[data-cinema-id="${cinemaId}"]` : ''} a`).forEach(a => a.classList.remove('selected'));
             document.getElementById("seatsArea").innerHTML = "<p>Оберіть час показу, щоб побачити доступні місця.</p>";
             document.getElementById("SelectedSessionId").value = "";
             selectedSeats = [];
@@ -416,16 +450,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.date-item').forEach(item => {
                 item.addEventListener('click', () => {
-                    document.querySelectorAll('.date-item').forEach(d => d.classList.remove('active'));
+                    const cinemaId = item.dataset.cinemaId;
+                    document.querySelectorAll(`.date-item${cinemaId ? `[data-cinema-id="${cinemaId}"]` : ''}`).forEach(d => d.classList.remove('active'));
                     item.classList.add('active');
-                    showTimesForDate(item.dataset.date);
+                    showTimesForDate(item.dataset.date, cinemaId);
                 });
             });
 
             document.querySelectorAll('.time-list a').forEach(a => {
                 a.addEventListener('click', e => {
                     e.preventDefault();
-                    document.querySelectorAll('.time-list a').forEach(el => el.classList.remove('selected'));
+                    const cinemaId = a.closest('.time-list').dataset.cinemaId;
+                    document.querySelectorAll(`.time-list${cinemaId ? `[data-cinema-id="${cinemaId}"]` : ''} a`).forEach(el => el.classList.remove('selected'));
                     a.classList.add('selected');
                     loadAvailableSeats(a.dataset.sessionId);
                 });
@@ -434,6 +470,31 @@
             document.querySelectorAll('.seat').forEach(seat => {
                 seat.addEventListener('click', toggleSeat);
             });
+
+            // Listen for cinema selection changes
+            const cinemaSelectionDropdown = document.getElementById("cinemaSelectionDropdown");
+            if (cinemaSelectionDropdown) {
+                cinemaSelectionDropdown.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    const target = e.target.closest(".cinema-selection");
+                    if (target) {
+                        const cinemaId = target.getAttribute("data-value");
+                        const cinemaName = target.textContent;
+                        fetch(`/Home/SetCinemaFilter?cinemaId=${cinemaId}&cinemaName=${encodeURIComponent(cinemaName)}`, {
+                            method: "POST"
+                        })
+                            .then(response => {
+                                if (response.ok) {
+                                    // Redirect to the same Create page with the current sessionId
+                                    const currentSessionId = @Model.SessionId;
+                                    window.location.href = `/Bookings/Create?sessionId=${currentSessionId}`;
+                                }
+                            })
+                            .catch(error => console.error("Error setting cinema filter:", error));
+                        cinemaSelectionDropdown.classList.remove("show");
+                    }
+                });
+            }
         });
     </script>
 }
