@@ -1,0 +1,67 @@
+﻿@model IEnumerable<CinemaInfrastructure.ViewModels.CinemaViewModel>
+
+@{
+    ViewData["Title"] = "Список кінотеатрів - FILMix";
+}
+
+<div class="cinemas-list">
+    <h2 class="section-title">Список кінотеатрів</h2>
+
+    @if (!Model.Any())
+    {
+        <p class="text-muted">Наразі немає доступних кінотеатрів.</p>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var cinemaViewModel in Model)
+            {
+                var cinema = cinemaViewModel.Cinema;
+                <div class="col-md-4 mb-4">
+                    <div class="card">
+                        @if (!string.IsNullOrEmpty(cinema.PhotoUrl))
+                        {
+                            <img src="@cinema.PhotoUrl" class="card-img-top" alt="@cinema.Name" style="height: 200px; object-fit: cover;" />
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@cinema.Name</h5>
+                            <p class="card-text">
+                                <strong>Місто:</strong> @cinema.City<br />
+                                <strong>Адреса:</strong> @cinema.Address<br />
+                                <strong>Телефон:</strong> @cinema.PhoneNumber
+                            </p>
+                            @if (!string.IsNullOrEmpty(cinemaViewModel.GoogleMapsEmbedUrl))
+                            {
+                                <iframe src="@cinemaViewModel.GoogleMapsEmbedUrl" width="100%" height="200" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                            }
+                            <button class="btn btn-primary mt-2 select-cinema" data-id="@cinema.Id" data-name="@cinema.Name">Обрати кінотеатр</button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Handle cinema selection from the list
+            document.querySelectorAll(".select-cinema").forEach(button => {
+                button.addEventListener("click", function () {
+                    const cinemaId = this.getAttribute("data-id");
+                    const cinemaName = this.getAttribute("data-name");
+                    fetch(`/Home/SetCinemaFilter?cinemaId=${cinemaId}&cinemaName=${encodeURIComponent(cinemaName)}`, {
+                        method: "POST"
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                window.location.href = "/Home/Index"; // Redirect to homepage after selection
+                            }
+                        })
+                        .catch(error => console.error("Error setting cinema filter:", error));
+                });
+            });
+        });
+    </script>
+}

@@ -2,7 +2,6 @@ using CinemaInfrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using CinemaInfrastructure.Models;
 
 
@@ -16,15 +15,14 @@ builder.Services.AddDbContext<DbcinemaContext>(options =>
 builder.Services.AddDbContext<IdentityContext>(option => option.UseSqlServer(
     builder.Configuration.GetConnectionString("IdentityConnection")
     ));
-builder.Services.AddControllersWithViews();
-builder.Services.AddDbContext<DbcinemaContext>(option => option.UseSqlServer(
-      builder.Configuration.GetConnectionString("DefaultConnection")
-      ));
 
-
-builder.Services.AddDbContext<DbcinemaContext>(option => option.UseSqlServer(
-     builder.Configuration.GetConnectionString("DefaultConnection")
-     ));
+// Add session support (needed for cinema selection persistence)
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddIdentity<User, IdentityRole>().AddEntityFrameworkStores<IdentityContext>();
@@ -43,12 +41,6 @@ builder.Services.Configure<IdentityOptions>(options =>
     options.Password.RequiredUniqueChars = 1;
 });
 
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // Session timeout
-    options.Cookie.HttpOnly = true; // Security: Prevent client-side access to the cookie
-    options.Cookie.IsEssential = true; // Required for GDPR compliance
-});
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

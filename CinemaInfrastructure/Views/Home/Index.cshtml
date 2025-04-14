@@ -7,6 +7,8 @@
     ViewData["Title"] = "FilMix Cinema - Now Showing & Coming Soon";
     bool isAdmin = User.IsInRole("admin");
     bool isAdminInUserMode = isAdmin && Context.Session?.GetString("AdminMode") == "user";
+    string? selectedCinemaId = Context.Session?.GetString("SelectedCinemaId");
+    bool hasCinemaFilter = !string.IsNullOrEmpty(selectedCinemaId) && selectedCinemaId != "0";
 }
 
 <div class="home-content">
@@ -34,61 +36,104 @@
                 </a>
             </div>
 
-            <aside class="d-flex align-items-start">
-                <div class="name-section-vertical text-center">
-                    <h3>Зараз у прокаті</h3>
-                    <strong>FilMix</strong>
-                </div>
+            @if (!Model.Any())
+            {
+                <p class="text-muted">Наразі немає доступних сеансів.</p>
+            }
+            else
+            {
+                @if (hasCinemaFilter)
+                {
+                    <!-- Display sessions for the selected cinema without grouping -->
+                    <aside class="d-flex align-items-start">
+                        <div class="name-section-vertical text-center">
+                            <h3>Зараз у прокаті</h3>
+                            <strong>FilMix</strong>
+                        </div>
 
-                <section class="now-playing-slider w-100">
-                    <h3 class="visually-hidden">Now Playing Movies</h3>
-                    <div class="owl-stage">
-                        @foreach (var session in Model)
-                        {
-                            var movie = session.Movie;
-                            var date = session.Schedule?.StartTime ?? DateTime.Now;
-                            var startDate = date.ToString("d MMMM", new System.Globalization.CultureInfo("uk-UA"));
+                        <section class="now-playing-slider w-100">
+                            <h3 class="visually-hidden">Now Playing Movies</h3>
+                            <div class="owl-stage">
+                                @foreach (var session in Model)
+                                {
+                                    var movie = session.Movie;
+                                    var date = session.Schedule?.StartTime ?? DateTime.Now;
+                                    var startDate = date.ToString("d MMMM", new System.Globalization.CultureInfo("uk-UA"));
 
-                            <article class="owl-item">
-                                <div class="film-slider text-center">
-                                    <div class="poster position-relative">
-                                        <button type="button" class="play-slide playYoutube1 position-absolute top-50 start-50 translate-middle" data-link="@movie.TrailerLink" aria-label="Play trailer for @movie.Title">
-                                            <img src="~/img/play.png" alt="Play" />
-                                        </button>
-                                        <a href="/Movies/Details/@movie.Id">
-                                            <img src="@movie.BannerUrl" alt="@movie.Title poster" class="img-fluid" loading="lazy" />
-                                        </a>
-                                    </div>
+                                    <article class="owl-item">
+                                        <div class="film-slider text-center">
+                                            <div class="poster position-relative">
+                                                <button type="button" class="play-slide playYoutube1 position-absolute top-50 start-50 translate-middle" data-link="@movie.TrailerLink" aria-label="Play trailer for @movie.Title">
+                                                    <img src="~/img/play.png" alt="Play" />
+                                                </button>
+                                                <a href="/Movies/Details/@movie.Id">
+                                                    <img src="@movie.BannerUrl" alt="@movie.Title poster" class="img-fluid" loading="lazy" />
+                                                </a>
+                                            </div>
 
-                                    <div class="data">
-                                        @startDate
-                                        <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id" class="btn btn-link">Інші дати</a>
+                                            <div class="data">
+                                                @startDate
+                                                <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id" class="btn btn-link">Інші дати</a>
 
-                                        <div class="ticket-icon">
-                                            <img src="https://www.palladium-cinema.com.ua/desktop/img/bilet.png" alt="Ticket icon" />
+                                                <div class="ticket-icon">
+                                                    <img src="https://www.palladium-cinema.com.ua/desktop/img/bilet.png" alt="Ticket icon" />
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
+                                    </article>
+                                }
+                            </div>
+                        </section>
+                    </aside>
+                }
+                else
+                {
+                    <!-- Group sessions by cinema -->
+                    @foreach (var cinemaGroup in Model.GroupBy(s => new { s.Schedule.Hall.CinemaId, s.Schedule.Hall.Cinema.Name }).OrderBy(g => g.Key.Name))
+                    {
+                        <aside class="d-flex align-items-start mt-4">
+                            <div class="name-section-vertical text-center">
+                                <h3>Зараз у прокаті</h3>
+                                <strong>@cinemaGroup.Key.Name</strong>
+                            </div>
+
+                            <section class="now-playing-slider w-100">
+                                <h3 class="visually-hidden">Now Playing Movies at @cinemaGroup.Key.Name</h3>
+                                <div class="owl-stage">
+                                    @foreach (var session in cinemaGroup.OrderBy(s => s.Schedule.StartTime))
+                                    {
+                                        var movie = session.Movie;
+                                        var date = session.Schedule?.StartTime ?? DateTime.Now;
+                                        var startDate = date.ToString("d MMMM", new System.Globalization.CultureInfo("uk-UA"));
+
+                                        <article class="owl-item">
+                                            <div class="film-slider text-center">
+                                                <div class="poster position-relative">
+                                                    <button type="button" class="play-slide playYoutube1 position-absolute top-50 start-50 translate-middle" data-link="@movie.TrailerLink" aria-label="Play trailer for @movie.Title">
+                                                        <img src="~/img/play.png" alt="Play" />
+                                                    </button>
+                                                    <a href="/Movies/Details/@movie.Id">
+                                                        <img src="@movie.BannerUrl" alt="@movie.Title poster" class="img-fluid" loading="lazy" />
+                                                    </a>
+                                                </div>
+
+                                                <div class="data">
+                                                    @startDate
+                                                    <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id" class="btn btn-link">Інші дати</a>
+
+                                                    <div class="ticket-icon">
+                                                        <img src="https://www.palladium-cinema.com.ua/desktop/img/bilet.png" alt="Ticket icon" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    }
                                 </div>
-                            </article>
-                        }
-                    </div>
-                </section>
-            </aside>
+                            </section>
+                        </aside>
+                    }
+                }
+            }
         </section>
     }
 </div>
-
-@section Scripts {
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Play trailer buttons
-            document.querySelectorAll('.playYoutube1').forEach(el => {
-                el.addEventListener('click', () => {
-                    const url = el.getAttribute('data-link');
-                    if (url) {
-                        window.open(url, '_blank');
-                    }
-                });
-            });
-    </script>
-}

@@ -1,15 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using CinemaDomain.Model;
-using CinemaInfrastructure;
+using CinemaInfrastructure.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using CinemaInfrastructure.Models;
 
-namespace CinemaInfrastructure.Controllers
+namespace CinemaInfrastructure
 {
     public class SessionsController : Controller
     {
@@ -346,9 +342,4 @@ namespace CinemaInfrastructure.Controllers
         public List<Cinema> Cinemas { get; set; }
     }
 
-    public class MyBookingsViewModel
-    {
-        public List<Booking> PrivateBookings { get; set; }
-        public List<Booking> TicketBookings { get; set; }
-    }
 }

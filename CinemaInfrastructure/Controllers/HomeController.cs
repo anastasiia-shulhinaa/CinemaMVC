@@ -1,60 +1,52 @@
-using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using CinemaInfrastructure.Models;
-using Microsoft.EntityFrameworkCore;
 using CinemaDomain.Model;
+using CinemaInfrastructure;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-namespace CinemaInfrastructure.Controllers
+
+public class HomeController : Controller
 {
-    public class HomeController : Controller
+    private readonly DbcinemaContext _context;
+
+    public HomeController(DbcinemaContext context)
     {
-        private readonly DbcinemaContext _context;
+        _context = context;
+    }
 
-        public HomeController(DbcinemaContext context)
+    public async Task<IActionResult> Index()
+    {
+        string? selectedCinemaId = HttpContext.Session.GetString("SelectedCinemaId");
+
+        IQueryable<Session> sessionsQuery = _context.Sessions
+            .Include(s => s.Movie)
+            .Include(s => s.Schedule)
+            .ThenInclude(sch => sch.Hall)
+            .ThenInclude(h => h.Cinema)
+            .Where(s => s.IsActive && s.Schedule.StartTime >= DateTime.Today);
+
+        if (!string.IsNullOrEmpty(selectedCinemaId) && int.TryParse(selectedCinemaId, out int cinemaId) && cinemaId != 0)
         {
-            _context = context;
+            sessionsQuery = sessionsQuery.Where(s => s.Schedule.Hall.CinemaId == cinemaId);
         }
 
-        public IActionResult TestSession()
-        {
-            // Set a test value in the session
-            HttpContext.Session.SetString("TestKey", "Session is working!");
-            return RedirectToAction("ReadSession");
-        }
+        var sessions = await sessionsQuery.OrderBy(s => s.Schedule.StartTime).ToListAsync();
 
-        public IActionResult ReadSession()
-        {
-            // Read the test value from the session
-            var value = HttpContext.Session.GetString("TestKey") ?? "Session not set";
-            ViewBag.SessionValue = value;
-            return View();
-        }
-        public async Task<IActionResult> Index()
-        {
-            var today = DateTime.Today;
+        return View(sessions);
+    }
 
-            var uniqueSessions = _context.Sessions
-                .Include(s => s.Movie)
-                .Include(s => s.Schedule)
-                .Where(s => s.IsActive && s.Schedule.StartTime > today)
-                .ToList()
-                .GroupBy(s => s.MovieId)
-                .Select(g => g.OrderBy(s => s.Schedule.StartTime).First())
-                .ToList();
-
-            return View(uniqueSessions);
-        }
-
-        public IActionResult Privacy()
+    [HttpPost]
+    public IActionResult SetCinemaFilter(int cinemaId, string cinemaName)
+    {
+        if (cinemaId == 0)
         {
-            return View();
+            HttpContext.Session.Remove("SelectedCinemaId");
+            HttpContext.Session.Remove("SelectedCinemaName");
         }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
+        else
         {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            HttpContext.Session.SetString("SelectedCinemaId", cinemaId.ToString());
+            HttpContext.Session.SetString("SelectedCinemaName", cinemaName);
         }
+        return Ok();
     }
 }
-

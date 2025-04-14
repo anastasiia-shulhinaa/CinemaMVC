@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using CinemaInfrastructure.Enums;
 using CinemaInfrastructure.ViewModels;
-using Microsoft.AspNetCore.Mvc.Rendering; // Add this for SelectList
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace CinemaInfrastructure.Controllers
 {
@@ -24,18 +24,6 @@ namespace CinemaInfrastructure.Controllers
             _context = context;
             _webHostEnvironment = webHostEnvironment;
             _googleMapsUrlBuilder = googleMapsUrlBuilder;
-        }
-
-        [HttpGet]
-        public IActionResult GetCinemas()
-        {
-            var cinemas = _context.Cinemas
-                .GroupBy(c => c.Name)
-                .Select(g => g.First())
-                .Select(c => new { c.Id, c.Name })
-                .ToList();
-
-            return Ok(cinemas);
         }
 
         // GET: Cinemas
