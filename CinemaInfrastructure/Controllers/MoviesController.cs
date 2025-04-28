@@ -302,7 +302,6 @@ namespace CinemaInfrastructure
         }
 
         // GET: Movies/DetailsWithSession/5
-        // GET: Movies/DetailsWithSession/5
         [Authorize]
         public async Task<IActionResult> DetailsWithSession(int id)
         {
@@ -508,7 +507,6 @@ namespace CinemaInfrastructure
             return Json(new { seatCount = seatCount });
         }
 
-        // GET: Movies/GetAvailableTimes
 
         // GET: Movies/GetAvailableTimes
         [HttpGet]

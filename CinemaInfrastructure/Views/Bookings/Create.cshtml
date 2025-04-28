@@ -3,228 +3,287 @@
 @{
     ViewData["Title"] = "Бронювання квитків";
     var videoId = Model.Movie.TrailerLink?.Contains("v=") == true ? Model.Movie.TrailerLink.Split("v=")[1] : null;
+    if (videoId != null)
+    {
+        var ampersandPosition = videoId.IndexOf('&');
+        if (ampersandPosition != -1)
+        {
+            videoId = videoId.Substring(0, ampersandPosition);
+        }
+    }
     var embedLink = videoId != null ? $"https://www.youtube.com/embed/{videoId}" : null;
 }
 
 <section class="film-page gray-bg py-4">
-    <div class="container">
-        <h2 class="mb-3">@Model.Movie.Title <span class="badge bg-primary px-3 py-2 rounded-pill fs-6">@Model.Movie.Rating</span></h2>
-
-        @if (!string.IsNullOrEmpty(Model.Movie.Language))
-        {
-            <div class="film-name-translate">@Model.Movie.Language</div>
-        }
-        <div>
-            <a href="@Url.Action("Index", "Movies")" class="button-empty">Розклад <span class="d-icon icon-next"></span></a>
+    <!-- Header Section -->
+    <div class="container-fluid px-0">
+        <div class="header-info d-flex justify-content-between align-items-center mb-4 px-3">
+            <div>
+                <h2 class="section-title mb-2">@Model.Movie.Title <span class="badge px-3 py-2 rounded-pill fs-6" style="background-color: #a63344;">@Model.Movie.Rating</span></h2>
+                @if (!string.IsNullOrEmpty(Model.Movie.Language))
+                {
+                    <div class="film-name-translate text-muted">@Model.Movie.Language</div>
+                }
+            </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-lg-9 col-md-12">
-            <div class="video mb-4 position-relative">
-                <div class="embed-responsive embed-responsive-16by9">
+    <!-- First Grid: Trailer and Banner -->
+    <div class="container-fluid px-0">
+        <div class="row g-3 align-items-start mx-0">
+            <!-- Trailer -->
+            <div class="col-lg-8 col-md-12 col-sm-12 px-3">
+                <div class="video mb-4">
                     @if (!string.IsNullOrEmpty(embedLink))
                     {
-                        <iframe class="embed-responsive-item" id="TrailerPreview"
-                                src="@embedLink"
-                                frameborder="0"
-                                allowfullscreen
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                referrerpolicy="strict-origin-when-cross-origin"
-                                title="@Model.Movie.Title | Офіційний трейлер">
-                        </iframe>
+                        <div class="embed-responsive embed-responsive-16by9">
+                            <iframe class="embed-responsive-item" id="TrailerPreview"
+                                    src="@embedLink"
+                                    frameborder="0"
+                                    allowfullscreen
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerpolicy="strict-origin-when-cross-origin"
+                                    title="@Model.Movie.Title | Офіційний трейлер">
+                            </iframe>
+                        </div>
                     }
                     else
                     {
-                        <p class="text-muted">Трейлер недоступний.</p>
+                        <p class="text-muted text-center">Трейлер недоступний.</p>
                     }
                 </div>
             </div>
-            <div class="mt-4">
-                <h4 class="mb-3">Доступні дати показу</h4>
-                @if (Model.GroupedTimes != null && Model.GroupedTimes.Any())
-                {
-                    // Case 1: No cinema selected, show sessions grouped by cinema
-                    foreach (var cinemaGroup in Model.GroupedTimes.OrderBy(g => g.Key.Name))
-                    {
-                        var cinema = cinemaGroup.Key;
-                        var times = cinemaGroup.Value;
-                        if (!times.Any()) continue;
 
-                        <h5>@cinema.Name</h5>
-                        <div class="date-film-slider d-flex flex-wrap gap-2" data-cinema-id="@cinema.Id">
-                            @foreach (var date in times.Select(t => t.StartTime.Date).Distinct().OrderBy(d => d))
-                            {
-                                <div class="date-item @(date == times.First().StartTime.Date ? "active" : "")"
-                                     data-date="@date.ToString("yyyy-MM-dd")"
-                                     data-cinema-id="@cinema.Id">
-                                    <div class="number-day">@date.Day</div>
-                                    <div class="day">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetShortestDayName(date.DayOfWeek)</div>
-                                </div>
-                            }
-                        </div>
-                        <div class="tabs-content">
-                            @foreach (var timeGroup in times.GroupBy(t => t.StartTime.Date))
-                            {
-                                <ul class="time-list @(timeGroup.Key == times.First().StartTime.Date ? "active" : "")"
-                                    data-date="@timeGroup.Key.ToString("yyyy-MM-dd")"
-                                    data-cinema-id="@cinema.Id">
-                                    @foreach (var item in timeGroup.OrderBy(t => t.StartTime.TimeOfDay))
-                                    {
-                                        <li>
-                                            <a href="#" data-session-id="@item.SessionId" data-start-time="@item.StartTime.ToString("HH:mm")">
-                                                @item.StartTime.ToString("HH:mm")
-                                            </a>
-                                        </li>
-                                    }
-                                </ul>
-                            }
-                        </div>
-                    }
-                }
-                else if (Model.AvailableTimes.Any())
-                {
-                    // Case 2: Cinema selected, show filtered sessions
-                    <div class="date-film-slider d-flex flex-wrap gap-2">
-                        @foreach (var date in Model.AvailableTimes.Select(t => t.StartTime.Date).Distinct().OrderBy(d => d))
-                        {
-                            <div class="date-item @(date == Model.AvailableTimes.First().StartTime.Date ? "active" : "")"
-                                 data-date="@date.ToString("yyyy-MM-dd")">
-                                <div class="number-day">@date.Day</div>
-                                <div class="day">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetShortestDayName(date.DayOfWeek)</div>
-                            </div>
-                        }
-                    </div>
-                    <div class="tabs-content">
-                        @foreach (var timeGroup in Model.AvailableTimes.GroupBy(t => t.StartTime.Date))
-                        {
-                            <ul class="time-list @(timeGroup.Key == Model.AvailableTimes.First().StartTime.Date ? "active" : "")"
-                                data-date="@timeGroup.Key.ToString("yyyy-MM-dd")">
-                                @foreach (var item in timeGroup.OrderBy(t => t.StartTime.TimeOfDay))
-                                {
-                                    <li>
-                                        <a href="#" data-session-id="@item.SessionId" data-start-time="@item.StartTime.ToString("HH:mm")">
-                                            @item.StartTime.ToString("HH:mm")
-                                        </a>
-                                    </li>
-                                }
-                            </ul>
-                        }
-                    </div>
-                }
-                else
-                {
-                    <p class="text-muted">Наразі немає доступних сеансів для цього фільму.</p>
-                }
-            </div>
-
-            <div class="about-film mt-4">
-                <h3>Опис фільму</h3>
-                <div class="description">@Model.Movie.Description</div>
+            <!-- Banner -->
+            <div class="col-lg-4 col-md-12 col-sm-12 px-3">
+                <div class="poster mb-3">
+                    <img id="PosterPreview" src="@Model.Movie.BannerUrl" class="img-fluid rounded shadow-sm" alt="Постер фільму @Model.Movie.Title" />
+                </div>
             </div>
         </div>
 
-        <div class="col-lg-3 col-md-12">
-            <div class="poster mb-3">
-                <img id="PosterPreview" src="@Model.Movie.BannerUrl" class="img-fluid" alt="Постер фільму @Model.Movie.Title" />
+        <!-- Second Row: Description and Movie Info -->
+        <div class="row g-3 align-items-start mx-0">
+            <!-- Description -->
+            <div class="col-lg-8 col-md-12 col-sm-12 px-3">
+                <div class="about-film bg-white p-4 rounded shadow-sm">
+                    <h3 class="section-title mb-3 text-center">Опис фільму</h3>
+                    <div class="description text-center">@Model.Movie.Description</div>
+                </div>
             </div>
 
-            <div class="detail-info">
-                <p><b>Мова: </b>@Model.Movie.Language</p>
-                <p><b>Тривалість: </b>@Model.Movie.Duration хв</p>
-                <p>
-                    <b>Жанр: </b>
-                    @if (Model.Movie.Categories != null && Model.Movie.Categories.Any())
-                    {
-                        @string.Join(", ", Model.Movie.Categories.Select(c => c.Name))
-                    }
-                    else
-                    {
-                        @:Невідомо
-                    }
-                </p>
-                <p>
-                    <b>Режисер: </b>
-                    @if (Model.Movie.Directors != null && Model.Movie.Directors.Any())
-                    {
-                        @string.Join(", ", Model.Movie.Directors.Select(d => d.FullName))
-                    }
-                    else
-                    {
-                        @:Невідомо
-                    }
-                </p>
-                <p>
-                    <b>Актори: </b>
-                    @if (Model.Movie.Actors != null && Model.Movie.Actors.Any())
-                    {
-                        @string.Join(", ", Model.Movie.Actors.Take(5).Select(a => a.FullName))
-                        @if (Model.Movie.Actors.Count() > 5)
+            <!-- Movie Info -->
+            <div class="col-lg-4 col-md-12 col-sm-12 px-3">
+                <div class="movie-info bg-white p-4 rounded shadow-sm">
+                    <p class="mb-2"><b>Мова:</b> @Model.Movie.Language</p>
+                    <p class="mb-2"><b>Тривалість:</b> @Model.Movie.Duration хв</p>
+                    <p class="mb-2">
+                        <b>Жанр:</b>
+                        @if (Model.Movie.Categories != null && Model.Movie.Categories.Any())
                         {
-                            <span>...</span>
+                            @string.Join(", ", Model.Movie.Categories.Select(c => c.Name))
                         }
-                    }
-                    else
-                    {
-                        @:Невідомо
-                    }
-                </p>
+                        else
+                        {
+                            @:Невідомо
+                        }
+                    </p>
+                    <p class="mb-2">
+                        <b>Режисер:</b>
+                        @if (Model.Movie.Directors != null && Model.Movie.Directors.Any())
+                        {
+                            @string.Join(", ", Model.Movie.Directors.Select(d => d.FullName))
+                        }
+                        else
+                        {
+                            @:Невідомо
+                        }
+                    </p>
+                    <p class="mb-0">
+                        <b>Актори:</b>
+                        @if (Model.Movie.Actors != null && Model.Movie.Actors.Any())
+                        {
+                            @string.Join(", ", Model.Movie.Actors.Take(5).Select(a => a.FullName))
+                            @if (Model.Movie.Actors.Count() > 5)
+                            {
+                                <span>...</span>
+                            }
+                        }
+                        else
+                        {
+                            @:Невідомо
+                        }
+                    </p>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="mt-4">
-        <h2>Виберіть місця</h2>
-        <div id="seatsArea">
-            @if (Model.SessionSeats != null && Model.SessionSeats.Any())
-            {
-                <div class="hall-structure">
-                    <span class="screen"><img src="https://www.palladium-cinema.com.ua/desktop/img/screen.png" alt="Екран" /></span>
-                    <div class="seats-container">
-                        @foreach (var row in Model.SessionSeats.GroupBy(s => s.RowNumber))
+    <!-- Booking Window -->
+    <div class="container-fluid px-3 mt-5">
+        <div class="row justify-content-center">
+            <div class="d-flex justify-content-center">
+                <div class="booking-window">
+                    <h2 class="booking-heading text-center mb-5">Забронювати квитки</h2>
+
+                    <!-- Date/Time Selection -->
+                    <div class="mt-4 date-time-section">
+                        <h4 class="section-title mb-3 text-center">Доступні дати показу</h4>
+                        @if (Model.GroupedTimes != null && Model.GroupedTimes.Any())
                         {
-                            <div class="row">
-                                <span class="number-of-row">@row.Key</span>
-                                <div class="seats">
-                                    @foreach (var seat in row.OrderBy(s => s.SeatNumber))
+                            foreach (var cinemaGroup in Model.GroupedTimes.OrderBy(g => g.Key.Name))
+                            {
+                                var cinema = cinemaGroup.Key;
+                                var times = cinemaGroup.Value;
+                                if (!times.Any()) continue;
+
+                                <h5 class="text-center">@cinema.Name</h5>
+                                <div class="date-film-slider d-flex flex-wrap gap-2 justify-content-center" data-cinema-id="@cinema.Id">
+                                    @foreach (var date in times.Select(t => t.StartTime.Date).Distinct().OrderBy(d => d))
                                     {
-                                        var disabled = seat.IsAvailable ? "" : "booked";
-                                        <div class="seat @disabled"
-                                             data-seat="@($"{seat.RowNumber}-{seat.SeatNumber}")"
-                                             data-id="@seat.Id"
-                                             data-price="@seat.Price"
-                                             title="Ряд @seat.RowNumber, Місце @seat.SeatNumber">
-                                            @seat.SeatNumber
+                                        <div class="date-item @(date == times.First().StartTime.Date ? "active" : "")"
+                                             data-date="@date.ToString("yyyy-MM-dd")"
+                                             data-cinema-id="@cinema.Id">
+                                            <div class="number-day">@date.Day</div>
+                                            <div class="day">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetShortestDayName(date.DayOfWeek).ToUpper()</div>
                                         </div>
                                     }
                                 </div>
+                                <div class="tabs-content">
+                                    @foreach (var timeGroup in times.GroupBy(t => t.StartTime.Date))
+                                    {
+                                        <ul class="time-list @(timeGroup.Key == times.First().StartTime.Date ? "active" : "")"
+                                            data-date="@timeGroup.Key.ToString("yyyy-MM-dd")"
+                                            data-cinema-id="@cinema.Id">
+                                            @foreach (var item in timeGroup.OrderBy(t => t.StartTime.TimeOfDay))
+                                            {
+                                                <li>
+                                                    <a href="#" data-session-id="@item.SessionId" data-start-time="@item.StartTime.ToString("HH:mm")">
+                                                        @item.StartTime.ToString("HH:mm")
+                                                    </a>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                </div>
+                            }
+                        }
+                        else if (Model.AvailableTimes.Any())
+                        {
+                            <div class="date-film-slider d-flex flex-wrap gap-2 justify-content-center">
+                                @foreach (var date in Model.AvailableTimes.Select(t => t.StartTime.Date).Distinct().OrderBy(d => d))
+                                {
+                                    <div class="date-item @(date == Model.AvailableTimes.First().StartTime.Date ? "active" : "")"
+                                         data-date="@date.ToString("yyyy-MM-dd")">
+                                        <div class="number-day">@date.Day</div>
+                                        <div class="day">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetShortestDayName(date.DayOfWeek).ToUpper()</div>
+                                    </div>
+                                }
+                            </div>
+                            <div class="tabs-content">
+                                @foreach (var timeGroup in Model.AvailableTimes.GroupBy(t => t.StartTime.Date))
+                                {
+                                    <ul class="time-list @(timeGroup.Key == Model.AvailableTimes.First().StartTime.Date ? "active" : "")"
+                                        data-date="@timeGroup.Key.ToString("yyyy-MM-dd")">
+                                        @foreach (var item in timeGroup.OrderBy(t => t.StartTime.TimeOfDay))
+                                        {
+                                            <li>
+                                                <a href="#" data-session-id="@item.SessionId" data-start-time="@item.StartTime.ToString("HH:mm")">
+                                                    @item.StartTime.ToString("HH:mm")
+                                                </a>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
                             </div>
                         }
+                        else
+                        {
+                            <p class="text-muted text-center">Наразі немає доступних сеансів для цього фільму.</p>
+                        }
                     </div>
+
+                    <!-- Seat Selection -->
+                    <div class="mt-5 seat-selection-section">
+                        <h2 class="section-title text-center mb-4">Виберіть місця</h2>
+                        <div id="seatsArea">
+                            @if (Model.SessionSeats != null && Model.SessionSeats.Any())
+                            {
+                                <div class="hall-structure">
+                                    <span class="screen"><img src="https://www.palladium-cinema.com.ua/desktop/img/screen.png" alt="Екран" class="img-fluid" /></span>
+                                    <div class="seats-container">
+                                        @foreach (var row in Model.SessionSeats.GroupBy(s => s.RowNumber))
+                                        {
+                                            <div class="row">
+                                                <span class="number-of-row">@row.Key</span>
+                                                <div class="seats">
+                                                    @foreach (var seat in row.OrderBy(s => s.SeatNumber))
+                                                    {
+                                                        var disabled = seat.IsAvailable ? "" : "booked";
+                                                        <div class="seat @disabled"
+                                                             data-seat="@($"{seat.RowNumber}-{seat.SeatNumber}")"
+                                                             data-id="@seat.Id"
+                                                             data-price="@seat.Price"
+                                                             title="Ряд @seat.RowNumber, Місце @seat.SeatNumber">
+                                                            @seat.SeatNumber
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="text-center text-muted">Оберіть час показу, щоб побачити доступні місця.</p>
+                            }
+                        </div>
+
+                        <div id="selectedSeatsInfo" class="mt-4 text-center selected-seats-info">
+                            <p class="seats-label mb-1">Обрані місця:</p>
+                            <div id="selectedSeatsList" class="d-flex flex-column align-items-center seats-list"></div>
+                            <p class="total-price mb-2 mt-2">Загальна вартість: <span id="totalPrice">0.00</span> грн</p>
+                        </div>
+
+
+                    </div>
+                    <form asp-action="ConfirmBooking" method="post" id="bookingForm" class="text-center mt-4">
+                        <input type="hidden" name="SelectedSeats" id="SelectedSeatsInput" value="" />
+                        <input type="hidden" name="SessionId" id="SelectedSessionId" value="@Model.SessionId" />
+                        <button type="submit" class="btn btn-maroon mt-3" disabled>Забронювати</button>
+                    </form>
                 </div>
-            }
-            else
-            {
-                <p>Оберіть час показу, щоб побачити доступні місця.</p>
-            }
+            </div>
         </div>
-
-        <div id="selectedSeatsInfo" class="mt-3">
-            <p>Обрані місця: <span id="selectedSeatsList"></span></p>
-            <p>Загальна вартість: <span id="totalPrice">0.00</span> грн</p>
-        </div>
-
-        <form asp-action="ConfirmBooking" method="post" id="bookingForm">
-            <input type="hidden" name="SelectedSeats" id="SelectedSeatsInput" value="" />
-            <input type="hidden" name="SessionId" id="SelectedSessionId" value="@Model.SessionId" />
-            <button type="submit" class="btn btn-primary mt-3" disabled>Забронювати</button>
-        </form>
     </div>
 </section>
 
 <style>
+    /* Override site.css section-title for this page */
+    .section-title {
+        font-size: 1.75rem;
+        font-weight: bold;
+        color: #800020;
+        position: relative;
+    }
+
+        .section-title::after {
+            content: '';
+            width: 80px;
+            height: 4px;
+            background-color: #800020;
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+    /* Video Section */
     .video {
         position: relative;
+        width: 100%;
     }
 
     .embed-responsive {
@@ -233,37 +292,137 @@
         width: 100%;
         padding: 0;
         overflow: hidden;
+        height: 0;
+        padding-bottom: 56.25%; /* 16:9 aspect ratio */
     }
-
-        .embed-responsive::before {
-            display: block;
-            content: "";
-            padding-top: 56.25%;
-        }
 
         .embed-responsive .embed-responsive-item {
             position: absolute;
             top: 0;
-            bottom: 0;
             left: 0;
             width: 100%;
             height: 100%;
             border: 0;
+            border-radius: 8px;
         }
 
+    /* Set same height for trailer and banner */
+    @@media (min-width: 992px) {
+        .embed-responsive {
+            padding-bottom: 0;
+            height: 450px; /* Increased height */
+        }
+
+        .poster img {
+            height: 450px; /* Match trailer height */
+            width: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+    }
+
+    @@media (max-width: 991px) {
+        .embed-responsive {
+            padding-bottom: 0;
+            height: 300px; /* Adjusted for smaller screens */
+        }
+
+        .poster img {
+            height: 300px;
+            width: 100%;
+            object-fit: cover;
+        }
+    }
+
+    /* Banner and Movie Info */
+    .poster {
+        width: 100%;
+    }
+
+    .movie-info {
+        font-size: 0.9rem;
+        color: #333;
+    }
+
+        .movie-info b {
+            color: #800020;
+        }
+
+    /* Movie Description */
+    .about-film {
+        width: 100%;
+    }
+
+        .about-film .description {
+            font-size: 1rem;
+            color: #555;
+            line-height: 1.6;
+            padding: 0 15px;
+        }
+
+    /* Highlighted Booking Window */
+    .booking-window {
+        background-color: #ffffff;
+        border: 2px solid #800020;
+        border-radius: 12px;
+        padding: 40px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        width: 100%;
+        max-width: 1200px;
+        position: relative;
+    }
+
+    .booking-heading {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #800020;
+        position: relative;
+        margin-bottom: 40px !important;
+    }
+
+        .booking-heading::after {
+            content: '';
+            width: 120px;
+            height: 5px;
+            background-color: #d4af37; /* Complementary gold color */
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+    /* Date and Time Selection Section Styling */
+    .date-time-section {
+        background-color: #fff9e6; /* Light gold background */
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #d4af37;
+    }
+
+    .date-film-slider {
+        width: 100%;
+        margin: 0 auto;
+    }
+
     .date-item {
-        background-color: #f5f5f5;
+        background-color: #ffffff;
+        border: 1px solid #ddd;
         border-radius: 8px;
         padding: 10px 12px;
         text-align: center;
         cursor: pointer;
-        width: 52px;
-        transition: background-color 0.3s, color 0.3s;
+        width: 60px;
+        transition: background-color 0.3s, color 0.3s, border-color 0.3s;
     }
 
         .date-item.active {
-            background-color: #333;
+            background-color: #800020;
             color: white;
+            border-color: #800020;
         }
 
         .date-item .number-day {
@@ -273,7 +432,13 @@
 
         .date-item .day {
             font-size: 12px;
+            text-transform: uppercase;
         }
+
+    .tabs-content {
+        width: 100%;
+        margin: 0 auto;
+    }
 
     .time-list {
         display: none;
@@ -281,6 +446,8 @@
         gap: 10px;
         padding-left: 0;
         list-style: none;
+        margin-top: 15px;
+        justify-content: center;
     }
 
         .time-list.active {
@@ -290,27 +457,44 @@
         .time-list li a {
             display: inline-block;
             padding: 10px 16px;
-            background-color: #f7f7f7;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
             border-radius: 6px;
-            font-weight: bold;
+            font-weight: 500;
             text-decoration: none;
             color: #333;
-            border: 1px solid #ddd;
-            transition: background-color 0.2s;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
         }
 
             .time-list li a:hover {
-                background-color: #e0e0e0;
+                background-color: #f0f0f0;
+                border-color: #800020;
             }
 
             .time-list li a.selected {
-                background-color: #333;
+                background-color: #800020;
                 color: white;
+                border-color: #800020;
             }
+
+    /* Seat Selection Section Styling */
+    .seat-selection-section {
+        background-color: #fff9e6; /* Light gold background */
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #d4af37;
+    }
 
     .hall-structure {
         text-align: center;
         margin: 20px 0;
+        width: 100%;
+    }
+
+    .screen img {
+        width: 100%;
+        max-width: 800px;
+        margin-bottom: 20px;
     }
 
     .seats-container {
@@ -318,6 +502,7 @@
         flex-direction: column;
         align-items: center;
         margin-top: 20px;
+        width: 100%;
     }
 
     .row {
@@ -325,41 +510,44 @@
         align-items: center;
         margin: 5px 0;
         width: 100%;
-        max-width: 600px;
+        max-width: 1000px;
     }
 
     .number-of-row {
-        width: 30px;
+        width: 40px;
         text-align: right;
-        margin-right: 10px;
+        margin-right: 15px;
         font-weight: bold;
         color: #5c534c;
+        font-size: 1rem;
     }
 
     .seats {
         display: flex;
         flex: 1;
         justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
     .seat {
-        display: inline-block;
+        display: inline-flex;
         width: 50px;
         height: 50px;
         margin: 4px;
-        background-color: #eee;
+        background-color: #e0e0e0;
         border-radius: 5px;
         cursor: pointer;
         transition: background-color 0.3s, transform 0.2s;
-        display: flex;
         align-items: center;
         justify-content: center;
         color: #5c534c;
         font-weight: bold;
+        font-size: 1rem;
     }
 
         .seat:hover {
-            background-color: #ddd;
+            background-color: #cccccc;
             transform: scale(1.05);
         }
 
@@ -369,9 +557,118 @@
         }
 
         .seat.booked {
-            background-color: #e0e0e0;
+            background-color: #b0b0b0;
             cursor: not-allowed;
         }
+    /* Selected Seats and Total Price Styling */
+    .selected-seats-info {
+        background-color: #fff9e6; /* Light gold background */
+        border: 2px solid #800020; /* Maroon border */
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .seats-label {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #800020;
+    }
+
+    .seats-list {
+        font-size: 1.1rem;
+        color: #333;
+        margin: 10px 0;
+    }
+
+        .seats-list div {
+            background-color: #f9f2e7; /* Muted gold background for selected seats */
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 3px 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+    .total-price {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #800020;
+    }
+
+        .total-price span {
+            color: #d4af37;
+            font-size: 1.4rem;
+        }
+
+    /* Custom Button Style */
+    .btn-maroon {
+        background-color: #800020;
+        border-color: #800020;
+        color: white;
+        font-weight: 500;
+        padding: 10px 20px;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+    }
+
+        .btn-maroon:hover {
+            background-color: #660018;
+            border-color: #660018;
+            color: white;
+        }
+
+        .btn-maroon:disabled {
+            background-color: #800020;
+            border-color: #800020;
+            color: white;
+            opacity: 1;
+            cursor: not-allowed;
+        }
+
+    /* Responsive Adjustments */
+    @@media (min-width: 1200px) {
+        .container-fluid {
+            padding: 0 20px;
+        }
+
+        .row {
+            max-width: 1200px;
+        }
+    }
+
+    @@media (max-width: 767px) {
+        .embed-responsive {
+            padding-bottom: 0;
+            height: 200px;
+        }
+
+        .poster img {
+            height: 200px;
+        }
+
+        .booking-window {
+            padding: 15px;
+        }
+
+        .booking-heading {
+            font-size: 2rem;
+        }
+
+        .row {
+            max-width: 100%;
+        }
+
+        .number-of-row {
+            width: 30px;
+            margin-right: 10px;
+        }
+
+        .seat {
+            width: 40px;
+            height: 40px;
+            font-size: 0.9rem;
+        }
+    }
 </style>
 
 @section Scripts {
@@ -380,7 +677,20 @@
         let totalPrice = 0;
 
         function updateSelectedSeatsInfo() {
-            document.getElementById("selectedSeatsList").innerText = selectedSeats.join(', ');
+            const selectedSeatsList = document.getElementById("selectedSeatsList");
+            selectedSeatsList.innerHTML = '';
+
+            if (selectedSeats.length === 0) {
+                selectedSeatsList.innerHTML = '<span class="text-muted">Немає обраних місць</span>';
+            } else {
+                selectedSeats.forEach(seat => {
+                    const [row, seatNumber] = seat.split('-');
+                    const seatText = document.createElement('div');
+                    seatText.textContent = `${row} ряд, ${seatNumber} місце`;
+                    selectedSeatsList.appendChild(seatText);
+                });
+            }
+
             document.getElementById("totalPrice").innerText = totalPrice.toFixed(2);
             document.getElementById("SelectedSeatsInput").value = JSON.stringify(selectedSeats);
             const sessionId = document.getElementById("SelectedSessionId").value;
@@ -414,7 +724,7 @@
             });
 
             document.querySelectorAll(`.time-list${cinemaId ? `[data-cinema-id="${cinemaId}"]` : ''} a`).forEach(a => a.classList.remove('selected'));
-            document.getElementById("seatsArea").innerHTML = "<p>Оберіть час показу, щоб побачити доступні місця.</p>";
+            document.getElementById("seatsArea").innerHTML = "<p class='text-center text-muted'>Оберіть час показу, щоб побачити доступні місця.</p>";
             document.getElementById("SelectedSessionId").value = "";
             selectedSeats = [];
             totalPrice = 0;
@@ -437,6 +747,21 @@
                 })
                 .then(html => {
                     document.getElementById("seatsArea").innerHTML = html;
+                    const seatsArea = document.getElementById("seatsArea");
+                    seatsArea.classList.add('w-100');
+                    const hallStructure = seatsArea.querySelector('.hall-structure');
+                    if (hallStructure) {
+                        hallStructure.style.width = '100%';
+                    }
+                    const seatsContainer = seatsArea.querySelector('.seats-container');
+                    if (seatsContainer) {
+                        seatsContainer.style.width = '100%';
+                    }
+                    const rows = seatsArea.querySelectorAll('.row');
+                    rows.forEach(row => {
+                        row.style.width = '100%';
+                        row.style.maxWidth = window.innerWidth >= 1200 ? '1200px' : window.innerWidth >= 768 ? '1000px' : '100%';
+                    });
                     document.querySelectorAll('.seat').forEach(seat => {
                         seat.addEventListener('click', toggleSeat);
                     });
@@ -471,7 +796,6 @@
                 seat.addEventListener('click', toggleSeat);
             });
 
-            // Listen for cinema selection changes
             const cinemaSelectionDropdown = document.getElementById("cinemaSelectionDropdown");
             if (cinemaSelectionDropdown) {
                 cinemaSelectionDropdown.addEventListener("click", function (e) {
@@ -485,7 +809,6 @@
                         })
                             .then(response => {
                                 if (response.ok) {
-                                    // Redirect to the same Create page with the current sessionId
                                     const currentSessionId = @Model.SessionId;
                                     window.location.href = `/Bookings/Create?sessionId=${currentSessionId}`;
                                 }

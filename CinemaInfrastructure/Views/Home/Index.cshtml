@@ -73,7 +73,7 @@
                                                 <button type="button" class="play-slide playYoutube1 position-absolute top-50 start-50 translate-middle" data-link="@movie.TrailerLink" aria-label="Play trailer for @movie.Title">
                                                     <img src="~/img/play.png" alt="Play" />
                                                 </button>
-                                                <a href="/Movies/Details/@movie.Id">
+                                                <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id">
                                                     <img src="@movie.BannerUrl" alt="@movie.Title poster" class="img-fluid" loading="lazy" />
                                                 </a>
                                             </div>
@@ -130,7 +130,7 @@
                                                     <button type="button" class="play-slide playYoutube1 position-absolute top-50 start-50 translate-middle" data-link="@movie.TrailerLink" aria-label="Play trailer for @movie.Title">
                                                         <img src="~/img/play.png" alt="Play" />
                                                     </button>
-                                                    <a href="/Movies/Details/@movie.Id">
+                                                    <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id">
                                                         <img src="@movie.BannerUrl" alt="@movie.Title poster" class="img-fluid" loading="lazy" />
                                                     </a>
                                                 </div>

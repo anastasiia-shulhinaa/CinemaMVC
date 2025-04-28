@@ -283,7 +283,7 @@ namespace CinemaInfrastructure.Controllers
 
             await _context.SaveChangesAsync();
 
-            return RedirectToAction("Index", "Home");
+            return RedirectToAction("MyBookings", "Sessions");
         }
 
         [Authorize]

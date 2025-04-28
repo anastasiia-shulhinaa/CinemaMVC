@@ -1,3 +1,95 @@
+html, body {
+    font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background-color: #f9fafb;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow-x: hidden; /* Prevent horizontal scrollbar */
+    color: #2d3748;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Ensure container-fluid is truly full-width */
+.container-fluid {
+    width: 100%;
+    padding: 0 20px;
+    margin: 0;
+}
+
+/* Remove max-width constraints for main content */
+.main-content {
+    flex: 1 0 auto;
+    padding: 1.5rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.03);
+    margin-bottom: 1.5rem;
+    width: 100%;
+    max-width: none; /* Remove any max-width constraints */
+    padding-bottom: 60px; /* Ensure content clears footer */
+}
+
+/* Navbar */
+.navbar {
+    background-color: #fff;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+    padding: 0.75rem 1.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    width: 100%;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #800020 !important;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
+}
+
+.navbar-brand:hover {
+    color: #660018 !important;
+}
+
+/* Ensure sections stretch to full width */
+.film-page.gray-bg {
+    background-color: #f5f5f5;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Adjust responsive design to prevent mobile layout on desktop */
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+
+    .container-fluid {
+        padding: 0 30px;
+    }
+
+    .main-content {
+        padding: 2rem;
+    }
+}
+
+@media (max-width: 767px) {
+    .container-fluid {
+        padding: 0 15px;
+    }
+
+    .main-content {
+        padding: 1rem;
+    }
+}
 html {
   font-size: 14px;
 }
