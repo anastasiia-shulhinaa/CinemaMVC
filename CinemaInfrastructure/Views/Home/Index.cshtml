@@ -17,8 +17,8 @@
     {
         <!-- Admin Dashboard -->
         <section class="admin-dashboard">
-            <h2 class="section-title"><i class="fas fa-user-shield"></i> Панель керування</h2>
-            <div class="dashboard-actions">
+            <h2 class="section-title text-center"><i class="fas fa-user-shield"></i> Панель керування</h2>
+            <div class="dashboard-actions d-flex justify-content-center">
                 <a asp-controller="Movies" asp-action="Create" class="btn btn-primary"><i class="fas fa-plus"></i> Додати фільм</a>
                 <a asp-controller="Cinemas" asp-action="Index" class="btn btn-primary"><i class="fas fa-building"></i> Кінотеатри</a>
                 <a asp-controller="Sessions" asp-action="Index" class="btn btn-primary"><i class="fas fa-clock"></i> Сеанси</a>
@@ -29,7 +29,7 @@
     {
         <!-- User or Guest View -->
         <section class="welcome-section">
-            <h2 class="section-title"><i class="fas fa-film"></i> Вітаємо на FilMix</h2>
+            <h2 class="section-title text-center"><i class="fas fa-film"></i> Вітаємо на FilMix!</h2>
             <div class="movie-card mb-4">
                 <img src="img/cinema_icon1.jpg" alt="Promotional banner for FilMix Cinema">
                 <a asp-controller="Movies" asp-action="Index" class="custom-session-btn">
@@ -55,7 +55,10 @@
                         <section class="now-playing-slider w-100">
                             <h3 class="visually-hidden">Now Playing Movies</h3>
                             <div class="owl-stage">
-                                @foreach (var session in Model)
+                                @foreach (var session in Model
+                               .GroupBy(s => s.MovieId) // Group by MovieId
+                               .Select(g => g.OrderBy(s => s.Schedule.StartTime).First()) // Take the earliest session
+                               .OrderBy(s => s.Schedule.StartTime)) // Sort by StartTime
                                 {
                                     var movie = session.Movie;
                                     var date = session.Schedule?.StartTime ?? DateTime.Now;
@@ -65,7 +68,7 @@
                                     int totalBookedSeats = session.Bookings.Sum(b =>
                                     b.IsPrivateBooking && b.NumberOfSeats == null
                                     ? totalSeatsInHall
-                                    : b.NumberOfSeats.GetValueOrDefault(0)); // Fixed typo: GetValueOr -> GetValueOrDefault
+                                    : b.NumberOfSeats.GetValueOrDefault(0));
 
                                     <article class="owl-item">
                                         <div class="film-slider text-center">
@@ -73,18 +76,18 @@
                                                 <button type="button" class="play-slide playYoutube1 position-absolute top-50 start-50 translate-middle" data-link="@movie.TrailerLink" aria-label="Play trailer for @movie.Title">
                                                     <img src="~/img/play.png" alt="Play" />
                                                 </button>
-                                                <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id">
+                                                <a href="/Movies/Details/@movie.Id">
                                                     <img src="@movie.BannerUrl" alt="@movie.Title poster" class="img-fluid" loading="lazy" />
                                                 </a>
                                             </div>
 
                                             <div class="data">
                                                 @startDate
-                                                <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id" class="btn btn-link">Інші дати</a>
+                                                <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id" class="btn btn-link" style="color: #800000;">Інші дати -></a>
 
                                                 @if (isOwnPrivateBooking)
                                                 {
-                                                    <p class="text-success">(Ваш приватний сеанс)</p>
+                                                    <p class="text-success" style="color: #800000;">(Ваш приватний сеанс)</p>
                                                 }
 
                                                 <div class="ticket-icon">
@@ -101,7 +104,9 @@
                 else
                 {
                     <!-- Group sessions by cinema -->
-                    @foreach (var cinemaGroup in Model.GroupBy(s => new { s.Schedule.Hall.CinemaId, s.Schedule.Hall.Cinema.Name }).OrderBy(g => g.Key.Name))
+                    @foreach (var cinemaGroup in Model
+                   .GroupBy(s => new { s.Schedule.Hall.CinemaId, s.Schedule.Hall.Cinema.Name })
+                   .OrderBy(g => g.Key.Name))
                     {
                         <aside class="d-flex align-items-start mt-4">
                             <div class="name-section-vertical text-center">
@@ -112,7 +117,10 @@
                             <section class="now-playing-slider w-100">
                                 <h3 class="visually-hidden">Now Playing Movies at @cinemaGroup.Key.Name</h3>
                                 <div class="owl-stage">
-                                    @foreach (var session in cinemaGroup.OrderBy(s => s.Schedule.StartTime))
+                                    @foreach (var session in cinemaGroup
+                                   .GroupBy(s => s.MovieId) // Group by MovieId within each cinema
+                                   .Select(g => g.OrderBy(s => s.Schedule.StartTime).First()) // Take the earliest session
+                                   .OrderBy(s => s.Schedule.StartTime)) // Sort by StartTime
                                     {
                                         var movie = session.Movie;
                                         var date = session.Schedule?.StartTime ?? DateTime.Now;
@@ -122,7 +130,7 @@
                                         int totalBookedSeats = session.Bookings.Sum(b =>
                                         b.IsPrivateBooking && b.NumberOfSeats == null
                                         ? totalSeatsInHall
-                                        : b.NumberOfSeats.GetValueOrDefault(0)); // Fixed typo: GetValueOr/Color -> GetValueOrDefault
+                                        : b.NumberOfSeats.GetValueOrDefault(0));
 
                                         <article class="owl-item">
                                             <div class="film-slider text-center">
@@ -130,19 +138,18 @@
                                                     <button type="button" class="play-slide playYoutube1 position-absolute top-50 start-50 translate-middle" data-link="@movie.TrailerLink" aria-label="Play trailer for @movie.Title">
                                                         <img src="~/img/play.png" alt="Play" />
                                                     </button>
-                                                    <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id">
+                                                    <a href="/Movies/Details/@movie.Id">
                                                         <img src="@movie.BannerUrl" alt="@movie.Title poster" class="img-fluid" loading="lazy" />
                                                     </a>
                                                 </div>
 
                                                 <div class="data">
                                                     @startDate
-                                                    <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id" class="btn btn-link">Інші дати</a>
-
+                                                    <a asp-controller="Bookings" asp-action="Create" asp-route-sessionId="@session.Id" class="btn btn-link" style="color: #800000;">Інші дати</a>
 
                                                     @if (isOwnPrivateBooking)
                                                     {
-                                                        <p class="text-success">(Ваш приватний сеанс)</p>
+                                                        <p class="text-success" style="color: #800000;">(Ваш приватний сеанс)</p>
                                                     }
 
                                                     <div class="ticket-icon">

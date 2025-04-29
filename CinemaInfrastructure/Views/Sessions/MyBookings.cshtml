@@ -1,120 +1,146 @@
 ﻿@model CinemaInfrastructure.ViewModels.MyBookingsViewModel
 
 <main class="container my-5">
-    <h1 class="text-center mb-5 section-title">Мої Бронювання</h1>
+    <h1 class="section-title text-center mb-5">Мої Бронювання</h1>
 
     <!-- Private Bookings -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">Приватні Бронювання</h5>
-        </div>
-        <div class="card-body">
-            @if (!Model.PrivateBookings.Any())
-            {
-                <p class="text-muted">Приватних бронювань немає.</p>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Фільм</th>
-                                <th>Кінотеатр</th>
-                                <th>Зал</th>
-                                <th>Розклад</th>
-                                <th>Ціна</th>
-                                <th>Дата Бронювання</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var booking in Model.PrivateBookings)
-                            {
-                                <tr>
-                                    <td>@booking.Session.Movie.Title</td>
-                                    <td>@booking.Session.Schedule.Hall.Cinema.Name</td>
-                                    <td>@booking.Session.Schedule.Hall.Name</td>
-                                    <td>@booking.Session.Schedule.StartTime.ToString("dd.MM.yyyy HH:mm")</td>
-                                    <td>@booking.PrivateBookingPrice.ToString()</td>
-                                    <td>@booking.BookingDate.ToString("dd.MM.yyyy HH:mm")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </div>
-    </div>
+    <section class="bookings-section mb-5">
+        <h2 class="section-subtitle">Приватні Бронювання</h2>
+        @if (!Model.PrivateBookings.Any())
+        {
+            <p class="text-muted">Приватних бронювань немає.</p>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var booking in Model.PrivateBookings)
+                {
+                    <div class="col-lg-4 col-md-6 col-12 mb-4">
+                        <div class="card booking-card shadow-sm">
+                            <div class="banner-container">
+                                @if (!string.IsNullOrEmpty(booking.Session.Movie.BannerUrl))
+                                {
+                                    <img src="@booking.Session.Movie.BannerUrl" class="card-img-top" alt="@booking.Session.Movie.Title" />
+                                }
+                                else
+                                {
+                                    <div class="no-photo-placeholder">
+                                        <p class="text-muted">Постер відсутній</p>
+                                    </div>
+                                }
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">@booking.Session.Movie.Title</h5>
+                                <div class="ticket-info">
+                                    <p><strong>Кінотеатр:</strong> <span class="highlight-text">@booking.Session.Schedule.Hall.Cinema.Name</span></p>
+                                    <p><strong>Зал:</strong> <span class="highlight-text">@booking.Session.Schedule.Hall.Name</span></p>
+                                    <p><strong>Розклад:</strong> <span class="highlight-text">@booking.Session.Schedule.StartTime.ToString("dd.MM.yyyy HH:mm")</span></p>
+                                    <p><strong>Ціна:</strong> <span class="highlight-text">@(booking.PrivateBookingPrice?.ToString("C", new System.Globalization.CultureInfo("uk-UA")) ?? "N/A")</span></p>
+                                    <p><strong>Дата Бронювання:</strong> <span class="highlight-text">@booking.BookingDate.ToString("dd.MM.yyyy HH:mm")</span></p>
+                                </div>
+                                <form asp-controller="Bookings" asp-action="DownloadTicket" method="post" class="text-center mt-4">
+                                    <input type="hidden" name="BookingId" value="@booking.Id" />
+                                    <button type="submit" class="btn btn-maroon">Завантажити квиток</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
 
     <!-- Ticket Bookings -->
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Бронювання Квитків</h5>
-        </div>
-        <div class="card-body">
-            @if (!Model.TicketBookings.Any())
-            {
-                <p class="text-muted">Бронювань квитків немає.</p>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Фільм</th>
-                                <th>Кінотеатр</th>
-                                <th>Зал</th>
-                                <th>Розклад</th>
-                                <th>Місця</th>
-                                <th>Загальна Ціна</th>
-                                <th>Дата Бронювання</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var booking in Model.TicketBookings)
-                            {
-                                <tr>
-                                    <td>@booking.Session.Movie.Title</td>
-                                    <td>@booking.Session.Schedule.Hall.Cinema.Name</td>
-                                    <td>@booking.Session.Schedule.Hall.Name</td>
-                                    <td>@booking.Session.Schedule.StartTime.ToString("dd.MM.yyyy HH:mm")</td>
-                                    <td>
-                                        @string.Join(", ", booking.SessionSeats.Select(ss => $"Ряд {ss.Seat.RowNumber} Місце {ss.Seat.SeatNumber}"))
-                                    </td>
-                                    <td>@booking.SessionSeats.Sum(ss => ss.Price).ToString("C", new System.Globalization.CultureInfo("uk-UA"))</td>
-                                    <td>@booking.BookingDate.ToString("dd.MM.yyyy HH:mm")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </div>
-    </div>
+    <section class="bookings-section">
+        <h2 class="section-subtitle">Бронювання Квитків</h2>
+        @if (!Model.TicketBookings.Any())
+        {
+            <p class="text-muted">Бронювань квитків немає.</p>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var booking in Model.TicketBookings)
+                {
+                    <div class="col-lg-4 col-md-6 col-12 mb-4">
+                        <div class="card booking-card shadow-sm">
+                            <div class="banner-container">
+                                @if (!string.IsNullOrEmpty(booking.Session.Movie.BannerUrl))
+                                {
+                                    <img src="@booking.Session.Movie.BannerUrl" class="card-img-top" alt="@booking.Session.Movie.Title" />
+                                }
+                                else
+                                {
+                                    <div class="no-photo-placeholder">
+                                        <p class="text-muted">Постер відсутній</p>
+                                    </div>
+                                }
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">@booking.Session.Movie.Title</h5>
+                                <div class="ticket-info">
+                                    <p><strong>Кінотеатр:</strong> <span class="highlight-text">@booking.Session.Schedule.Hall.Cinema.Name</span></p>
+                                    <p><strong>Зал:</strong> <span class="highlight-text">@booking.Session.Schedule.Hall.Name</span></p>
+                                    <p><strong>Розклад:</strong> <span class="highlight-text">@booking.Session.Schedule.StartTime.ToString("dd.MM.yyyy HH:mm")</span></p>
+                                    <p><strong>Місця:</strong> <span class="highlight-text">@string.Join(", ", booking.SessionSeats.Select(ss => $"Ряд {ss.Seat.RowNumber} Місце {ss.Seat.SeatNumber}"))</span></p>
+                                    <p><strong>Загальна Ціна:</strong> <span class="highlight-text">@booking.SessionSeats.Sum(ss => ss.Price).ToString("C", new System.Globalization.CultureInfo("uk-UA"))</span></p>
+                                    <p><strong>Дата Бронювання:</strong> <span class="highlight-text">@booking.BookingDate.ToString("dd.MM.yyyy HH:mm")</span></p>
+                                </div>
+                                <form asp-controller="Bookings" asp-action="DownloadTicket" method="post" class="text-center mt-4">
+                                    <input type="hidden" name="BookingId" value="@booking.Id" />
+                                    <button type="submit" class="btn btn-maroon">Завантажити квиток</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </section>
 </main>
 
 <style>
-    /* General Styles */
     .container {
-        max-width: 1400px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
     }
 
     .section-title {
-        color: #800020;
-        font-weight: 700;
         font-size: 2.5rem;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-        margin-bottom: 2rem;
+        font-weight: bold;
+        color: #800020;
+        text-align: center;
+        margin-bottom: 40px;
         position: relative;
     }
 
         .section-title::after {
             content: '';
+            width: 120px;
+            height: 5px;
+            background-color: #d4af37;
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+    .section-subtitle {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #800020;
+        text-align: center;
+        margin-bottom: 30px;
+        position: relative;
+    }
+
+        .section-subtitle::after {
+            content: '';
             width: 80px;
             height: 4px;
-            background-color: #800020;
+            background-color: #d4af37;
             position: absolute;
             bottom: -10px;
             left: 50%;
@@ -122,78 +148,165 @@
             border-radius: 2px;
         }
 
-    /* Card Styles */
-    .card {
-        background-color: #fefefe;
-        border: 1px solid #e5e5e5;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    .bookings-section {
+        margin-bottom: 50px;
     }
 
-    .card-header {
-        background-color: #fefefe;
-        border-bottom: 1px solid #e5e5e5;
-        padding: 1rem;
+    .booking-card {
+        border: none;
+        border-radius: 12px;
+        background-color: #fff9e6;
+        transition: transform 0.3s, box-shadow 0.3s;
+        width: 100%;
+        max-width: 350px;
+        margin: 0 auto;
+    }
+
+        .booking-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+    .banner-container {
+        position: relative;
+        width: 100%;
+        padding-top: 75%; /* 4:3 aspect ratio */
+        background-color: #f0e4d7;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+        overflow: hidden;
+    }
+
+    .card-img-top {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+    }
+
+    .no-photo-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f0e4d7;
         color: #800020;
+        font-weight: 500;
+        text-align: center;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
     }
 
     .card-body {
-        padding: 1.5rem;
+        padding: 15px;
+    }
+
+    .card-title {
+        font-size: 1.3rem;
         color: #800020;
+        margin-bottom: 10px;
+        font-weight: 600;
+        text-align: center;
     }
 
-    /* Table Styles */
-    .table-responsive {
-        overflow-x: auto;
+    .ticket-info {
+        background-color: #f9f2e7;
+        border-left: 3px solid #d4af37;
+        padding: 10px;
+        border-radius: 6px;
     }
 
-    .table {
-        background-color: #fff;
-        border: 1px solid #e5e5e5;
-        border-radius: 8px;
-        margin-bottom: 0;
-    }
+        .ticket-info p {
+            margin: 5px 0;
+            font-size: 0.95rem;
+            color: #333;
+        }
 
-        .table thead {
-            background-color: #fefefe;
+        .ticket-info strong {
             color: #800020;
-            border-bottom: 1px solid #e5e5e5;
+            font-weight: 600;
+            display: inline-block;
+            width: 110px;
         }
 
-        .table th {
-            font-weight: 500;
-            padding: 10px;
-            text-align: left;
+        .ticket-info .highlight-text {
+            font-weight: 700;
+            font-size: 1rem;
+            color: white;
+            background-color: #800020;
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
         }
 
-        .table td {
-            padding: 10px;
-            text-align: left;
-            vertical-align: middle;
-            color: #800020;
-        }
-
-    .table-striped tbody tr:nth-of-type(odd) {
-        background-color: #f9fafb;
+    .btn-maroon {
+        background-color: #800020;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        transition: background-color 0.3s;
     }
 
-    /* Misc */
+        .btn-maroon:hover {
+            background-color: #660018;
+            color: white;
+        }
+
     .text-muted {
-        color: #b88b8b !important;
+        color: #6c757d !important;
+        font-size: 0.95rem;
+        text-align: center;
     }
 
-    /* Responsive */
+    /* Responsive Adjustments */
     @@media (max-width: 767px) {
-        .card-body
+        .container
 
     {
-        padding: 1rem;
+        padding: 15px;
     }
 
-    .table th,
-    .table td {
-        font-size: 0.85rem;
-        padding: 8px;
+    .section-title {
+        font-size: 2rem;
+    }
+
+    .section-subtitle {
+        font-size: 1.8rem;
+    }
+
+    .booking-card {
+        max-width: 100%;
+        margin: 0 10px;
+    }
+
+    .banner-container {
+        padding-top: 100%; /* 1:1 aspect ratio for mobile */
+    }
+
+    .card-title {
+        font-size: 1.2rem;
+    }
+
+    .ticket-info p {
+        font-size: 0.9rem;
+    }
+
+    .ticket-info .highlight-text {
+        font-size: 0.95rem;
+    }
+
+    .ticket-info strong {
+        width: auto;
+        display: block;
+        margin-bottom: 0.25rem;
     }
 
     }

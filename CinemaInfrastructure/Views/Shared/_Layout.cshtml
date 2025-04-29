@@ -22,147 +22,137 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/CinemaInfrastructure.styles.css" asp-append-version="true" />
     <style>
-        /* Cinema selection styles (matching the photo) */
-        .cinema-selection-container {
-            position: relative;
-            margin-right: 15px;
-        }
-
-        .cinema-selection-toggle {
-            background-color: #333;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            text-decoration: none;
-            font-size: 0.95rem;
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-            .cinema-selection-toggle::after {
-                content: '';
-                display: inline-block;
-                width: 0;
-                height: 0;
-                margin-left: 5px;
-                border-left: 5px solid transparent;
-                border-right: 5px solid transparent;
-                border-top: 5px solid white;
-            }
-
-        .cinema-selection-dropdown {
-            display: none;
-            position: absolute;
-            top: 100%;
-            right: 0;
-            background-color: white;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            z-index: 1000;
-            min-width: 200px;
-        }
-
-            .cinema-selection-dropdown.show {
-                display: block;
-            }
-
-            .cinema-selection-dropdown .dropdown-item {
-                padding: 8px 15px;
-                color: #333;
-                text-decoration: none;
-                display: block;
-            }
-
-                .cinema-selection-dropdown .dropdown-item:hover {
-                    background-color: #f1f1f1;
-                }
-
         @@media (max-width: 992px) {
-            .navbar-nav
+            .navbar-nav {
+                margin-top: 0.5rem;
+            }
 
-        {
-            margin-top: 0.5rem;
-        }
+            .nav-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.95rem;
+            }
 
-        .nav-link {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.95rem;
-        }
+            .dropdown-toggle {
+                font-size: 0.95rem;
+            }
 
-        .dropdown-toggle {
-            font-size: 0.95rem;
-        }
+            .movie-card img {
+                max-height: 240px;
+            }
 
-        .movie-card img {
-            max-height: 240px;
-        }
-
-        .film-slider {
-            width: 200px;
-        }
-
+            .film-slider {
+                width: 200px;
+            }
         }
 
         @@media (max-width: 767px) {
-            .navbar-brand
+            .navbar-brand {
+                font-size: 1.4rem;
+            }
 
-        {
-            font-size: 1.4rem;
+            .nav-link,
+            .dropdown-toggle {
+                font-size: 0.9rem;
+                padding: 0.4rem 0.6rem;
+            }
+
+            .main-content {
+                padding: 1rem;
+            }
+
+            .footer {
+                font-size: 0.75rem;
+            }
+
+            .btn {
+                font-size: 0.85rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            .section-title {
+                font-size: 1.5rem;
+            }
+
+            .dashboard-actions,
+            .user-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .cinema-selection {
+                max-width: 100%;
+            }
+
+            .movie-card img {
+                max-height: 200px;
+            }
+
+            .film-slider {
+                width: 160px;
+            }
+
+            .custom-session-btn {
+                font-size: 1rem;
+                padding: 8px 20px;
+            }
+
+            .name-section-vertical {
+                font-size: 0.9rem;
+                margin-right: 8px;
+            }
         }
 
-        .nav-link,
-        .dropdown-toggle {
+        /* Style adjustments for cinema selection dropdown */
+        .cinema-selection-container {
+            margin-right: 15px;
+            position: relative;
+        }
+
+        .cinema-selection-toggle {
+            color: white;
+            font-size: 0.95rem;
+        }
+
+            .cinema-selection-toggle:hover {
+                color: #f1f1f1;
+            }
+
+        /* Style for dropdown items with address hover effect */
+        .cinema-selection-item {
+            position: relative;
+        }
+
+        .cinema-selection-address {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 100%;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 8px 15px;
+            white-space: nowrap;
+            z-index: 1001;
+            color: #333;
             font-size: 0.9rem;
-            padding: 0.4rem 0.6rem;
         }
 
-        .main-content {
-            padding: 1rem;
+        .cinema-selection-item:hover .cinema-selection-address {
+            display: block;
         }
 
-        .footer {
-            font-size: 0.75rem;
+        .cinema-selection-dropdown {
+            min-width: 200px;
         }
 
-        .btn {
-            font-size: 0.85rem;
-            padding: 0.4rem 0.8rem;
-        }
-
-        .section-title {
-            font-size: 1.5rem;
-        }
-
-        .dashboard-actions,
-        .user-actions {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .cinema-selection {
-            max-width: 100%;
-        }
-
-        .movie-card img {
-            max-height: 200px;
-        }
-
-        .film-slider {
-            width: 160px;
-        }
-
-        .custom-session-btn {
-            font-size: 1rem;
-            padding: 8px 20px;
-        }
-
-        .name-section-vertical {
-            font-size: 0.9rem;
-            margin-right: 8px;
-        }
-
+        @@media (max-width: 767px) {
+            .cinema-selection-address {
+                left: auto;
+                right: 0;
+                top: 100%;
+                width: 200px;
+            }
         }
     </style>
 </head>
@@ -208,11 +198,6 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link @((ViewContext.RouteData.Values["Controller"]?.ToString() == "Movies" && ViewContext.RouteData.Values["Action"]?.ToString() == "AdminIndex") ? "active" : "")" asp-controller="Movies" asp-action="Create">
-                                    Додати фільм
-                                </a>
-                            </li>
-                            <li class="nav-item">
                                 <a class="nav-link @((ViewContext.RouteData.Values["Controller"]?.ToString() == "Cinemas") ? "active" : "")" asp-controller="Cinemas" asp-action="Index">
                                     Кінотеатри
                                 </a>
@@ -234,12 +219,12 @@
                         @if (!isAdmin || isAdminInUserMode)
                         {
                             <div class="cinema-selection-container">
-                                <a class="cinema-selection-toggle" href="#" id="cinemaSelectionToggle">
+                                <a class="nav-link dropdown-toggle cinema-selection-toggle" href="#" id="cinemaSelectionToggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     @selectedCinemaName
                                 </a>
-                                <div class="cinema-selection-dropdown" id="cinemaSelectionDropdown">
+                                <ul class="dropdown-menu dropdown-menu-end cinema-selection-dropdown" id="cinemaSelectionDropdown" aria-labelledby="cinemaSelectionToggle">
                                     <!-- Populated via JavaScript -->
-                                </div>
+                                </ul>
                             </div>
                         }
 
@@ -314,37 +299,46 @@
             const cinemaSelectionToggle = document.getElementById("cinemaSelectionToggle");
             const cinemaSelectionDropdown = document.getElementById("cinemaSelectionDropdown");
             if (cinemaSelectionToggle && cinemaSelectionDropdown) {
+                // Populate dropdown when toggled
                 cinemaSelectionToggle.addEventListener("click", function (e) {
-                    e.preventDefault();
-                    if (cinemaSelectionDropdown.classList.contains("show")) {
-                        cinemaSelectionDropdown.classList.remove("show");
-                    } else {
+                    if (cinemaSelectionDropdown.children.length === 0) {
                         fetch("/api/cinemas")
                             .then(response => {
                                 if (!response.ok) throw new Error("API error");
                                 return response.json();
                             })
                             .then(data => {
+                                console.log("API Response:", data);
                                 cinemaSelectionDropdown.innerHTML = "";
                                 // Add "All Cinemas" option to reset filter
-                                const allItem = document.createElement("div");
-                                allItem.innerHTML = `<a class="dropdown-item cinema-selection" href="#" data-value="0">Усі кінотеатри</a>`;
+                                const allItem = document.createElement("li");
+                                allItem.classList.add("cinema-selection-item");
+                                allItem.innerHTML = `<a class="dropdown-item cinema-selection" href="#" data-value="0" data-address="Усі адреси">Усі кінотеатри</a><div class="cinema-selection-address">Усі адреси</div>`;
                                 cinemaSelectionDropdown.appendChild(allItem);
                                 if (data && Array.isArray(data)) {
                                     data.forEach(cinema => {
-                                        const item = document.createElement("div");
-                                        item.innerHTML = `<a class="dropdown-item cinema-selection" href="#" data-value="${cinema.id}">${cinema.name}</a>`;
+                                        console.log("Cinema Object:", cinema);
+                                        const item = document.createElement("li");
+                                        item.classList.add("cinema-selection-item");
+                                        // Handle both PascalCase and camelCase
+                                        const id = cinema.Id ?? cinema.id ?? 0;
+                                        const name = cinema.Name ?? cinema.name ?? "Назва не вказана";
+                                        const address = cinema.Address ?? cinema.address ?? "Адреса не вказана";
+                                        item.innerHTML = `<a class="dropdown-item cinema-selection" href="#" data-value="${id}" data-address="${address}">${name}</a><div class="cinema-selection-address">${address}</div>`;
                                         cinemaSelectionDropdown.appendChild(item);
                                     });
                                 }
-                                cinemaSelectionDropdown.classList.add("show");
                             })
-                            .catch(error => console.error("Error loading cinemas for dropdown:", error));
+                            .catch(error => {
+                                console.error("Error loading cinemas for dropdown:", error);
+                                alert("Не вдалося завантажити список кінотеатрів. Спробуйте ще раз.");
+                            });
                     }
                 });
 
                 // Handle cinema selection
                 cinemaSelectionDropdown.addEventListener("click", function (e) {
+                    e.preventDefault();
                     e.stopPropagation();
                     const target = e.target.closest(".cinema-selection");
                     if (target) {
@@ -355,18 +349,10 @@
                         })
                             .then(response => {
                                 if (response.ok) {
-                                    window.location.reload(); // Reload to apply filter
+                                    window.location.reload();
                                 }
                             })
                             .catch(error => console.error("Error setting cinema filter:", error));
-                        cinemaSelectionDropdown.classList.remove("show");
-                    }
-                });
-
-                // Close dropdown if clicking outside
-                document.addEventListener("click", function (e) {
-                    if (!cinemaSelectionToggle.contains(e.target) && !cinemaSelectionDropdown.contains(e.target)) {
-                        cinemaSelectionDropdown.classList.remove("show");
                     }
                 });
             }

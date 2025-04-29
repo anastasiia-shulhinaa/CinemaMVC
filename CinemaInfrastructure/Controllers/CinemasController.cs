@@ -272,6 +272,34 @@ namespace CinemaInfrastructure.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // GET: Cinemas/List
+        public IActionResult List(int movieId, string cityFilter = null)
+        {
+            var cinemasQuery = _context.Cinemas.Include(c => c.Halls).AsQueryable();
+
+            // Apply city filter
+            if (!string.IsNullOrEmpty(cityFilter))
+            {
+                cinemasQuery = cinemasQuery.Where(c => c.City == cityFilter);
+            }
+
+            var cinemas = cinemasQuery.OrderBy(c => c.Name).ToList();
+
+            // Generate embed URLs for each cinema
+            var cinemaViewModels = cinemas.Select(c => new CinemaViewModel
+            {
+                Cinema = c,
+                GoogleMapsEmbedUrl = _googleMapsUrlBuilder.GetEmbedUrl(c)
+            }).ToList();
+
+            // Create SelectList for cities dropdown
+            var allCities = _context.Cinemas.Select(c => c.City).Distinct().ToList();
+            ViewBag.CitiesSelectList = new SelectList(allCities, cityFilter);
+            ViewBag.MovieId = movieId;
+            ViewBag.CityFilter = cityFilter;
+
+            return View(cinemaViewModels);
+        }
         private bool CinemaExists(int id)
         {
             return _context.Cinemas.Any(e => e.Id == id);

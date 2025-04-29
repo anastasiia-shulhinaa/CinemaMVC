@@ -393,7 +393,27 @@ namespace CinemaInfrastructure.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> DownloadTicket(int bookingId)
+        {
+            var booking = await _context.Bookings
+                .Include(b => b.Session)
+                    .ThenInclude(s => s.Movie)
+                .Include(b => b.Session)
+                    .ThenInclude(s => s.Schedule)
+                        .ThenInclude(sh => sh.Hall)
+                            .ThenInclude(h => h.Cinema)
+                .Include(b => b.SessionSeats)
+                    .ThenInclude(ss => ss.Seat)
+                .FirstOrDefaultAsync(b => b.Id == bookingId);
 
+            if (booking == null)
+                return NotFound();
+
+            var pdfBytes = await TicketGenerator.GenerateBookingTicket(booking);
+
+            return File(pdfBytes, "application/pdf", $"Ticket_Booking_{booking.Id}.pdf");
+        }
     }
 
     public class BookingViewModel
