@@ -3,34 +3,42 @@
     ViewData["Title"] = "Login";
 }
 
-<div class="container mx-auto">
-    <div class="row justify-content-center">
-        <div class="col-12 col-lg-6">
-
-            <h1 class="mt-5 mb-3 h3">Login</h1>
+<div class="auth-container d-flex align-items-center justify-content-center min-vh-100">
+    <div class="col-12 col-md-10 col-lg-8">
+        <div class="auth-card p-5 shadow-lg rounded">
+            <h1 class="section-title text-center mb-4"><i class="fas fa-sign-in-alt"></i> Вхід</h1>
             <partial name="_Notification" />
 
             <form asp-action="Login" method="post">
                 <input type="hidden" asp-for="ReturnUrl" />
-                <div class="mb-3">
-                    <label class="form-label">Username</label>
-                    <input type="text" class="form-control" asp-for="Username" />
+                <div class="mb-4">
+                    <label class="form-label text-muted">Електронна пошта</label>
+                    <input type="email" class="form-control auth-input" asp-for="Username" placeholder="Введіть вашу електронну пошту" />
+                    <span asp-validation-for="Username" class="text-danger"></span>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" class="form-control" asp-for="Password" />
+                <div class="mb-4">
+                    <label class="form-label text-muted">Пароль</label>
+                    <input type="password" class="form-control auth-input" asp-for="Password" placeholder="Введіть пароль" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
                 </div>
 
-                <div class="mb-3 form-check">
-                    <input type="checkbox" class="form-check-input" asp-for="RememberMe" />
-                    <label class="form-check-label" for="RememberMe">Remember Me</label>
+                <div class="mb-4 form-check">
+                    <input type="checkbox" class="form-check-input" asp-for="RememberMe" id="RememberMe" />
+                    <label class="form-check-label text-muted" for="RememberMe">Запам'ятати мене</label>
                 </div>
 
-                <div class="mb-3">
-                    <button type="submit" class="btn bg-danger text-bg-success text-light">Login</button>
+                <div class="mb-4 text-center">
+                    <button type="submit" class="btn auth-btn">Увійти</button>
                 </div>
             </form>
+            <p class="text-center text-muted mt-3">
+                Немає облікового запису? <a asp-action="Register" class="text-maroon">Зареєструватися</a>
+            </p>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
