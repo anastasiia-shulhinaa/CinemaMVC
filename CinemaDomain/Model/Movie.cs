@@ -1,9 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-
 namespace CinemaDomain.Model;
-
-
 public partial class Movie : Entity
 {
     [Required(ErrorMessage = "Поле не повинно бути порожнім")]

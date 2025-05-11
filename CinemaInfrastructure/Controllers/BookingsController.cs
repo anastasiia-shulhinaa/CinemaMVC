@@ -5,8 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
+
 
 namespace CinemaInfrastructure.Controllers
 {
@@ -23,21 +22,23 @@ namespace CinemaInfrastructure.Controllers
 
         public async Task<IActionResult> Index()
         {
+            // Отримуємо всі бронювання з пов'язаними сутностями: сесія, фільм, графік і місця
             var bookings = await _context.Bookings
                 .Include(b => b.Session)
                 .ThenInclude(s => s.Movie)
                 .Include(b => b.Session)
-                .ThenInclude(s => s.Schedule) // Include Schedule
+                .ThenInclude(s => s.Schedule) // Додаємо графік сеансу
                 .Include(b => b.SessionSeats)
                 .ToListAsync();
 
-            // Create a view model to include user email, calculated price, and session date
+            // Створюємо список моделей для відображення з додатковими даними (пошта користувача, ціна, дата)
             var bookingViewModels = new List<BookingViewModel>();
             foreach (var booking in bookings)
             {
+                // Отримуємо користувача за його ID
                 var user = await _userManager.FindByIdAsync(booking.UserId);
 
-                // Calculate price for non-private bookings by summing SessionSeats.Price
+                // Розраховуємо ціну для не приватних бронювань, підсумовуючи ціни місць
                 decimal calculatedPrice = 0;
                 if (!booking.IsPrivateBooking && booking.SessionSeats != null && booking.SessionSeats.Any())
                 {
@@ -48,17 +49,18 @@ namespace CinemaInfrastructure.Controllers
                 {
                     Id = booking.Id,
                     SessionId = booking.SessionId,
-                    MovieTitle = booking.Session?.Movie?.Title ?? "Невідомий фільм", // Null check
+                    MovieTitle = booking.Session?.Movie?.Title ?? "Невідомий фільм", // Перевірка на null для назви фільму
                     NumberOfSeats = booking.NumberOfSeats,
                     IsPrivateBooking = booking.IsPrivateBooking,
                     PrivateBookingPrice = booking.PrivateBookingPrice,
                     CalculatedPrice = calculatedPrice,
-                    UserEmail = user?.Email ?? "Невідомий",
+                    UserEmail = user?.Email ?? "Невідомий", // Перевірка на null для пошти
                     BookingDate = booking.BookingDate,
-                    SessionDate = booking.Session?.Schedule?.StartTime ?? default(DateTime) // Null check with default
+                    SessionDate = booking.Session?.Schedule?.StartTime ?? default(DateTime) // Перевірка на null для дати сеансу
                 });
             }
 
+            // Повертаємо модель для відображення у View
             return View(bookingViewModels);
         }
         public IActionResult SelectSeat(int sessionId)
@@ -414,27 +416,5 @@ namespace CinemaInfrastructure.Controllers
 
             return File(pdfBytes, "application/pdf", $"Ticket_Booking_{booking.Id}.pdf");
         }
-    }
-
-    public class BookingViewModel
-    {
-        public int Id { get; set; }
-        public int SessionId { get; set; }
-        public string MovieTitle { get; set; }
-        public int? NumberOfSeats { get; set; }
-        public bool IsPrivateBooking { get; set; }
-        public decimal? PrivateBookingPrice { get; set; }
-        public decimal PricePerSeat { get; set; } // For calculating price
-        public decimal CalculatedPrice { get; set; } // For non-private bookings
-        public string UserEmail { get; set; }
-        public DateTime BookingDate { get; set; }
-        public DateTime SessionDate { get; set; } // Added for chart
-    }
-
-    public class BookingEditModel
-    {
-        public int Id { get; set; }
-        public bool IsPrivateBooking { get; set; }
-        public decimal? PrivateBookingPrice { get; set; }
     }
 }

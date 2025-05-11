@@ -72,7 +72,6 @@ namespace CinemaInfrastructure.Controllers
         }
 
         // POST: Sessions/Create
-        // POST: Sessions/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([FromBody] CreateSessionDto dto)

@@ -5,33 +5,33 @@ using Microsoft.EntityFrameworkCore;
 
 
 
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ChartsController : ControllerBase
-    {
-        private readonly DbcinemaContext cinemaContext;
+[Route("api/[controller]")]
+[ApiController]
+public class ChartsController : ControllerBase
+{
+    private readonly DbcinemaContext cinemaContext;
 
-        public ChartsController(DbcinemaContext cinemaContext)
-        {
-            this.cinemaContext = cinemaContext;
-        }
+    public ChartsController(DbcinemaContext cinemaContext)
+    {
+        this.cinemaContext = cinemaContext;
+    }
 
     [HttpGet("topMovies")]
     public async Task<JsonResult> GetTopMoviesAsync(CancellationToken cancellationToken)
     {
         var responseItems = await cinemaContext
             .Sessions
-            .GroupBy(session => session.Movie.Title) // Group by movie title
-            .Select(group => new // Create anonymous type for response
+            .GroupBy(session => session.Movie.Title) 
+            .Select(group => new 
             {
-                MovieTitle = group.Key, // The title of the movie
-                SessionCount = group.Count() // Count of sessions for that movie
+                MovieTitle = group.Key, 
+                SessionCount = group.Count() 
             })
-            .OrderByDescending(item => item.SessionCount) // Order by session count descending
-            .Take(10) // Take only the top 10 movies
-            .ToListAsync(cancellationToken); // Execute the query asynchronously
+            .OrderByDescending(item => item.SessionCount) 
+            .Take(10) 
+            .ToListAsync(cancellationToken); 
 
-        return new JsonResult(responseItems); // Return the results as JSON
+        return new JsonResult(responseItems);
     }
 
     [HttpGet("bookingsByDayOfWeek")]
@@ -46,7 +46,6 @@ using Microsoft.EntityFrameworkCore;
             })
             .ToListAsync();
 
-        // Ensure all days of the week are represented, even if there are zero bookings
         var daysOfWeek = Enum.GetNames(typeof(DayOfWeek)).ToList();
         var result = daysOfWeek.Select(day => new
         {
@@ -57,5 +56,3 @@ using Microsoft.EntityFrameworkCore;
         return Ok(result);
     }
 }
-
-

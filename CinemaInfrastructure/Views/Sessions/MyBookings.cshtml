@@ -12,41 +12,45 @@
         }
         else
         {
-            <div class="row">
-                @foreach (var booking in Model.PrivateBookings)
-                {
-                    <div class="col-lg-4 col-md-6 col-12 mb-4">
-                        <div class="card booking-card shadow-sm">
-                            <div class="banner-container">
-                                @if (!string.IsNullOrEmpty(booking.Session.Movie.BannerUrl))
-                                {
-                                    <img src="@booking.Session.Movie.BannerUrl" class="card-img-top" alt="@booking.Session.Movie.Title" />
-                                }
-                                else
-                                {
-                                    <div class="no-photo-placeholder">
-                                        <p class="text-muted">Постер відсутній</p>
-                                    </div>
-                                }
-                            </div>
-                            <div class="card-body">
-                                <h5 class="card-title">@booking.Session.Movie.Title</h5>
-                                <div class="ticket-info">
-                                    <p><strong>Кінотеатр:</strong> <span class="highlight-text">@booking.Session.Schedule.Hall.Cinema.Name</span></p>
-                                    <p><strong>Зал:</strong> <span class="highlight-text">@booking.Session.Schedule.Hall.Name</span></p>
-                                    <p><strong>Розклад:</strong> <span class="highlight-text">@booking.Session.Schedule.StartTime.ToString("dd.MM.yyyy HH:mm")</span></p>
-                                    <p><strong>Ціна:</strong> <span class="highlight-text">@(booking.PrivateBookingPrice?.ToString("C", new System.Globalization.CultureInfo("uk-UA")) ?? "N/A")</span></p>
-                                    <p><strong>Дата Бронювання:</strong> <span class="highlight-text">@booking.BookingDate.ToString("dd.MM.yyyy HH:mm")</span></p>
+            @for (int i = 0; i < Model.PrivateBookings.Count; i += 3)
+            {
+                <div class="row mb-3">
+                    @for (int j = i; j < i + 3 && j < Model.PrivateBookings.Count; j++)
+                    {
+                        var booking = Model.PrivateBookings[j];
+                        <div class="col-md-8 col-12 d-flex justify-content-center mb-3">
+                            <div class="card booking-card shadow-sm" style="width: 20rem;">
+                                <div class="banner-container">
+                                    @if (!string.IsNullOrEmpty(booking.Session.Movie.BannerUrl))
+                                    {
+                                        <img src="@booking.Session.Movie.BannerUrl" class="card-img-top" alt="@booking.Session.Movie.Title" />
+                                    }
+                                    else
+                                    {
+                                        <div class="no-photo-placeholder">
+                                            <p class="text-muted">Постер відсутній</p>
+                                        </div>
+                                    }
                                 </div>
-                                <form asp-controller="Bookings" asp-action="DownloadTicket" method="post" class="text-center mt-4">
-                                    <input type="hidden" name="BookingId" value="@booking.Id" />
-                                    <button type="submit" class="btn btn-maroon">Завантажити квиток</button>
-                                </form>
+                                <div class="card-body">
+                                    <h5 class="card-title">@booking.Session.Movie.Title</h5>
+                                    <div class="ticket-info">
+                                        <p><strong>Кінотеатр:</strong> <span class="highlight-text">@booking.Session.Schedule.Hall.Cinema.Name</span></p>
+                                        <p><strong>Зал:</strong> <span class="highlight-text">@booking.Session.Schedule.Hall.Name</span></p>
+                                        <p><strong>Розклад:</strong> <span class="highlight-text">@booking.Session.Schedule.StartTime.ToString("dd.MM.yyyy HH:mm")</span></p>
+                                        <p><strong>Ціна:</strong> <span class="highlight-text">@(booking.PrivateBookingPrice?.ToString("C", new System.Globalization.CultureInfo("uk-UA")) ?? "N/A")</span></p>
+                                        <p><strong>Дата Бронювання:</strong> <span class="highlight-text">@booking.BookingDate.ToString("dd.MM.yyyy HH:mm")</span></p>
+                                    </div>
+                                    <form asp-controller="Bookings" asp-action="DownloadTicket" method="post" class="text-center mt-4">
+                                        <input type="hidden" name="BookingId" value="@booking.Id" />
+                                        <button type="submit" class="btn btn-maroon">Завантажити квиток</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                }
-            </div>
+                    }
+                </div>
+            }
         }
     </section>
 
@@ -59,42 +63,46 @@
         }
         else
         {
-            <div class="row">
-                @foreach (var booking in Model.TicketBookings)
-                {
-                    <div class="col-lg-4 col-md-6 col-12 mb-4">
-                        <div class="card booking-card shadow-sm">
-                            <div class="banner-container">
-                                @if (!string.IsNullOrEmpty(booking.Session.Movie.BannerUrl))
-                                {
-                                    <img src="@booking.Session.Movie.BannerUrl" class="card-img-top" alt="@booking.Session.Movie.Title" />
-                                }
-                                else
-                                {
-                                    <div class="no-photo-placeholder">
-                                        <p class="text-muted">Постер відсутній</p>
-                                    </div>
-                                }
-                            </div>
-                            <div class="card-body">
-                                <h5 class="card-title">@booking.Session.Movie.Title</h5>
-                                <div class="ticket-info">
-                                    <p><strong>Кінотеатр:</strong> <span class="highlight-text">@booking.Session.Schedule.Hall.Cinema.Name</span></p>
-                                    <p><strong>Зал:</strong> <span class="highlight-text">@booking.Session.Schedule.Hall.Name</span></p>
-                                    <p><strong>Розклад:</strong> <span class="highlight-text">@booking.Session.Schedule.StartTime.ToString("dd.MM.yyyy HH:mm")</span></p>
-                                    <p><strong>Місця:</strong> <span class="highlight-text">@string.Join(", ", booking.SessionSeats.Select(ss => $"Ряд {ss.Seat.RowNumber} Місце {ss.Seat.SeatNumber}"))</span></p>
-                                    <p><strong>Загальна Ціна:</strong> <span class="highlight-text">@booking.SessionSeats.Sum(ss => ss.Price).ToString("C", new System.Globalization.CultureInfo("uk-UA"))</span></p>
-                                    <p><strong>Дата Бронювання:</strong> <span class="highlight-text">@booking.BookingDate.ToString("dd.MM.yyyy HH:mm")</span></p>
+            @for (int i = 0; i < Model.TicketBookings.Count; i += 3)
+            {
+                <div class="row mb-3">
+                    @for (int j = i; j < i + 3 && j < Model.TicketBookings.Count; j++)
+                    {
+                        var booking = Model.TicketBookings[j];
+                        <div class="col-md-6 col-12 d-flex justify-content-center mb-3">
+                            <div class="card booking-card shadow-sm" style="width: 20rem;">
+                                <div class="banner-container">
+                                    @if (!string.IsNullOrEmpty(booking.Session.Movie.BannerUrl))
+                                    {
+                                        <img src="@booking.Session.Movie.BannerUrl" class="card-img-top" alt="@booking.Session.Movie.Title" />
+                                    }
+                                    else
+                                    {
+                                        <div class="no-photo-placeholder">
+                                            <p class="text-muted">Постер відсутній</p>
+                                        </div>
+                                    }
                                 </div>
-                                <form asp-controller="Bookings" asp-action="DownloadTicket" method="post" class="text-center mt-4">
-                                    <input type="hidden" name="BookingId" value="@booking.Id" />
-                                    <button type="submit" class="btn btn-maroon">Завантажити квиток</button>
-                                </form>
+                                <div class="card-body">
+                                    <h5 class="card-title">@booking.Session.Movie.Title</h5>
+                                    <div class="ticket-info">
+                                        <p><strong>Кінотеатр:</strong> <span class="highlight-text">@booking.Session.Schedule.Hall.Cinema.Name</span></p>
+                                        <p><strong>Зал:</strong> <span class="highlight-text">@booking.Session.Schedule.Hall.Name</span></p>
+                                        <p><strong>Розклад:</strong> <span class="highlight-text">@booking.Session.Schedule.StartTime.ToString("dd.MM.yyyy HH:mm")</span></p>
+                                        <p><strong>Місця:</strong> <span class="highlight-text">@string.Join(", ", booking.SessionSeats.Select(ss => $"Ряд {ss.Seat.RowNumber} Місце {ss.Seat.SeatNumber}"))</span></p>
+                                        <p><strong>Загальна Ціна:</strong> <span class="highlight-text">@booking.SessionSeats.Sum(ss => ss.Price).ToString("C", new System.Globalization.CultureInfo("uk-UA"))</span></p>
+                                        <p><strong>Дата Бронювання:</strong> <span class="highlight-text">@booking.BookingDate.ToString("dd.MM.yyyy HH:mm")</span></p>
+                                    </div>
+                                    <form asp-controller="Bookings" asp-action="DownloadTicket" method="post" class="text-center mt-4">
+                                        <input type="hidden" name="BookingId" value="@booking.Id" />
+                                        <button type="submit" class="btn btn-maroon">Завантажити квиток</button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                }
-            </div>
+                    }
+                </div>
+            }
         }
     </section>
 </main>
@@ -157,9 +165,6 @@
         border-radius: 12px;
         background-color: #fff9e6;
         transition: transform 0.3s, box-shadow 0.3s;
-        width: 100%;
-        max-width: 350px;
-        margin: 0 auto;
     }
 
         .booking-card:hover {
@@ -232,18 +237,16 @@
         .ticket-info strong {
             color: #800020;
             font-weight: 600;
-            display: inline-block;
-            width: 110px;
+            display: table-row;
+            width: 120px; /* Adjusted for better alignment */
         }
 
         .ticket-info .highlight-text {
-            font-weight: 700;
-            font-size: 1rem;
-            color: white;
-            background-color: #800020;
+            font-weight: 500;
+            font-size: 0.95rem;
+            color: #660018;
             padding: 2px 6px;
             border-radius: 4px;
-            display: inline-block;
         }
 
     .btn-maroon {
@@ -284,11 +287,11 @@
 
     .booking-card {
         max-width: 100%;
-        margin: 0 10px;
+        margin: 0 auto;
     }
 
     .banner-container {
-        padding-top: 100%; /* 1:1 aspect ratio for mobile */
+        padding-top: 100%; 
     }
 
     .card-title {
@@ -300,7 +303,7 @@
     }
 
     .ticket-info .highlight-text {
-        font-size: 0.95rem;
+        font-size: 0.9rem;
     }
 
     .ticket-info strong {

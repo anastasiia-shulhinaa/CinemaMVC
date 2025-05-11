@@ -4,8 +4,8 @@
     <h1 class="text-center mb-5 section-title">Каталог Фільмів</h1>
 
     <!-- Filter Section -->
-    <form id="filtersForm" class="filter-section row g-3 align-items-end mb-5 p-4 rounded shadow-sm">
-        <div class="col-md-3 col-sm-6">
+    <form id="filtersForm" class="filter-section mb-5 p-4 rounded shadow-sm">
+        <div class="filters-row">
             <div class="filter-group">
                 <label for="categoryDropdown" class="form-label small mb-1">Категорія</label>
                 <select class="form-select" id="categoryDropdown" name="category" onchange="updateMovies()">
@@ -14,14 +14,19 @@
                     {
                         foreach (var cat in ViewBag.Categories)
                         {
-                            <option value="@cat">@cat</option>
+                            if (cat == ViewBag.SelectedCategory)
+                            {
+                                <option value="@cat" selected>@cat</option>
+                            }
+                            else
+                            {
+                                <option value="@cat">@cat</option>
+                            }
                         }
                     }
                 </select>
             </div>
-        </div>
 
-        <div class="col-md-3 col-sm-6">
             <div class="filter-group">
                 <label for="yearDropdown" class="form-label small mb-1">Рік</label>
                 <select class="form-select" id="yearDropdown" name="year" onchange="updateMovies()">
@@ -30,14 +35,19 @@
                     {
                         foreach (var y in ViewBag.Years)
                         {
-                            <option value="@y">@y</option>
+                            if (y == ViewBag.SelectedYear)
+                            {
+                                <option value="@y" selected>@y</option>
+                            }
+                            else
+                            {
+                                <option value="@y">@y</option>
+                            }
                         }
                     }
                 </select>
             </div>
-        </div>
 
-        <div class="col-md-3 col-sm-6">
             <div class="filter-group">
                 <label for="ratingDropdown" class="form-label small mb-1">Рейтинг</label>
                 <select class="form-select" id="ratingDropdown" name="rating" onchange="updateMovies()">
@@ -46,23 +56,56 @@
                     {
                         foreach (var r in ViewBag.Ratings)
                         {
-                            <option value="@r">@r</option>
+                            if (r == ViewBag.SelectedRating)
+                            {
+                                <option value="@r" selected>@r</option>
+                            }
+                            else
+                            {
+                                <option value="@r">@r</option>
+                            }
                         }
                     }
                 </select>
             </div>
-        </div>
 
-        <div class="col-md-3 col-sm-6">
             <div class="filter-group">
+                <label for="languageDropdown" class="form-label small mb-1">Мова</label>
+                <select class="form-select" id="languageDropdown" name="language" onchange="updateMovies()">
+                    <option value="">Всі мови</option>
+                    @if (ViewBag.Language != null)
+                    {
+                        foreach (var lang in ViewBag.Language)
+                        {
+                            if (lang == ViewBag.SelectedLanguage)
+                            {
+                                <option value="@lang" selected>@lang</option>
+                            }
+                            else
+                            {
+                                <option value="@lang">@lang</option>
+                            }
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="filter-group search-group">
                 <label for="titleSearch" class="form-label small mb-1">Пошук за назвою</label>
                 <div class="input-group">
-                    <input type="text" class="form-control title-search" id="titleSearch" name="title" placeholder="Назва фільму" oninput="debouncedUpdateMovies()">
-                    <button type="button" class="btn btn-primary search-btn" aria-label="Пошук" onclick="updateMovies()">
+                    <input type="text" class="title-search" id="titleSearch" name="title" placeholder="Назва фільму" oninput="debouncedUpdateMovies()" value="@ViewBag.SelectedTitle">
+                    <button type="button" class="search-btn" aria-label="Пошук" onclick="updateMovies()">
                         <img src="https://www.palladium-cinema.com.ua/desktop/img/search.svg" alt="Search Icon" class="search-icon" />
                     </button>
                 </div>
             </div>
+        </div>
+
+        <!-- Clear Filters Button -->
+        <div class="clear-filters-container">
+            <button type="button" class="btn clear-filters-btn" id="clearFiltersBtn" onclick="clearFilters()" style="display: none;">
+                <span class="clear-icon">✖</span> Очистити фільтри
+            </button>
         </div>
     </form>
 
@@ -72,15 +115,14 @@
     </div>
 </main>
 
-
-
 <script>
     function updateMovies() {
         const form = document.getElementById('filtersForm');
         const formData = new FormData(form);
         const params = new URLSearchParams(formData).toString();
+        const page = 1; // Reset to first page on filter change
 
-        fetch(`/Movies/Filter?${params}`, {
+        fetch(`/Movies/Filter?${params}&page=${page}`, {
             method: 'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
@@ -92,10 +134,39 @@
         })
         .then(html => {
             document.getElementById('moviesList').innerHTML = html;
+            updateClearFiltersVisibility();
         })
         .catch(error => {
             console.error('There was a problem with the fetch operation:', error);
         });
+    }
+
+    function clearFilters() {
+        // Reset all dropdowns to their default (empty) values
+        document.getElementById('categoryDropdown').value = '';
+        document.getElementById('yearDropdown').value = '';
+        document.getElementById('ratingDropdown').value = '';
+        document.getElementById('languageDropdown').value = '';
+        document.getElementById('titleSearch').value = '';
+
+        // Trigger updateMovies to refresh the movie list with no filters
+        updateMovies();
+    }
+
+    function updateClearFiltersVisibility() {
+        const category = document.getElementById('categoryDropdown').value;
+        const year = document.getElementById('yearDropdown').value;
+        const rating = document.getElementById('ratingDropdown').value;
+        const language = document.getElementById('languageDropdown').value;
+        const title = document.getElementById('titleSearch').value;
+
+        const clearBtn = document.getElementById('clearFiltersBtn');
+        // Show the button if any filter is applied
+        if (category || year || rating || language || title) {
+            clearBtn.style.display = 'flex';
+        } else {
+            clearBtn.style.display = 'none';
+        }
     }
 
     function debounce(func, delay) {
@@ -106,5 +177,14 @@
         };
     }
 
+    // Initial check for clear filters button visibility
+    window.onload = function () {
+        updateClearFiltersVisibility();
+    };
+
     const debouncedUpdateMovies = debounce(updateMovies, 300);
 </script>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+}

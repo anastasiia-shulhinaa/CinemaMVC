@@ -1,268 +1,47 @@
 ﻿@model IEnumerable<CinemaInfrastructure.ViewModels.CinemaViewModel>
 
-<div class="row">
-    @foreach (var item in Model)
-    {
-        var cinema = item.Cinema;
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <!-- Cinema Photo -->
+@if (!Model.Any())
+{
+    <p class="text-muted">Наразі немає доступних кінотеатрів.</p>
+}
+else
+{
+    <div class="row-list">
+        @foreach (var cinemaViewModel in Model)
+        {
+            var cinema = cinemaViewModel.Cinema;
+            <div class="cinema-card">
                 @if (!string.IsNullOrEmpty(cinema.PhotoUrl))
                 {
                     <img src="@cinema.PhotoUrl" class="card-img-top" alt="@cinema.Name" />
                 }
-
-                <div class="card-header">
-                    <h5 class="mb-0">@cinema.Name</h5>
-                </div>
-                <div class="card-body">
-                    <!-- Cinema Details -->
-                    <p><strong>Місто:</strong> @cinema.City</p>
-                    <p><strong>Адреса:</strong> <a href="@cinema.GoogleMapsUrl" target="_blank">@cinema.Address</a></p>
-                    <p>
-                        <strong>Телефон:</strong>
-                        <span class="flag-icon me-1">🇺🇦</span>
-                        <a href="tel:@cinema.FormattedPhoneNumber">@cinema.FormattedPhoneNumber</a>
-                    </p>
-                    @if (!string.IsNullOrEmpty(cinema.Description))
-                    {
-                        <p><strong>Опис:</strong> @cinema.Description</p>
-                    }
-                    <p><strong>Максимальна кількість залів:</strong> @cinema.TotalCinemaHalls</p>
-
-                    <!-- Google Maps Embed -->
-                    <h6>Мапа</h6>
-                    <div class="map-container mb-3">
-                        @if (string.IsNullOrEmpty(item.GoogleMapsEmbedUrl))
-                        {
-                            <p class="text-danger">Google Maps API key is missing.</p>
-                        }
-                        else
-                        {
-                            <iframe width="100%"
-                                    height="200"
-                                    frameborder="0"
-                                    style="border:0; border-radius: 8px;"
-                                    src="@item.GoogleMapsEmbedUrl"
-                                    allowfullscreen>
-                            </iframe>
-                        }
+                else
+                {
+                    <div class="no-photo-placeholder">
+                        <p class="text-muted">Фото відсутнє</p>
                     </div>
+                }
+                <div class="card-body">
+                    <h5 class="card-title">@cinema.Name</h5>
+                    <p class="card-text">
+                        <strong>Місто:</strong> @cinema.City<br />
+                        <strong>Адреса:</strong> @cinema.Address<br />
+                        <strong>Телефон:</strong>
+                        <a href="tel:+38@cinema.PhoneNumber" class="text-decoration-none">@cinema.PhoneNumber</a><br />
+                        @if (!string.IsNullOrEmpty(cinema.Description))
+                        {
+                            <strong>Опис:</strong> @cinema.Description
 
-                    <!-- List of Halls -->
-                    <h6>Зали (@cinema.Halls.Count)</h6>
-                    @if (cinema.Halls.Any())
+                            <br />
+                        }
+                    </p>
+                    @if (!string.IsNullOrEmpty(cinemaViewModel.GoogleMapsEmbedUrl))
                     {
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Назва</th>
-                                        <th>Кількість місць</th>
-                                        <th>Дії</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var hall in cinema.Halls)
-                                    {
-                                        <tr>
-                                            <td>@hall.Name</td>
-                                            <td>@hall.TotalSeats</td>
-                                            <td>
-                                                <a asp-controller="Schedules" asp-action="Index" asp-route-hallId="@hall.Id" class="btn btn-primary btn-sm">Розклад</a>
-                                                <a asp-controller="Halls" asp-action="Edit" asp-route-id="@hall.Id" class="btn btn-primary btn-sm">Редагувати</a>
-                                                <a asp-controller="Halls" asp-action="Delete" asp-route-id="@hall.Id" class="btn btn-danger btn-sm" onclick="return confirm('Ви впевнені, що хочете видалити зал @hall.Name?');">Видалити</a>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+                        <iframe src="@cinemaViewModel.GoogleMapsEmbedUrl" class="map-iframe w-100" allowfullscreen="" loading="lazy"></iframe>
                     }
-                    else
-                    {
-                        <p class="text-muted">У цьому кінотеатрі ще немає залів.</p>
-                    }
-
-                    <!-- Create Hall Button -->
-                    <a asp-controller="Halls" asp-action="Create" asp-route-cinemaId="@cinema.Id" class="btn btn-primary mt-2">
-                        <i class="fas fa-plus me-1"></i> Створити зал
-                    </a>
-                </div>
-                <div class="card-footer d-flex justify-content-between">
-                    <a asp-controller="Cinemas" asp-action="Delete" asp-route-id="@cinema.Id" class="btn btn-primary">Видалити кінотеатр</a>
-                    <a asp-controller="Cinemas" asp-action="Edit" asp-route-id="@cinema.Id" class="btn btn-primary">Редагувати кінотеатр</a>
+                    <button class="btn-maroon select-cinema" data-id="@cinema.Id" data-name="@cinema.Name">Обрати кінотеатр</button>
                 </div>
             </div>
-        </div>
-    }
-</div>
-
-<style>
-    /* Card Styles */
-    .card {
-        background-color: #fefefe;
-        border: 1px solid #e5e5e5;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-    }
-
-    .card-img-top {
-        height: 200px;
-        object-fit: cover;
-        border-top-left-radius: 8px;
-        border-top-right-radius: 8px;
-    }
-
-    .card-header {
-        background-color: #fefefe;
-        border-bottom: 1px solid #e5e5e5;
-        padding: 1rem;
-        color: #800020;
-    }
-
-    .card-body {
-        padding: 1.5rem;
-        color: #800020;
-    }
-
-        .card-body p {
-            margin-bottom: 0.75rem;
         }
-
-        .card-body a {
-            color: #800020;
-            text-decoration: none;
-        }
-
-            .card-body a:hover {
-                color: #660018;
-            }
-
-    .card-footer {
-        background-color: #fefefe;
-        border-top: 1px solid #e5e5e5;
-        padding: 1rem;
-        border-bottom-left-radius: 8px;
-        border-bottom-right-radius: 8px;
-    }
-
-    /* Map Container */
-    .map-container {
-        position: relative;
-        overflow: hidden;
-        border-radius: 8px;
-    }
-
-    /* Table Styles */
-    .table-responsive {
-        overflow-x: auto;
-    }
-
-    .table {
-        background-color: #fff;
-        border: 1px solid #e5e5e5;
-        border-radius: 8px;
-        margin-bottom: 0;
-    }
-
-        .table thead {
-            background-color: #fefefe;
-            color: #800020;
-            border-bottom: 1px solid #e5e5e5;
-        }
-
-        .table th {
-            font-weight: 500;
-            padding: 10px;
-            text-align: left;
-        }
-
-        .table td {
-            padding: 10px;
-            text-align: left;
-            vertical-align: middle;
-            color: #800020;
-        }
-
-    .table-striped tbody tr:nth-of-type(odd) {
-        background-color: #f9fafb;
-    }
-
-    /* Buttons */
-    .btn-primary {
-        background-color: #800020;
-        border-color: #800020;
-        color: #fff;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        font-weight: 500;
-        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-    }
-
-        .btn-primary:hover {
-            background-color: #660018;
-            border-color: #660018;
-            transform: scale(1.05);
-        }
-
-    .btn-danger {
-        background-color: #dc3545;
-        border-color: #dc3545;
-        color: #fff;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        font-weight: 500;
-        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
-    }
-
-        .btn-danger:hover {
-            background-color: #c82333;
-            border-color: #c82333;
-            transform: scale(1.05);
-        }
-
-    .btn-sm {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.85rem;
-    }
-
-    /* Misc */
-    .text-muted {
-        color: #b88b8b !important;
-    }
-
-    .flag-icon {
-        font-size: 1rem;
-        vertical-align: middle;
-    }
-
-    /* Responsive Design */
-    @@media (max-width: 767px) {
-        .card-body
-
-    {
-        padding: 1rem;
-    }
-
-    .map-container iframe {
-        height: 150px;
-    }
-
-    .card-footer {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-        .card-footer .btn {
-            width: 100%;
-        }
-
-    .table th,
-    .table td {
-        font-size: 0.85rem;
-        padding: 8px;
-    }
-
-    }
-</style>
+    </div>
+}

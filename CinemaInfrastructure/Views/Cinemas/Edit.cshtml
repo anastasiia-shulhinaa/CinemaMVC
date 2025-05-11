@@ -4,76 +4,78 @@
     ViewData["Title"] = "Редагувати кінотеатр";
 }
 
-<div class="container-fluid py-4">
-    <h1 class="mb-4 text-primary">Редагувати кінотеатр</h1>
+<main class="container my-5">
+    <h1 class="text-center mb-5 section-title">Редагувати кінотеатр</h1>
 
     <partial name="_Notification" />
 
-    <div class="card shadow-sm p-4">
-        <form asp-action="Edit" method="post" enctype="multipart/form-data">
-            <input type="hidden" asp-for="Id" />
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                <input type="hidden" asp-for="Id" />
 
-            <div class="form-group mb-3">
-                <label asp-for="Name" class="form-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="City" class="form-label"></label>
-                <input asp-for="City" class="form-control" />
-                <span asp-validation-for="City" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="Address" class="form-label"></label>
-                <input asp-for="Address" class="form-control" placeholder="Вулиця, номер будинку" />
-                <span asp-validation-for="Address" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="PhoneNumber" class="form-label"></label>
-                <div class="input-group">
-                    <span class="input-group-text">
-                        +38
-                        <img src="https://flagcdn.com/w20/ua.png" alt="Ukrainian Flag" class="ms-1" style="width: 20px; vertical-align: middle;" />
-                    </span>
-                    <input asp-for="PhoneNumber" class="form-control" placeholder="0501234567" />
+                <div class="form-group mb-3">
+                    <label asp-for="Name" class="form-label small mb-1"></label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
                 </div>
-                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-            </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="PhotoUrl" class="form-label">Фото</label>
-                @if (!string.IsNullOrEmpty(Model.PhotoUrl))
-                {
-                    <div class="mb-2">
-                        <img src="@Model.PhotoUrl" alt="Поточне фото" class="rounded" style="max-height: 200px; object-fit: cover;" />
+                <div class="form-group mb-3">
+                    <label asp-for="City" class="form-label small mb-1"></label>
+                    <input asp-for="City" class="form-control" />
+                    <span asp-validation-for="City" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="Address" class="form-label small mb-1"></label>
+                    <input asp-for="Address" class="form-control" placeholder="Вулиця, номер будинку" />
+                    <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label asp-for="PhoneNumber" class="form-label small mb-1"></label>
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            +38
+                            <img src="https://flagcdn.com/w20/ua.png" alt="Ukrainian Flag" class="ms-1" style="width: 20px; vertical-align: middle;" />
+                        </span>
+                        <input asp-for="PhoneNumber" class="form-control" placeholder="0501234567" />
                     </div>
-                }
-                <input type="file" name="photoFile" class="form-control" accept="image/*" />
-                <span class="text-danger" asp-validation-for="PhotoUrl"></span>
-            </div>
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="Description" class="form-label"></label>
-                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
+                <div class="form-group mb-3">
+                    <label asp-for="PhotoUrl" class="form-label small mb-1">Фото</label>
+                    @if (!string.IsNullOrEmpty(Model.PhotoUrl))
+                    {
+                        <div class="mb-2">
+                            <img src="@Model.PhotoUrl" alt="Поточне фото" class="rounded" style="max-height: 200px; object-fit: cover;" />
+                        </div>
+                    }
+                    <input type="file" name="photoFile" class="form-control" accept="image/*" />
+                    <span class="text-danger" asp-validation-for="PhotoUrl"></span>
+                </div>
 
-            <div class="form-group mb-3">
-                <label asp-for="TotalCinemaHalls" class="form-label"></label>
-                <input asp-for="TotalCinemaHalls" type="number" class="form-control" />
-                <span asp-validation-for="TotalCinemaHalls" class="text-danger"></span>
-            </div>
+                <div class="form-group mb-3">
+                    <label asp-for="Description" class="form-label small mb-1"></label>
+                    <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
 
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary-custom"><i class="fas fa-save me-2"></i>Зберегти</button>
-                <a asp-action="Index" class="btn btn-secondary-custom"><i class="fas fa-arrow-left me-2"></i>Назад</a>
-            </div>
-        </form>
+                <div class="form-group mb-3">
+                    <label asp-for="TotalCinemaHalls" class="form-label small mb-1"></label>
+                    <input asp-for="TotalCinemaHalls" type="number" class="form-control" />
+                    <span asp-validation-for="TotalCinemaHalls" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Зберегти</button>
+                    <a asp-action="Index" class="btn btn-danger"><i class="fas fa-arrow-left me-2"></i>Назад</a>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
+</main>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
@@ -85,81 +87,140 @@
 }
 
 <style>
-    body {
-        background-color: #f5f5f5;
+    /* General Styles */
+    .container {
+        max-width: 800px;
     }
 
-    h1 {
-        font-size: 2rem;
+    .section-title {
+        color: #800020;
         font-weight: 700;
-        color: #1a2a44;
+        font-size: 2.5rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 2rem;
+        position: relative;
     }
 
-    .text-primary {
-        color: #1a2a44 !important;
-    }
+        .section-title::after {
+            content: '';
+            width: 80px;
+            height: 4px;
+            background-color: #800020;
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
 
+    /* Card Styles */
     .card {
-        background-color: #fff;
-        border-radius: 8px;
-        border: none;
+        background-color: #fefefe;
+        border: 1px solid #e5e5e5;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
 
+    .card-body {
+        padding: 1.5rem;
+        color: #800020;
+    }
+
+    /* Form Styles */
     .form-label {
+        color: #800020;
+        font-size: 0.85rem;
         font-weight: 500;
-        color: #666;
     }
 
     .form-control, .form-select {
+        border: 1px solid #d1d1d1;
         border-radius: 8px;
-        border-color: #e0e4d7;
         padding: 0.5rem 1rem;
-        transition: border-color 0.2s ease;
+        font-size: 0.95rem;
+        color: #800020;
+        background-color: #fff;
+        transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     }
 
         .form-control:focus, .form-select:focus {
-            border-color: #1a2a44;
-            box-shadow: 0 0 0 0.2rem rgba(26, 42, 68, 0.25);
+            border-color: #800020;
+            box-shadow: 0 0 0 0.2rem rgba(128, 0, 32, 0.15);
+            outline: none;
         }
 
     .input-group-text {
-        background-color: #f5f5f5;
-        border-color: #e0e4d7;
-        color: #666;
+        background-color: #f0e4d7;
+        border: 1px solid #d1d1d1;
+        border-right: none;
         border-radius: 8px 0 0 8px;
+        color: #800020;
+        font-size: 0.95rem;
     }
 
-    .btn-primary-custom {
-        background-color: #1a2a44;
-        border-color: #1a2a44;
+    .text-danger {
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Buttons */
+    .btn-primary {
+        background-color: #800020;
+        border-color: #800020;
         color: #fff;
         border-radius: 8px;
         padding: 0.5rem 1rem;
         font-weight: 500;
-        text-transform: uppercase;
-        transition: background-color 0.2s ease, transform 0.1s ease;
+        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
     }
 
-        .btn-primary-custom:hover {
-            background-color: #800020;
-            border-color: #800020;
+        .btn-primary:hover {
+            background-color: #660018;
+            border-color: #660018;
             transform: scale(1.05);
         }
 
-    .btn-secondary-custom {
-        background-color: #666;
-        border-color: #666;
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
         color: #fff;
         border-radius: 8px;
         padding: 0.5rem 1rem;
         font-weight: 500;
-        text-transform: uppercase;
-        transition: background-color 0.2s ease, transform 0.1s ease;
+        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
     }
 
-        .btn-secondary-custom:hover {
-            background-color: #555;
-            border-color: #555;
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #c82333;
             transform: scale(1.05);
         }
+
+    /* Responsive Adjustments */
+    @@media (max-width: 767px) {
+        .container
+
+    {
+        padding: 0 15px;
+    }
+
+    .section-title {
+        font-size: 2rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .form-control, .form-select {
+        font-size: 0.9rem;
+    }
+
+    .btn-primary, .btn-danger {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    }
 </style>

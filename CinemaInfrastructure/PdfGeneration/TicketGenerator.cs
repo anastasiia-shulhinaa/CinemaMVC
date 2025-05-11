@@ -13,7 +13,7 @@ public class TicketGenerator
         var qrGenerator = new QRCodeGenerator();
         var qrCodeData = qrGenerator.CreateQrCode(qrData, QRCodeGenerator.ECCLevel.Q);
         var qrCode = new PngByteQRCode(qrCodeData);
-        var qrCodeBytes = qrCode.GetGraphic(20);
+        var qrCodeBytes = qrCode.GetGraphic(10); // Reduced from 15 to 10 for smaller QR code
 
         // 2. Create PDF
         var pdfBytes = Document.Create(container =>
@@ -21,16 +21,16 @@ public class TicketGenerator
             container.Page(page =>
             {
                 page.Size(PageSizes.A6);
-                page.Margin(20);
+                page.Margin(15); // Reduced margin from 20 to 15
                 page.PageColor("#fff9e6"); // Light gold background
-                page.DefaultTextStyle(x => x.FontSize(12).FontColor("#800020")); // Maroon text
+                page.DefaultTextStyle(x => x.FontSize(11).FontColor("#800020")); // Reduced font size from 12 to 11
 
                 // Header: Movie Title
                 page.Header()
-                    .PaddingBottom(10)
+                    .PaddingBottom(8) // Reduced from 10 to 8
                     .Text(booking.Session?.Movie?.Title ?? "N/A")
                     .Bold()
-                    .FontSize(18)
+                    .FontSize(16) // Reduced from 18 to 16
                     .FontColor(booking.IsPrivateBooking ? "#660018" : "#800020") // Darker maroon for private
                     .AlignCenter();
 
@@ -40,8 +40,10 @@ public class TicketGenerator
                     {
                         // QR Code at Top
                         column.Item()
-                            .PaddingBottom(15)
+                            .PaddingBottom(8) // Reduced from 10 to 8
                             .AlignCenter()
+                            .Width(200)
+                            .Height(200)
                             .Image(qrCodeBytes);
 
                         // Ticket Details at Bottom
@@ -49,7 +51,7 @@ public class TicketGenerator
                             .Background("#f9f2e7") // Light gold background
                             .BorderLeft(3, Unit.Point)
                             .BorderColor("#d4af37") // Gold border
-                            .Padding(10)
+                            .Padding(8) // Reduced from 10 to 8
                             .Column(details =>
                             {
                                 details.Item().Text(text =>
@@ -71,21 +73,21 @@ public class TicketGenerator
                                 // Seats for Ticket Bookings
                                 if (!booking.IsPrivateBooking && booking.SessionSeats?.Any() == true)
                                 {
-                                    details.Item().PaddingTop(5).Text("Місця:").Bold();
+                                    details.Item().PaddingTop(4).Text("Місця:").Bold(); // Reduced from 5 to 4
                                     foreach (var seat in booking.SessionSeats)
                                     {
                                         details.Item()
-                                            .PaddingLeft(10)
+                                            .PaddingLeft(8) // Reduced from 10 to 8
                                             .PaddingVertical(2)
                                             .Background("#800020") // Maroon background
-                                            .PaddingHorizontal(5)
+                                            .PaddingHorizontal(4) // Reduced from 5 to 4
                                             .Text($"Ряд {seat.Seat.RowNumber} Місце {seat.Seat.SeatNumber}")
                                             .Bold()
                                             .FontColor(Colors.White); // White text
                                     }
                                 }
 
-                                details.Item().PaddingTop(5).Text(text =>
+                                details.Item().PaddingTop(4).Text(text => // Reduced from 5 to 4
                                 {
                                     text.Span("Ціна: ").Bold();
                                     text.Span($"{(booking.IsPrivateBooking ? booking.PrivateBookingPrice?.ToString("C", new System.Globalization.CultureInfo("uk-UA")) : booking.SessionSeats?.Sum(ss => ss.Price).ToString("C", new System.Globalization.CultureInfo("uk-UA")) ?? "N/A")}");
@@ -97,7 +99,7 @@ public class TicketGenerator
                 page.Footer()
                     .AlignCenter()
                     .Text("Скануйте QR-код для перевірки квитка")
-                    .FontSize(10)
+                    .FontSize(9) // Reduced from 10 to 9
                     .FontColor("#800020");
             });
         })
